@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Phase 1 UI-SPEC approved
-last_updated: "2026-04-22T17:53:48.713Z"
-last_activity: 2026-04-22 — Project initialized (PROJECT.md, config.json, research, REQUIREMENTS.md, ROADMAP.md)
+stopped_at: Phase 1 planned — 5 plans ready to execute
+last_updated: "2026-04-22T20:05:28.740Z"
+last_activity: 2026-04-22 — Phase 1 planned (5 plans, verification passed)
 progress:
   total_phases: 6
   completed_phases: 0
-  total_plans: 0
+  total_plans: 5
   completed_plans: 0
   percent: 0
 ---
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 ## Current Position
 
 Phase: 1 of 6 (Foundation & Identity)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-04-22 — Project initialized (PROJECT.md, config.json, research, REQUIREMENTS.md, ROADMAP.md)
+Plan: 0 of 5 in current phase
+Status: Ready to execute
+Last activity: 2026-04-22 — Phase 1 planned (5 plans, verification passed)
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -68,7 +68,7 @@ None yet.
 - **LGPD cross-border DPA (Google)** — must be signed by legal before Phase 3 LLM categorization ships to production. Does not block Phase 1–2 work.
 - **ASAAS PIX Automático sandbox** — confirm recurring-PIX is live in sandbox before Phase 5 billing work begins.
 - **Railway sa-east-1 region availability** — verify at project creation in Phase 1, plan 01-01.
-- **`@serwist/next` package name** — verify via `npm view` before Phase 4, plan 04-03.
+- ~~**`@serwist/next` package name**~~ — RESOLVED 2026-04-22 during Phase 1 research: `@serwist/next@9.5.7` confirmed on npm.
 
 ## Deferred Items
 
@@ -78,6 +78,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: --stopped-at
-Stopped at: Phase 1 UI-SPEC approved
-Resume file: --resume-file
+Last session: 2026-04-22
+Stopped at: Phase 1 planned — 5 plans ready to execute
+Resume file: .planning/phases/01-foundation-identity/
+
+**Planned Phase:** 1 (Foundation & Identity) — 5 plans — 2026-04-22T20:05:28.735Z
