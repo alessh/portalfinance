@@ -117,9 +117,9 @@ describe('rate limiter — login (D-05 / D-06)', () => {
     }
 
     // The lockout email must be enqueued.
-    const { drainQueue } = await import('@/jobs/boss');
+    const { drainQueue, QUEUES } = await import('@/jobs/boss');
     const jobs = drainQueue();
-    expect(jobs.some((j) => j.name === 'send-account-unlock-email')).toBe(
+    expect(jobs.some((j) => j.name === QUEUES.SEND_UNLOCK_EMAIL)).toBe(
       true,
     );
   }, 60_000);

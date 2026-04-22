@@ -19,7 +19,7 @@ import { hashPassword, verifyPassword } from '@/lib/password';
 import { checkAndIncrement, resetCounter } from '@/lib/rateLimit';
 import { verifyTurnstile } from '@/lib/turnstile';
 import { recordAudit } from '@/lib/auditLog';
-import { enqueue } from '@/jobs/boss';
+import { enqueue, QUEUES } from '@/jobs/boss';
 
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const SESSION_COOKIE_NAME =
@@ -189,10 +189,11 @@ async function ensureAccountLock(
     unlock_token_expires_at: new Date(now.getTime() + UNLOCK_TOKEN_TTL_MS),
   });
 
-  await enqueue('send-account-unlock-email', {
+  await enqueue(QUEUES.SEND_UNLOCK_EMAIL, {
     user_id: user.id,
-    email: user.email,
-    token,
+    to: user.email,
+    unlock_link: `/api/auth/unlock?token=${token}`,
+    expires_at: new Date(now.getTime() + UNLOCK_TOKEN_TTL_MS).toISOString(),
   });
 
   await recordAudit({

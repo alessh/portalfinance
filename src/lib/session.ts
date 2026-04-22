@@ -15,8 +15,13 @@
  * Auth.js Drizzle adapter expects, so a future swap to a v5-stable
  * non-Credentials provider (e.g., email magic link) can drop in
  * without a session migration.
+ *
+ * Cookie resolution priority:
+ *   1. If an explicit `req` (Request | NextRequest) is provided, the
+ *      session token is read from the `Cookie` request header. This path
+ *      works in Vitest integration tests (no Next.js runtime context).
+ *   2. Otherwise, `next/headers` is used (the normal App Router path).
  */
-import { cookies } from 'next/headers';
 import { eq, and, gt } from 'drizzle-orm';
 import { db } from '@/db';
 import { sessions, users } from '@/db/schema';
@@ -29,17 +34,46 @@ export class UnauthorizedError extends Error {
   }
 }
 
-const SESSION_COOKIE_NAME =
+export const SESSION_COOKIE_NAME =
   process.env.NODE_ENV === 'production' && !process.env.E2E_TEST
     ? '__Secure-authjs.session-token'
     : 'authjs.session-token';
 
-async function readSession(): Promise<{
+/**
+ * Parse the session token from a raw `Cookie` header string.
+ * Returns null if the named cookie is absent.
+ */
+function parseTokenFromCookieHeader(
+  header: string | null,
+  name: string,
+): string | null {
+  if (!header) return null;
+  for (const part of header.split(';')) {
+    const [k, ...v] = part.trim().split('=');
+    if (k?.trim() === name) return v.join('=').trim();
+  }
+  return null;
+}
+
+async function resolveToken(req?: Request): Promise<string | null> {
+  if (req) {
+    // Integration-test / direct-call path: read from the request headers.
+    return parseTokenFromCookieHeader(
+      req.headers.get('cookie'),
+      SESSION_COOKIE_NAME,
+    );
+  }
+  // App Router path: use next/headers (requires Next.js runtime context).
+  const { cookies } = await import('next/headers');
+  const cookie_store = await cookies();
+  return cookie_store.get(SESSION_COOKIE_NAME)?.value ?? null;
+}
+
+async function readSession(req?: Request): Promise<{
   userId: string;
   email: string;
 } | null> {
-  const cookie_store = await cookies();
-  const token = cookie_store.get(SESSION_COOKIE_NAME)?.value;
+  const token = await resolveToken(req);
   if (!token) return null;
   const rows = await db
     .select({
@@ -60,16 +94,16 @@ async function readSession(): Promise<{
   return { userId: row.user_id, email: row.email };
 }
 
-export async function requireSession(): Promise<{
+export async function requireSession(req?: Request): Promise<{
   userId: string;
   email: string;
 }> {
-  const session = await readSession();
+  const session = await readSession(req);
   if (!session) throw new UnauthorizedError();
   return session;
 }
 
-export async function getSessionUserId(): Promise<string | null> {
-  const session = await readSession();
+export async function getSessionUserId(req?: Request): Promise<string | null> {
+  const session = await readSession(req);
   return session?.userId ?? null;
 }

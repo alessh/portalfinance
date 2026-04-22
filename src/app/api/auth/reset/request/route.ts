@@ -20,7 +20,7 @@ import { PasswordResetRequestSchema } from '@/lib/validation';
 import { hashPassword } from '@/lib/password';
 import { checkAndIncrement } from '@/lib/rateLimit';
 import { recordAudit } from '@/lib/auditLog';
-import { enqueue } from '@/jobs/boss';
+import { enqueue, QUEUES } from '@/jobs/boss';
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
 const RESET_TOKEN_TTL_MS = ONE_HOUR_MS;
@@ -89,10 +89,11 @@ export async function POST(req: NextRequest) {
       token_hash,
       expires_at: new Date(Date.now() + RESET_TOKEN_TTL_MS),
     });
-    await enqueue('send-password-reset-email', {
+    await enqueue(QUEUES.SEND_PASSWORD_RESET_EMAIL, {
       user_id: user.id,
-      email: user.email,
-      token,
+      to: user.email,
+      reset_link: `/api/auth/reset/confirm?token=${token}`,
+      expires_at: new Date(Date.now() + RESET_TOKEN_TTL_MS).toISOString(),
     });
     await recordAudit({
       user_id: user.id,
