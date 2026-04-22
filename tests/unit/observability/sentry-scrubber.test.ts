@@ -12,12 +12,12 @@
  *   5. No throw on malformed / null input
  */
 import { describe, it, expect, beforeAll } from 'vitest';
-import type { Event } from '@sentry/types';
+import type { ErrorEvent } from '@sentry/nextjs';
 
 // Set NEXTAUTH_SECRET so hashUserIdForSentry can generate a hash.
 beforeAll(() => {
   process.env.NEXTAUTH_SECRET = 'test-secret-at-least-32-chars-long-xxx';
-  process.env.NODE_ENV = 'test';
+  // NODE_ENV is already 'test' in unit test context.
 });
 
 // Import after env is set.
@@ -26,10 +26,10 @@ const getSentryLib = () => import('@/lib/sentry');
 describe('beforeSend — PII scrubbing', () => {
   it('strips CPF from event.message', async () => {
     const { beforeSend } = await getSentryLib();
-    const event: Event = {
+    const event = {
       message: 'Failed for user 123.456.789-00',
     };
-    const result = beforeSend(event);
+    const result = beforeSend(event as ErrorEvent);
     expect(result?.message).toBeDefined();
     expect(result?.message).not.toContain('123.456.789-00');
     expect(result?.message).toContain('[CPF]');
@@ -37,7 +37,7 @@ describe('beforeSend — PII scrubbing', () => {
 
   it('strips email from exception.values[0].value', async () => {
     const { beforeSend } = await getSentryLib();
-    const event: Event = {
+    const event = {
       exception: {
         values: [
           {
@@ -47,7 +47,7 @@ describe('beforeSend — PII scrubbing', () => {
         ],
       },
     };
-    const result = beforeSend(event);
+    const result = beforeSend(event as ErrorEvent);
     expect(result?.exception?.values?.[0].value).toBeDefined();
     expect(result?.exception?.values?.[0].value).not.toContain('test@example.com');
     expect(result?.exception?.values?.[0].value).toContain('[EMAIL]');
@@ -55,7 +55,7 @@ describe('beforeSend — PII scrubbing', () => {
 
   it('scrubs nested extras — key-based redaction + string scrub', async () => {
     const { beforeSend } = await getSentryLib();
-    const event: Event = {
+    const event = {
       extra: {
         payload: {
           cpf: '12345678900',
@@ -64,7 +64,7 @@ describe('beforeSend — PII scrubbing', () => {
         },
       } as Record<string, unknown>,
     };
-    const result = beforeSend(event);
+    const result = beforeSend(event as ErrorEvent);
     const payload = (result?.extra as Record<string, Record<string, string>>)?.payload;
     expect(payload).toBeDefined();
     // Key-based: cpf key → '[REDACTED]'
@@ -76,13 +76,13 @@ describe('beforeSend — PII scrubbing', () => {
 
   it('hashes user.id to a 16-char hex string', async () => {
     const { beforeSend } = await getSentryLib();
-    const event: Event = {
+    const event = {
       user: {
         id: 'some-uuid-v4-value',
         email: 'should-be-dropped@example.com',
       },
     };
-    const result = beforeSend(event);
+    const result = beforeSend(event as ErrorEvent);
     expect(result?.user).toBeDefined();
     // user.id should be a 16-char hex string (not the original)
     const resultId = result?.user?.id;
@@ -98,10 +98,10 @@ describe('beforeSend — PII scrubbing', () => {
   it('does not throw when given a malformed or null event', async () => {
     const { beforeSend } = await getSentryLib();
     // Should not throw even for edge-case inputs.
-    expect(() => beforeSend(null as unknown as Event)).not.toThrow();
-    expect(() => beforeSend({} as Event)).not.toThrow();
+    expect(() => beforeSend(null as unknown as ErrorEvent)).not.toThrow();
+    expect(() => beforeSend({} as ErrorEvent)).not.toThrow();
     expect(() =>
-      beforeSend({ extra: undefined, exception: undefined } as Event),
+      beforeSend({ extra: undefined, exception: undefined } as ErrorEvent),
     ).not.toThrow();
   });
 });

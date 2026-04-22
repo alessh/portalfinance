@@ -16,16 +16,15 @@
  */
 import * as Sentry from '@sentry/nextjs';
 import { scrubString, scrubObject } from '@/lib/piiScrubber';
-import type { Event } from '@sentry/types';
+import type { ErrorEvent } from '@sentry/nextjs';
 
-function clientBeforeSend(event: Event): Event | null {
+function clientBeforeSend(event: ErrorEvent): ErrorEvent | null {
   try {
     if (event.message) event.message = scrubString(event.message);
     if (event.exception?.values) {
-      event.exception.values = event.exception.values.map((ex) => {
+      for (const ex of event.exception.values) {
         if (ex.value) ex.value = scrubString(ex.value);
-        return ex;
-      });
+      }
     }
     if (event.extra) event.extra = scrubObject(event.extra) as typeof event.extra;
     if (event.contexts) event.contexts = scrubObject(event.contexts) as typeof event.contexts;

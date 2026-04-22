@@ -12,7 +12,7 @@
  * rather than hashed — edge middleware typically runs before user context is
  * attached anyway.
  */
-import type { Event } from '@sentry/types';
+import type { ErrorEvent } from '@sentry/nextjs';
 import { scrubString, scrubObject } from '@/lib/piiScrubber';
 
 // ---------------------------------------------------------------------------
@@ -61,7 +61,7 @@ export function hashUserIdForSentry(user_id: string): string | undefined {
  * rather than nothing. Callers cannot rely on full scrubbing if this
  * function throws, but the catch block prevents double-faulting.
  */
-export function beforeSend(event: Event): Event | null {
+export function beforeSend(event: ErrorEvent): ErrorEvent | null {
   try {
     // --- Scrub top-level message ---
     if (event.message) {
@@ -70,25 +70,18 @@ export function beforeSend(event: Event): Event | null {
 
     // --- Scrub exception values ---
     if (event.exception?.values) {
-      event.exception.values = event.exception.values.map((ex) => {
+      for (const ex of event.exception.values) {
         if (ex.value) ex.value = scrubString(ex.value);
-        return ex;
-      });
+      }
     }
 
     // --- Scrub breadcrumbs ---
     if (event.breadcrumbs) {
       const values = Array.isArray(event.breadcrumbs)
         ? event.breadcrumbs
-        : (event.breadcrumbs as { values?: unknown[] }).values ?? [];
-      const scrubbed = (values as Array<{ message?: string }>).map((bc) => {
+        : ((event.breadcrumbs as unknown) as { values?: Array<{ message?: string }> }).values ?? [];
+      for (const bc of values as Array<{ message?: string }>) {
         if (bc.message) bc.message = scrubString(bc.message);
-        return bc;
-      });
-      if (Array.isArray(event.breadcrumbs)) {
-        event.breadcrumbs = scrubbed as typeof event.breadcrumbs;
-      } else {
-        (event.breadcrumbs as { values?: unknown[] }).values = scrubbed;
       }
     }
 

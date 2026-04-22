@@ -95,6 +95,9 @@ importers:
       react-hook-form:
         specifier: ^7.73.1
         version: 7.73.1(react@19.1.0)
+      sns-validator:
+        specifier: 0.3.5
+        version: 0.3.5
       sonner:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -138,6 +141,9 @@ importers:
       '@types/react-dom':
         specifier: 19.1.0
         version: 19.1.0(@types/react@19.1.0)
+      '@types/sns-validator':
+        specifier: 0.3.3
+        version: 0.3.3
       '@vitest/coverage-v8':
         specifier: 3.0.5
         version: 3.0.5(vitest@3.0.5)
@@ -3405,6 +3411,9 @@ packages:
   '@types/sinonjs__fake-timers@15.0.1':
     resolution: {integrity: sha512-Ko2tjWJq8oozHzHV+reuvS5KYIRAokHnGbDwGh/J64LntgpbuylF74ipEL24HCyRjf9FOlBiBHWBR1RlVKsI1w==}
 
+  '@types/sns-validator@0.3.3':
+    resolution: {integrity: sha512-v/3bN5dak8aDXn7bgTGu+1oGc+PQCP0qnfzUM6gzo7FnxiW4wpppkaIptPhRhJaiDItbUDK+YA4yDQuVs5Cq1Q==}
+
   '@types/ssh2-streams@0.1.13':
     resolution: {integrity: sha512-faHyY3brO9oLEA0QlcO8N2wT7R0+1sHWZvQ+y3rMLwdY1ZyS1z0W3t65j9PqT4HmQ6ALzNe7RZlNuCNE0wBSWA==}
 
@@ -5760,6 +5769,9 @@ packages:
 
   sisteransi@1.0.5:
     resolution: {integrity: sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg==}
+
+  sns-validator@0.3.5:
+    resolution: {integrity: sha512-lapYNmezLsltnt2fcQyhmYnC41mYZ7EjU7f2oR/hrhpbD/LemryclRpApwxO84gOyDIQ7MWe/h4HvkdunFzSKg==}
 
   sonic-boom@4.2.1:
     resolution: {integrity: sha512-w6AxtubXa2wTXAUsZMMWERrsIRAdrK0Sc+FUytWvYAhBJLyuI4llrMIC1DtlNSdI99EI86KZum2MMq3EAZlF9Q==}
@@ -9675,6 +9687,8 @@ snapshots:
 
   '@types/sinonjs__fake-timers@15.0.1': {}
 
+  '@types/sns-validator@0.3.3': {}
+
   '@types/ssh2-streams@0.1.13':
     dependencies:
       '@types/node': 22.10.5
@@ -12126,6 +12140,8 @@ snapshots:
       totalist: 3.0.1
 
   sisteransi@1.0.5: {}
+
+  sns-validator@0.3.5: {}
 
   sonic-boom@4.2.1:
     dependencies:

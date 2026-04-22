@@ -66,7 +66,7 @@ describe('lib/logger (pino + scrubObject hook)', () => {
   beforeAll(() => {
     process.env.LOG_LEVEL = 'trace';
     process.env.SERVICE_NAME = 'test';
-    process.env.NODE_ENV = 'test';
+    // NODE_ENV is already 'test' in unit test context.
   });
 
   it('emits valid JSON on a log call', async () => {

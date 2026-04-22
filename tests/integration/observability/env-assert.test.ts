@@ -42,12 +42,8 @@ function runEnvRunner(envOverrides: Record<string, string>) {
   // Inherit most of the parent environment but override the app-specific vars.
   // This ensures tsx, Node.js, and OS utilities resolve correctly on all
   // platforms (Windows, Linux) without hardcoding paths.
-  const env: Record<string, string> = {
-    ...Object.fromEntries(
-      Object.entries(process.env).filter(
-        ([, v]) => v !== undefined,
-      ) as [string, string][],
-    ),
+  const env: NodeJS.ProcessEnv = {
+    ...process.env,
     // Override only the app-specific env vars for the test scenario.
     ...envOverrides,
   };
