@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Plan 01-01 complete (Task 3 deferred to Phase 6); proceeding to Plan 01-02
-last_updated: "2026-04-22T20:35:58.065Z"
+stopped_at: Plan 01-02 complete (Auth.js v5, CPF crypto, UI-SPEC auth — partial UAT green); proceeding to Plan 01-03
+last_updated: "2026-04-22T22:00:00.000Z"
 last_activity: 2026-04-22
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 5
-  completed_plans: 2
-  percent: 40
+  completed_plans: 3
+  percent: 60
 ---
 
 # Project State
@@ -26,32 +26,36 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 ## Current Position
 
 Phase: 01 (Foundation & Identity) — EXECUTING
-Plan: 3 of 5 (Wave 2 — 01-02 Auth.js next)
+Plan: 4 of 5 (Wave 3 — 01-03 LGPD scaffolding next)
 Status: Ready to execute
 Last activity: 2026-04-22
 
-Progress: [████░░░░░░] 40%
+Progress: [██████░░░░] 60%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 1
-- Average duration: 11.4 min
-- Total execution time: 0.2 hours
+- Total plans completed: 3
+- Average duration: 18.4 min
+- Total execution time: 0.9 hours
 
 **By Phase:**
 
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 01    | 1     | 11.4m | 11.4m    |
+| Phase | Plans | Total  | Avg/Plan |
+|-------|-------|--------|----------|
+| 01    | 3     | 55.3m  | 18.4m    |
 
 **Recent Trend:**
 
-- Last 5 plans: 01-00 (11.4 min)
-- Trend: —
+- Last 5 plans: 01-00 (11.4 min), 01-01 (7.8 min), 01-02 (36.1 min)
+- Trend: Wave 2 auth work dominated — 3 tasks + 5 auto-fixed deviations (UnsupportedStrategy pivot, Next 16 build DB-URL, Radix Checkbox, Playwright Windows race, E2E cookie).
 
-| Phase 01 P01 | 469 | 2 tasks | 23 files |
+| Plan         | Seconds | Tasks   | Files        |
+|--------------|---------|---------|--------------|
+| Phase 01 P00 | 684     | 3 tasks | 35 files     |
+| Phase 01 P01 | 469     | 2 tasks | 23 files     |
+| Phase 01 P02 | 2166    | 3 tasks | 49 files     |
 
 ## Accumulated Context
 
@@ -68,10 +72,15 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - Plan 01-01: users.email uniqueness via uniqueIndex() in table extras only — column-level .unique() removed (Drizzle was emitting both CONSTRAINT and CREATE UNIQUE INDEX with same name, breaking migration).
 - Plan 01-01: Drizzle migrate runner creates pgcrypto extension before drizzle-orm migrator (gen_random_uuid() dependency); generator does NOT auto-emit it.
 - Plan 01-01: ENCRYPTION_KEY and CPF_HASH_PEPPER are distinct env vars (RESEARCH.md Open Question #3); documented in docs/ops/railway-setup.md.
+- Plan 01-02: Auth.js v5 Credentials + DB sessions is unsupported — self-managed sessions row (INSERT on signup/login, DELETE on logout) while Auth.js owns cookie name + adapter shape for forward compatibility.
+- Plan 01-02: Radix Checkbox renders input aria-hidden, breaking RHF register() — SignupForm uses a styled native checkbox instead.
+- Plan 01-02: scripts/run-e2e.ts orchestrates testcontainers + .env.local rewrite BEFORE Playwright's webServer spawns (avoids globalSetup vs webServer race on Windows).
+- Plan 01-02: Lazy Drizzle client construction — src/db/index.ts accepts a placeholder DATABASE_URL so Next 16 build-time "collect page data" succeeds without a live DB.
+- Plan 01-02: src/jobs/boss.ts is a STUB — real pg-boss singleton + worker lands in plan 01-03; enqueue signatures remain stable.
 
 ### Pending Todos
 
-None — Wave 1 is the next active queue (01-01 schema baseline, 01-02 Auth.js, 01-03 LGPD scaffolding, 01-04 observability close-out).
+None — Wave 3 is the next active queue (01-03 LGPD scaffolding, 01-04 observability close-out).
 
 ### Blockers/Concerns
 
@@ -90,8 +99,8 @@ None — Wave 1 is the next active queue (01-01 schema baseline, 01-02 Auth.js, 
 
 ## Session Continuity
 
-Last session: 2026-04-22T20:35:58.060Z
-Stopped at: Plan 01-01 complete (Task 3 deferred to Phase 6); proceeding to Plan 01-02
-Resume file: Plan 01-02 — Auth.js v5 credentials + CPF crypto helpers (AUTH-01..06, SEC-01, SEC-02)
+Last session: 2026-04-22T22:00:00.000Z
+Stopped at: Plan 01-02 complete (Auth.js v5, CPF crypto, UI-SPEC auth — partial Phase 1 UAT green); proceeding to Plan 01-03
+Resume file: Plan 01-03 — LGPD scaffolding: piiScrubber + ConsentScreen + pg-boss real worker + React Email + DSR stubs + Settings/Privacy
 
-**Planned Phase:** 1 (Foundation & Identity) — 5 plans (1 complete) — 2026-04-22T20:21:12Z
+**Planned Phase:** 1 (Foundation & Identity) — 5 plans (3 complete) — 2026-04-22T20:21:12Z
