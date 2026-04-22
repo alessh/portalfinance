@@ -24,7 +24,7 @@ export const users = pgTable(
   'users',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    email: text('email').notNull().unique(),
+    email: text('email').notNull(),
     email_verified_at: timestamp('email_verified_at', { withTimezone: true }),
     password_hash: text('password_hash').notNull(),
     cpf_hash: bytea('cpf_hash'),
