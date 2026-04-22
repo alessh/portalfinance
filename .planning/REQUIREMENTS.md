@@ -18,12 +18,15 @@ Requirements for the initial release. Each maps to a roadmap phase.
 
 ### LGPD & Consent
 
-- [ ] **LGPD-01**: Before a Pluggy Connect widget opens, user sees an explicit consent screen listing exactly what data will be collected (transactions, balances, account details) and clicks to grant consent. A `user_consents` row is written (user_id, data_source_type, scope, IP, user_agent, timestamp).
+- [x] **LGPD-01
+**: Before a Pluggy Connect widget opens, user sees an explicit consent screen listing exactly what data will be collected (transactions, balances, account details) and clicks to grant consent. A `user_consents` row is written (user_id, data_source_type, scope, IP, user_agent, timestamp).
 - [ ] **LGPD-02**: User can revoke consent per connection from account settings; revocation writes a new `user_consents` row (append-only audit trail).
 - [ ] **LGPD-03**: User can export all personal data (transactions, accounts, categories, corrections) as machine-readable JSON via a DSR request; system responds within the statutory 15-day window.
 - [ ] **LGPD-04**: User can request account deletion; deletion is a multi-step workflow that (a) calls Pluggy `DELETE /items/:id` to revoke bank access, (b) removes the user from email lists, (c) anonymizes user identifiers in application logs, (d) soft-deletes DB rows, (e) hard-deletes after a 30-day legal hold. Every step is logged in an immutable `deletion_audit_log`.
-- [ ] **LGPD-05**: All personal and financial data (users, accounts, transactions, categories, subscriptions) is stored in Brazilian territory. No service with data-at-rest outside Brazil is used for storage.
-- [ ] **LGPD-06**: No personally identifiable information (CPF, transaction descriptions, account numbers, full names) appears in application logs, Sentry payloads, or error traces. A `piiScrubber` utility + Sentry `beforeSend` hook enforce this and are verified with a test capture.
+- [x] **LGPD-05
+**: All personal and financial data (users, accounts, transactions, categories, subscriptions) is stored in Brazilian territory. No service with data-at-rest outside Brazil is used for storage.
+- [x] **LGPD-06
+**: No personally identifiable information (CPF, transaction descriptions, account numbers, full names) appears in application logs, Sentry payloads, or error traces. A `piiScrubber` utility + Sentry `beforeSend` hook enforce this and are verified with a test capture.
 
 ### Open Finance Connection (Pluggy)
 

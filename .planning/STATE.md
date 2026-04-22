@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Plan 01-02 complete (Auth.js v5, CPF crypto, UI-SPEC auth — partial UAT green); proceeding to Plan 01-03
-last_updated: "2026-04-22T22:00:00.000Z"
+stopped_at: "Completed 01-03-PLAN.md (LGPD scaffolding: piiScrubber + ConsentScreen + pg-boss + SES mailer + DSR routes + workers + Settings/Privacy)"
+last_updated: "2026-04-22T23:24:15.561Z"
 last_activity: 2026-04-22
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 5
-  completed_plans: 3
-  percent: 60
+  completed_plans: 4
+  percent: 80
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-22)
 
 **Core value:** Seeing, without work, where your money actually goes every month.
-**Current focus:** Phase 01 — Foundation & Identity
+**Current focus:** Phase 01 — foundation-identity
 
 ## Current Position
 
-Phase: 01 (Foundation & Identity) — EXECUTING
-Plan: 4 of 5 (Wave 3 — 01-03 LGPD scaffolding next)
+Phase: 01 (foundation-identity) — EXECUTING
+Plan: 2 of 5
 Status: Ready to execute
 Last activity: 2026-04-22
 
-Progress: [██████░░░░] 60%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Progress: [██████░░░░] 60%
 | Phase 01 P00 | 684     | 3 tasks | 35 files     |
 | Phase 01 P01 | 469     | 2 tasks | 23 files     |
 | Phase 01 P02 | 2166    | 3 tasks | 49 files     |
+| Phase 01 P03 | 5700 | 2 tasks | 33 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,10 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - Plan 01-02: scripts/run-e2e.ts orchestrates testcontainers + .env.local rewrite BEFORE Playwright's webServer spawns (avoids globalSetup vs webServer race on Windows).
 - Plan 01-02: Lazy Drizzle client construction — src/db/index.ts accepts a placeholder DATABASE_URL so Next 16 build-time "collect page data" succeeds without a live DB.
 - Plan 01-02: src/jobs/boss.ts is a STUB — real pg-boss singleton + worker lands in plan 01-03; enqueue signatures remain stable.
+- pg-boss v12 named export { PgBoss } (not default); localConcurrency option (not teamSize); test-mode in-memory fallback when NODE_ENV=test
+- session.ts dual-path cookie resolution: optional req param reads Cookie header for integration tests; falls back to next/headers for App Router
+- mailer credential guard reads process.env at call time (not cached env) so beforeAll() AWS creds in tests take effect
+- DSR PII contract: DSRAcknowledgment template accepts only { request_type, dsr_request_id }; user email is SES Destination only, never in HTML body
 
 ### Pending Todos
 
@@ -99,8 +104,8 @@ None — Wave 3 is the next active queue (01-03 LGPD scaffolding, 01-04 observab
 
 ## Session Continuity
 
-Last session: 2026-04-22T22:00:00.000Z
-Stopped at: Plan 01-02 complete (Auth.js v5, CPF crypto, UI-SPEC auth — partial Phase 1 UAT green); proceeding to Plan 01-03
-Resume file: Plan 01-03 — LGPD scaffolding: piiScrubber + ConsentScreen + pg-boss real worker + React Email + DSR stubs + Settings/Privacy
+Last session: 2026-04-22T23:24:15.556Z
+Stopped at: Completed 01-03-PLAN.md (LGPD scaffolding: piiScrubber + ConsentScreen + pg-boss + SES mailer + DSR routes + workers + Settings/Privacy)
+Resume file: None
 
 **Planned Phase:** 1 (Foundation & Identity) — 5 plans (3 complete) — 2026-04-22T20:21:12Z
