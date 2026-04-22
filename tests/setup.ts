@@ -17,3 +17,8 @@ process.env.CPF_HASH_PEPPER =
   process.env.CPF_HASH_PEPPER ?? 'test-pepper-at-least-32-chars-long-xyz';
 process.env.NEXTAUTH_SECRET =
   process.env.NEXTAUTH_SECRET ?? 'test-secret-at-least-32-chars-long-xxx';
+// Test-time defaults for the env loader (lib/env.ts). Integration tests
+// override DATABASE_URL with the testcontainers connection string before
+// importing modules that touch the DB.
+process.env.DATABASE_URL =
+  process.env.DATABASE_URL ?? 'postgres://test:test@localhost:5432/portal_test';
