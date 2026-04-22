@@ -73,6 +73,10 @@ const EnvSchema = z
   .refine(
     (e) => {
       if (e.NODE_ENV !== 'production') return true;
+      // Skip OPS-04 runtime guards during `next build` (NEXT_PHASE is set by
+      // Next.js during the build step). The guard fires when the server
+      // actually boots to serve traffic, which is the correct enforcement point.
+      if (process.env.NEXT_PHASE === 'phase-production-build') return true;
 
       // OPS-04: in production, Sentry DSN MUST end with .sentry.io (EU or US
       // ingest — the exact subdomain is verified at human checkpoint Task 4).
@@ -102,6 +106,7 @@ const EnvSchema = z
   .refine(
     (e) => {
       if (e.NODE_ENV !== 'production') return true;
+      if (process.env.NEXT_PHASE === 'phase-production-build') return true;
       // AWS SES credentials are required in production.
       return !!(e.AWS_ACCESS_KEY_ID && e.AWS_SECRET_ACCESS_KEY);
     },
@@ -112,6 +117,7 @@ const EnvSchema = z
   .refine(
     (e) => {
       if (e.NODE_ENV !== 'production') return true;
+      if (process.env.NEXT_PHASE === 'phase-production-build') return true;
       // Cloudflare Turnstile keys are required in production.
       return !!(e.TURNSTILE_SITE_KEY && e.TURNSTILE_SECRET_KEY && e.NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY);
     },

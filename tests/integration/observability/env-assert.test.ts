@@ -46,6 +46,9 @@ function runEnvRunner(envOverrides: Record<string, string>) {
     ...process.env,
     // Override only the app-specific env vars for the test scenario.
     ...envOverrides,
+    // Ensure NEXT_PHASE is not set — otherwise the build-time bypass would
+    // suppress OPS-04 guards and these tests would never catch violations.
+    NEXT_PHASE: undefined,
   };
 
   return spawnSync(
