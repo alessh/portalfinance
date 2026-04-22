@@ -1,10 +1,11 @@
 ---
 phase: 1
 slug: foundation-identity
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-04-22
+reviewed_at: 2026-04-22
 ---
 
 # Phase 1 — UI Design Contract: Foundation & Identity
@@ -212,19 +213,16 @@ const inter = Inter({
 
 | Role | Size | Weight | Line Height | Letter Spacing | Usage |
 |------|------|--------|-------------|----------------|-------|
-| display | 28px / `text-2xl` | 600 semibold | 1.2 | -0.02em | Auth page headline ("Bem-vindo ao Portal Finance") |
-| heading-lg | 20px / `text-xl` | 600 semibold | 1.3 | -0.01em | Card titles, section headings, modal titles |
-| heading-sm | 16px / `text-base` | 600 semibold | 1.4 | 0 | Form section labels, sub-headings |
-| body | 14px / `text-sm` | 400 regular | 1.5 | 0 | Body copy, form field help text, descriptions |
-| label | 14px / `text-sm` | 500 medium | 1.4 | 0.01em | Form labels, button text |
-| caption | 12px / `text-xs` | 400 regular | 1.4 | 0.01em | Timestamps, meta info, badge text |
-| tabular | 14px / `text-sm` | 500 medium | 1.5 | 0 | Currency values, numeric columns (Phase 4 dashboard) — apply `font-variant-numeric: tabular-nums` via Tailwind `tabular-nums` utility |
+| display | 28px / `text-2xl` | 600 semibold | 1.2 | -0.02em | Auth page headline ("Bem-vindo ao Portal Finance"), page hero, big numeric (net / income / expenses) |
+| heading | 20px / `text-xl` | 600 semibold | 1.3 | -0.01em | Card titles, auth shell form titles, modal titles |
+| body | 14px / `text-sm` | 400 regular or 600 semibold (emphasis) | 1.5 | 0 | Body copy, form field help text, descriptions; 600 for form labels, button text, tabular numerals — apply `font-variant-numeric: tabular-nums` via Tailwind `tabular-nums` utility for numeric columns |
+| caption | 12px / `text-xs` | 400 regular | 1.4 | 0.01em | Helper text, meta, captions, ribbon text, SLA hints, timestamps, badge text |
 
-**Rationale for 28/20/16/14/12 scale:** Five sizes cover all Phase 1 surfaces without ambiguity. The 28px display only appears once per auth page; 20px headings anchor cards; 14px is the reading size for the BR middle-class demographic (not too small on a phone). Only 2 weights (400 + 600, with 500 for labels): executor never reaches for 300 or 700.
+**Rationale for 28/20/14/12 scale:** Four sizes (28/20/14/12) cover all Phase 1 surfaces without ambiguity. The 28px display only appears once per auth page; 20px headings anchor cards; 14px is the reading size for the BR middle-class demographic (not too small on a phone). Two weights only: 400 regular (body copy, helper text, captions) and 600 semibold (all headings, labels, button text, tabular numerals). The executor never reaches for 300, 500, or 700.
 
 **Line heights:** 1.5 for body/paragraphs (optimal for pt-BR which has many accent-heavy words), 1.2–1.3 for headings (prevents excessive vertical rhythm at large sizes).
 
-**Locale:** `lang="pt-BR"` on `<html>`. Currency rendered as `R$ ` + amount (non-breaking space between symbol and value). Date format: `dd/MM/yyyy` (day-js `DD/MM/YYYY`).
+**Locale:** `lang="pt-BR"` on `<html>`. Currency rendered as `R$ ` + amount (non-breaking space between symbol and value). Date format: `dd/MM/yyyy` (day-js `DD/MM/YYYY`).
 
 ---
 
@@ -291,10 +289,12 @@ Apply `pb-safe` (env(safe-area-inset-bottom)) to the page bottom on mobile. Tail
 - Full-viewport `min-h-screen` with `bg-background` and `flex items-center justify-center`
 - Inner card: `max-w-[440px] w-full mx-auto bg-card rounded-xl shadow-md border border-border p-8`
 - Logo slot at top: `<Image>` component rendering `public/logo.svg` at 32px height, centered, `mb-6`
-- App name "Portal Finance" below logo: `text-sm font-medium text-muted-foreground tracking-wide uppercase mb-8`
+- App name "Portal Finance" below logo: `text-sm font-semibold text-muted-foreground tracking-wide uppercase mb-8`
 - `title` renders as `text-xl font-semibold text-foreground mb-1`
 - `description` renders as `text-sm text-muted-foreground mb-6` (optional)
 - Footer slot below children for secondary links (e.g., "Já tem uma conta? Entrar")
+
+**Primary focal point:** the form title (rendered as `heading` 20px/600) is the visual anchor — the logo and app name are secondary orientation elements.
 
 **Dark/light:** automatic — all values are CSS variables. No explicit color props.
 
@@ -312,6 +312,13 @@ Apply `pb-safe` (env(safe-area-inset-bottom)) to the page bottom on mobile. Tail
 3. Confirm password — `type="password"`, autocomplete="new-password", placeholder="Confirmar senha"
 4. Consent checkbox — inline label with embedded links:
    > "Li e aceito os [Termos de Uso] e a [Política de Privacidade], e autorizo o Portal Finance a tratar meus dados pessoais conforme a LGPD."
+
+**Password show/hide toggle (eye icon):**
+- Icon button rendered at the trailing end of the password `Input`
+- When password is hidden (default): `aria-label="Mostrar senha"`, renders `<Eye>` icon
+- When password is shown: `aria-label="Ocultar senha"`, renders `<EyeOff>` icon
+- The `aria-label` value toggles with state — never static
+- Touch target: `min-w-11 min-h-11` (44px)
 
 **Validation:**
 - Email: Zod `.email()`, trim + lowercase before submit
@@ -338,6 +345,13 @@ Apply `pb-safe` (env(safe-area-inset-bottom)) to the page bottom on mobile. Tail
 1. Email — `type="email"`, autocomplete="email"
 2. Password — `type="password"`, autocomplete="current-password", show/hide toggle
 
+**Password show/hide toggle (eye icon):**
+- Icon button rendered at the trailing end of the password `Input`
+- When password is hidden (default): `aria-label="Mostrar senha"`, renders `<Eye>` icon
+- When password is shown: `aria-label="Ocultar senha"`, renders `<EyeOff>` icon
+- The `aria-label` value toggles with state — never static
+- Touch target: `min-w-11 min-h-11` (44px)
+
 **"Esqueceu a senha?" link:** Right-aligned above or below password field, `text-sm text-primary hover:underline`
 
 **Cloudflare Turnstile slot:**
@@ -346,7 +360,7 @@ Apply `pb-safe` (env(safe-area-inset-bottom)) to the page bottom on mobile. Tail
 - On appearance: smooth height animation (`max-h-0` → `max-h-24`, `transition-all duration-300`)
 - On 5th failure: form enters locked state before redirect to `AccountLockedScreen`
 
-**Submit button:** "Entrar", full-width, `variant="default"`
+**Submit button:** "Entrar na conta", full-width, `variant="default"`
 
 **Error surface:** `text-sm text-destructive` below the password field on auth failure: "E-mail ou senha incorretos." (no hint which field is wrong — prevents enumeration)
 
@@ -487,7 +501,7 @@ PLUGGY_CONNECTOR:* → {
 - Background: `bg-info-bg dark:bg-info-bg-dark`
 - Left icon: `<MailWarning>` 16px `text-info-fg`
 - Text: "Confirme seu e-mail para garantir o acesso à sua conta."
-- CTA link: "Verificar agora" — `text-primary font-medium underline` — triggers resend API call + shows toast "E-mail de verificação reenviado."
+- CTA link: "Verificar agora" — `text-primary font-semibold underline` — triggers resend API call + shows toast "E-mail de verificação reenviado."
 - Dismiss: `<X>` icon button, 32px touch target, right side — sets `sessionStorage['nag_email_dismissed'] = '1'`, component reads this on mount and self-hides
 
 **State machine:**
@@ -557,16 +571,16 @@ categories: [
 └─────────────────────────────────────┘
 ```
 
-**Phase 1 chart implementation:** A simple CSS-based horizontal bar list, NOT Recharts (Recharts is a Phase 4 dependency). Each row: category icon + name, amount (`tabular-nums font-medium`), percentage, and a `<div>` progress bar filled with `bg-primary` at `width: {pct}%`. This matches the exact same layout Phase 4 will replace with a Recharts `<BarChart>` or `<PieChart>`.
+**Phase 1 chart implementation:** A simple CSS-based horizontal bar list, NOT Recharts (Recharts is a Phase 4 dependency). Each row: category icon + name, amount (`tabular-nums font-semibold`), percentage, and a `<div>` progress bar filled with `bg-primary` at `width: {pct}%`. This matches the exact same layout Phase 4 will replace with a Recharts `<BarChart>` or `<PieChart>`.
 
-**Currency formatting:** All amounts rendered with `Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })`. Output: "R$ 6.500,00".
+**Currency formatting:** All amounts rendered with `Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })`. Output: "R$ 6.500,00".
 
 **Metric cards:**
 - Receitas card: `text-success-fg` amount
 - Despesas card: `text-destructive` amount
 - Net card: amount colored green if positive (`text-success-fg`), red if negative (`text-destructive`)
 
-**Month navigation:** `<ChevronLeft>` / `<ChevronRight>` buttons with `variant="ghost"`. In Phase 1 these are non-functional (sample data only) — disable `<ChevronRight>` since April 2026 is the "current" demo month.
+**Month navigation:** `<ChevronLeft aria-label="Mês anterior">` / `<ChevronRight aria-label="Próximo mês" aria-disabled="true">` buttons with `variant="ghost"`. In Phase 1 these are non-functional (sample data only) — `<ChevronRight>` is disabled (`aria-disabled="true"`) since April 2026 is the "current" demo month and there is no forward navigation.
 
 ---
 
@@ -589,18 +603,20 @@ Both open `ConfirmDestructiveModal` with action-specific props.
 
 **`ConfirmDestructiveModal` contract:**
 
+`ConfirmDestructiveModal` is a generic reusable component that accepts a `cancelLabel` prop. Every consumer MUST pass a noun-qualified cancel label — generic "Cancelar" is not permitted. The two in-flight consumers and their required `cancelLabel` values are:
+
 ```
 Action: EXPORT
   Title: "Exportar seus dados"
   Body: "Vamos preparar um arquivo JSON com todas as suas informações pessoais, financeiras e histórico de categorias. Você receberá um e-mail com o link para download."
   Confirm CTA: "Confirmar exportação" (variant="default")
-  Cancel: "Cancelar" (variant="ghost")
+  cancelLabel prop: "Manter como está" (variant="ghost")
 
 Action: DELETE
   Title: "Excluir sua conta permanentemente"
   Body: "Esta ação é irreversível. Todos os seus dados serão removidos após um período de retenção legal de 30 dias. Suas conexões bancárias serão desvinculadas imediatamente."
   Confirm CTA: "Confirmar exclusão" (variant="destructive")
-  Cancel: "Cancelar" (variant="ghost")
+  cancelLabel prop: "Manter minha conta" (variant="ghost")
   Extra confirmation: type-in field requiring user to type "EXCLUIR" before the confirm button enables
 ```
 
@@ -743,7 +759,7 @@ Tone: clear, adult, direct. Never patronizing. Never "Por favor, informe...". Us
 | Sign-up CTA | "Criar conta" |
 | Sign-up loading | "Criando conta..." |
 | Login heading | "Entrar na sua conta" |
-| Login CTA | "Entrar" |
+| Login CTA | "Entrar na conta" |
 | Login loading | "Entrando..." |
 | Forgot password link | "Esqueceu a senha?" |
 | Reset request heading | "Recuperar acesso" |
@@ -757,6 +773,8 @@ Tone: clear, adult, direct. Never patronizing. Never "Por favor, informe...". Us
 | Confirm password placeholder | "Repita a senha" |
 | Already has account | "Já tem uma conta? Entrar" |
 | No account yet | "Não tem uma conta? Criar conta" |
+| Password show toggle aria-label | "Mostrar senha" (when password is hidden) |
+| Password hide toggle aria-label | "Ocultar senha" (when password is shown) |
 
 ### Validation Errors
 
@@ -826,6 +844,8 @@ Tone: clear, adult, direct. Never patronizing. Never "Por favor, informe...". Us
 | Net metric label | "Resultado do mês" |
 | Category section heading | "Gastos por categoria" |
 | Sample income description | "Salário via PIX" |
+| Month back button aria-label | `aria-label="Mês anterior"` on `<ChevronLeft>` |
+| Month forward button aria-label | `aria-label="Próximo mês"` on `<ChevronRight>` (also `aria-disabled="true"` — no forward navigation in demo) |
 
 ### DSR / Privacy
 
@@ -838,15 +858,16 @@ Tone: clear, adult, direct. Never patronizing. Never "Por favor, informe...". Us
 | Export confirm title | "Exportar seus dados" |
 | Export confirm body | "Vamos preparar um arquivo JSON com todas as suas informações pessoais, financeiras e histórico. Você receberá o link por e-mail." |
 | Export confirm CTA | "Confirmar exportação" |
+| Export modal cancel | "Manter como está" — `cancelLabel` prop passed to `ConfirmDestructiveModal` for the EXPORT flow |
 | Delete confirm title | "Excluir conta permanentemente" |
 | Delete confirm body | "Esta ação é irreversível. Seus dados serão removidos após o período legal de retenção de 30 dias. Suas conexões bancárias serão desvinculadas imediatamente. Para confirmar, digite EXCLUIR abaixo." |
 | Delete type-in placeholder | "Digite EXCLUIR para confirmar" |
 | Delete confirm CTA | "Confirmar exclusão" |
+| Delete modal cancel | "Manter minha conta" — `cancelLabel` prop passed to `ConfirmDestructiveModal` for the DELETE flow |
 | Pending export heading | "Solicitação de exportação recebida" |
 | Pending export body | "Sua solicitação foi registrada (Protocolo: {id}). Você receberá o arquivo em até 15 dias. Em geral, o prazo é de menos de 24 horas." |
 | Pending delete heading | "Solicitação de exclusão recebida" |
 | Pending delete body | "Sua solicitação foi registrada (Protocolo: {id}). Suas conexões serão desvinculadas em breve. A exclusão completa ocorrerá em até 30 dias, conforme o período de retenção legal." |
-| Cancel generic | "Cancelar" |
 
 ---
 
@@ -913,8 +934,14 @@ No third-party registries in Phase 1. All components are from the official shadc
 | shadcn "New York" style, CSS variables | UI-SPEC decision (default for financial density) |
 | Inter Variable font | UI-SPEC decision (tabular-numerals for Phase 4) |
 | Class-based dark mode | UI-SPEC decision (allows user toggle in Phase 4) |
-| 5-step type scale (28/20/16/14/12) | UI-SPEC decision |
+| 4-step type scale (28/20/14/12) | UI-SPEC revision r1 — checker flagged 5-step scale |
+| 2-weight system (400 regular + 600 semibold) | UI-SPEC revision r1 — checker flagged 3-weight system |
+| Login CTA "Entrar na conta" | UI-SPEC revision r1 — checker flagged single-word CTA |
+| AuthShell focal-point declaration | UI-SPEC revision r1 — checker flagged missing focal point |
+| DemoDashboard chevron aria-labels | UI-SPEC revision r1 — checker flagged missing aria-labels |
 | 60/30/10 color split + accent reserved-for list | UI-SPEC decision |
 | WCAG AA contrast verification table | UI-SPEC decision |
 | Sonner (not legacy Toast) | shadcn/ui current recommendation (2025) |
 | PWA manifest values reserved (not shipped) | locked_decisions + ROADMAP.md Phase 4 |
+| ConfirmDestructiveModal noun-qualified cancel labels | UI-SPEC revision r2 — checker flagged generic "Cancelar" |
+| Password show/hide toggle aria-labels (Mostrar/Ocultar senha) | UI-SPEC revision r2 — checker flagged missing aria-label |
