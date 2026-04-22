@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 1 plan 01-00 complete — Wave 0 scaffold landed; Wave 1 (01-01..01-04) ready to execute
-last_updated: "2026-04-22T20:21:12Z"
-last_activity: 2026-04-22 -- Phase 01 plan 00 (Wave 0 scaffold) complete
+stopped_at: Plan 01-01 schema baseline complete; Task 3 [BLOCKING] Railway provisioning awaiting human action
+last_updated: "2026-04-22T20:35:58.065Z"
+last_activity: 2026-04-22
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 5
-  completed_plans: 1
-  percent: 3
+  completed_plans: 2
+  percent: 40
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 ## Current Position
 
 Phase: 01 (Foundation & Identity) — EXECUTING
-Plan: 2 of 5 (Wave 1 starts at 01-01)
-Status: Plan 01-00 complete; ready to execute 01-01..01-04 in parallel waves
-Last activity: 2026-04-22 -- Phase 01 plan 00 (Wave 0 scaffold) complete
+Plan: 3 of 5 (Wave 1 starts at 01-01)
+Status: Ready to execute
+Last activity: 2026-04-22
 
-Progress: [▓░░░░░░░░░] 3%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
@@ -51,6 +51,8 @@ Progress: [▓░░░░░░░░░] 3%
 - Last 5 plans: 01-00 (11.4 min)
 - Trend: —
 
+| Phase 01 P01 | 469 | 2 tasks | 23 files |
+
 ## Accumulated Context
 
 ### Decisions
@@ -63,6 +65,9 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - Plan 01-00: Tailwind 4 @theme inline mapping is the canonical bridge between shadcn HSL CSS variables and utility surfaces — replaces legacy hsl(var(--token)) usage in component files.
 - Plan 01-00: Vitest 3.0.5 ships the workspace API; projects field arrived in 3.2+. vitest.config.ts uses workspace[] for unit + integration projects.
 - Plan 01-00: start:web simplified to "next start" — bash-style ${PORT:-3000} substitution is broken on Windows when Playwright spawns the script; Next honours $PORT natively.
+- Plan 01-01: users.email uniqueness via uniqueIndex() in table extras only — column-level .unique() removed (Drizzle was emitting both CONSTRAINT and CREATE UNIQUE INDEX with same name, breaking migration).
+- Plan 01-01: Drizzle migrate runner creates pgcrypto extension before drizzle-orm migrator (gen_random_uuid() dependency); generator does NOT auto-emit it.
+- Plan 01-01: ENCRYPTION_KEY and CPF_HASH_PEPPER are distinct env vars (RESEARCH.md Open Question #3); documented in docs/ops/railway-setup.md.
 
 ### Pending Todos
 
@@ -84,8 +89,8 @@ None — Wave 1 is the next active queue (01-01 schema baseline, 01-02 Auth.js, 
 
 ## Session Continuity
 
-Last session: 2026-04-22
-Stopped at: Phase 1 plan 01-00 complete — Wave 0 scaffold landed; Wave 1 ready
-Resume file: .planning/phases/01-foundation-identity/01-01-PLAN.md
+Last session: 2026-04-22T20:35:58.060Z
+Stopped at: Plan 01-01 schema baseline complete; Task 3 [BLOCKING] Railway provisioning awaiting human action
+Resume file: Task 3 [BLOCKING]: Railway sa-east-1 provisioning + live schema push (developer must operate Railway dashboard)
 
 **Planned Phase:** 1 (Foundation & Identity) — 5 plans (1 complete) — 2026-04-22T20:21:12Z
