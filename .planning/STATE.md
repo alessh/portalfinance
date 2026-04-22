@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Plan 01-01 schema baseline complete; Task 3 [BLOCKING] Railway provisioning awaiting human action
+stopped_at: Plan 01-01 complete (Task 3 deferred to Phase 6); proceeding to Plan 01-02
 last_updated: "2026-04-22T20:35:58.065Z"
 last_activity: 2026-04-22
 progress:
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 ## Current Position
 
 Phase: 01 (Foundation & Identity) — EXECUTING
-Plan: 3 of 5 (Wave 1 starts at 01-01)
+Plan: 3 of 5 (Wave 2 — 01-02 Auth.js next)
 Status: Ready to execute
 Last activity: 2026-04-22
 
@@ -86,11 +86,12 @@ None — Wave 1 is the next active queue (01-01 schema baseline, 01-02 Auth.js, 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
 | Deploy   | Switch production start command to `node .next/standalone/server.js` (next 16 standalone output) | Open | 01-00 |
+| Deploy   | Railway sa-east-1 provisioning + live schema push (Task 3 of 01-01) — runbook ready at `docs/ops/railway-setup.md` | Open | 01-01 |
 
 ## Session Continuity
 
 Last session: 2026-04-22T20:35:58.060Z
-Stopped at: Plan 01-01 schema baseline complete; Task 3 [BLOCKING] Railway provisioning awaiting human action
-Resume file: Task 3 [BLOCKING]: Railway sa-east-1 provisioning + live schema push (developer must operate Railway dashboard)
+Stopped at: Plan 01-01 complete (Task 3 deferred to Phase 6); proceeding to Plan 01-02
+Resume file: Plan 01-02 — Auth.js v5 credentials + CPF crypto helpers (AUTH-01..06, SEC-01, SEC-02)
 
 **Planned Phase:** 1 (Foundation & Identity) — 5 plans (1 complete) — 2026-04-22T20:21:12Z

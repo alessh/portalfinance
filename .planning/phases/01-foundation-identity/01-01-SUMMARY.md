@@ -74,7 +74,7 @@ metrics:
   duration_seconds: 469
   duration_minutes: 7.8
   tasks_completed: 2
-  tasks_blocked: 1
+  tasks_deferred: 1
   files_created: 23
   files_modified: 2
   commits: 2
@@ -91,7 +91,7 @@ Drizzle ORM 0.45.2 wired against Postgres via the `postgres@3.4.9` driver; 14 Ph
 | ---- | ------------------------------------------------------------------------------------------------- | ------------------- | --------- |
 | 1    | Install Drizzle, author 13 schema files, drizzle.config.ts + db client                            | DONE                | `406bfbf` |
 | 2    | Generate initial migration + write migrate runner + integration tests + Railway runbook           | DONE                | `749d494` |
-| 3    | [BLOCKING] Railway provisioning + schema push to sa-east-1 Postgres                                | AWAITING HUMAN ACTION | —         |
+| 3    | [BLOCKING] Railway provisioning + schema push to sa-east-1 Postgres                                | DEFERRED TO PHASE 6 | —         |
 
 ## What Was Built
 
@@ -145,19 +145,19 @@ Drizzle ORM 0.45.2 wired against Postgres via the `postgres@3.4.9` driver; 14 Ph
 
 ### Deferred Items
 
-- **None for this plan.** Task 3 is intentionally human-action — Railway provisioning has no public API for region selection at project create time.
+- **Task 3 — Railway sa-east-1 provisioning + live schema push.** Deferred to Phase 6 (Deploy) per user decision on 2026-04-22. Phase 1's scope is foundation/identity code, not infrastructure provisioning; Railway provisioning lands naturally in the deploy phase. The runbook (`docs/ops/railway-setup.md`) is committed and ready. Phase 1's remaining plans (01-02, 01-03, 01-04) execute against local testcontainers Postgres; production database push happens in Phase 6.
 
 ## Authentication / Human-Action Gates
 
-**Task 3 — Railway sa-east-1 provisioning + live schema push** is a `checkpoint:human-action` gate. The runbook (`docs/ops/railway-setup.md`) provides the full procedure. The developer must:
+**Task 3 — Railway sa-east-1 provisioning + live schema push** is **deferred to Phase 6 (Deploy)** per user decision on 2026-04-22. The runbook (`docs/ops/railway-setup.md`) is committed and ready for the operator to execute when Phase 6 lands. Phase 1's remaining plans (01-02, 01-03, 01-04) execute against local testcontainers Postgres and do not require a live Railway database.
+
+The deferred procedure (run during Phase 6):
 
 1. Verify Railway offers `sa-east-1` at project creation (HALT if not).
 2. Provision the 3-service topology (`postgres`, `web`, `worker`) in `sa-east-1`.
 3. Set the env-var matrix (DATABASE_URL reference, NEXTAUTH_SECRET, ENCRYPTION_KEY, CPF_HASH_PEPPER, SENTRY_DSN, SENTRY_ENV, NODE_ENV) on web + worker.
 4. Run `DATABASE_URL=... pnpm db:migrate` (or wire it as a Railway predeploy on the web service only).
 5. Verify with `psql -c "\dt public.*"` — expect all 14 tables, NO `accounts`.
-
-Resume signal: type `schema pushed` once the live DB carries all 14 tables in sa-east-1. If sa-east-1 is unavailable, type `blocked` per STATE.md blocker.
 
 ## Threat Surface
 
@@ -184,7 +184,7 @@ No new surface introduced beyond what the threat model covered:
 | `users.subscription_tier` default = `'paid'`                  | PASS   | Asserted in test                                          |
 | `users.cpf_hash` and `users.cpf_enc` nullable                 | PASS   | Asserted in test                                          |
 | `pgcrypto` extension created                                  | PASS   | Asserted in test                                          |
-| Schema pushed to Railway sa-east-1                             | PENDING | Task 3 human-action gate                                  |
+| Schema pushed to Railway sa-east-1                             | DEFERRED | Task 3 deferred to Phase 6 (Deploy) per user decision 2026-04-22 |
 
 ## Self-Check: PASSED
 
