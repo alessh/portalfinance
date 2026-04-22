@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start:web": "next start -p ${PORT:-3000}",
+    "start:web": "next start",
     "start:worker": "node --enable-source-maps dist/jobs/worker.js",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
@@ -46,6 +46,8 @@
     "zod": "4.3.6"
   },
   "devDependencies": {
+    "@aws-sdk/client-ses": "3.1034.0",
+    "@next/env": "^16.2.4",
     "@playwright/test": "1.51.1",
     "@testcontainers/postgresql": "10.16.0",
     "@testing-library/jest-dom": "6.6.3",

@@ -1,0 +1,14 @@
+import '@testing-library/jest-dom/vitest';
+import { loadEnvConfig } from '@next/env';
+
+loadEnvConfig(process.cwd());
+
+// Default test env values — keep in sync with src/lib/env.ts (created in plan 01-01).
+// Pure Vitest (`test` env) and Next.js dev runs both rely on these defaults.
+process.env.NODE_ENV = process.env.NODE_ENV ?? 'test';
+process.env.ENCRYPTION_KEY =
+  process.env.ENCRYPTION_KEY ?? Buffer.alloc(32, 1).toString('base64');
+process.env.CPF_HASH_PEPPER =
+  process.env.CPF_HASH_PEPPER ?? 'test-pepper-at-least-32-chars-long-xyz';
+process.env.NEXTAUTH_SECRET =
+  process.env.NEXTAUTH_SECRET ?? 'test-secret-at-least-32-chars-long-xxx';
