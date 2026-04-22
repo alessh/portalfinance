@@ -38,7 +38,7 @@ Portal Finance v1 ships a Brazilian personal-finance PWA for the middle-class we
 **Plans**: 5 plans
 
 Plans:
-- [ ] 01-00-PLAN.md — Wave 0: Next.js 16 + TS 5.7 + Tailwind 4 + shadcn/ui scaffold, Vitest + Playwright + testcontainers, package.json scripts, pt-BR locale
+- [x] 01-00-PLAN.md — Wave 0: Next.js 16 + TS 5.7 + Tailwind 4 + shadcn/ui scaffold, Vitest + Playwright + testcontainers, package.json scripts, pt-BR locale (completed 2026-04-22)
 - [ ] 01-01-PLAN.md — Railway sa-east-1 project + Drizzle schema baseline (14 tables, accounts_oauth rename, nullable CPF, subscription_tier default paid) + drizzle-kit generate/migrate + [BLOCKING] schema push
 - [ ] 01-02-PLAN.md — Auth.js v5 credentials provider (next-auth@beta + @auth/drizzle-adapter), argon2id + AES-256-GCM + HMAC-SHA-256 CPF helpers, @brazilian-utils/brazilian-utils CPF validator, Postgres rate limit (5/15 + 3/hour + 10/hour-per-IP), Cloudflare Turnstile after 2nd failure, IDOR baseline, UI-SPEC § 2.1–2.7 forms
 - [ ] 01-03-PLAN.md — LGPD scaffolding: piiScrubber with pluggable rules + full corpus, ConsentScreen reusable component (scope discriminated-union), pg-boss singleton + worker entrypoint, React Email templates + SES mailer with suppression guard, DSR /api/privacy/{export,delete} stubs (PENDING only; execution Phase 6), Settings > Privacy UI, ToS/Privacy skeleton markdown + consent_version hash
@@ -168,7 +168,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Identity | 0/TBD | Not started | - |
+| 1. Foundation & Identity | 1/5 | In progress | - |
 | 2. Pluggy Ingestion | 0/TBD | Not started | - |
 | 3. Categorization & Learning | 0/TBD | Not started | - |
 | 4. Dashboard & Monthly Insight | 0/TBD | Not started | - |

@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 1 planned — 5 plans ready to execute
-last_updated: "2026-04-22T20:05:28.740Z"
-last_activity: 2026-04-22 — Phase 1 planned (5 plans, verification passed)
+status: executing
+stopped_at: Phase 1 plan 01-00 complete — Wave 0 scaffold landed; Wave 1 (01-01..01-04) ready to execute
+last_updated: "2026-04-22T20:21:12Z"
+last_activity: 2026-04-22 -- Phase 01 plan 00 (Wave 0 scaffold) complete
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 5
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 3
 ---
 
 # Project State
@@ -21,34 +21,34 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-22)
 
 **Core value:** Seeing, without work, where your money actually goes every month.
-**Current focus:** Phase 1 — Foundation & Identity
+**Current focus:** Phase 01 — Foundation & Identity
 
 ## Current Position
 
-Phase: 1 of 6 (Foundation & Identity)
-Plan: 0 of 5 in current phase
-Status: Ready to execute
-Last activity: 2026-04-22 — Phase 1 planned (5 plans, verification passed)
+Phase: 01 (Foundation & Identity) — EXECUTING
+Plan: 2 of 5 (Wave 1 starts at 01-01)
+Status: Plan 01-00 complete; ready to execute 01-01..01-04 in parallel waves
+Last activity: 2026-04-22 -- Phase 01 plan 00 (Wave 0 scaffold) complete
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [▓░░░░░░░░░] 3%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0
-- Average duration: —
-- Total execution time: 0.0 hours
+- Total plans completed: 1
+- Average duration: 11.4 min
+- Total execution time: 0.2 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01    | 1     | 11.4m | 11.4m    |
 
 **Recent Trend:**
 
-- Last 5 plans: —
+- Last 5 plans: 01-00 (11.4 min)
 - Trend: —
 
 ## Accumulated Context
@@ -58,28 +58,34 @@ Progress: [░░░░░░░░░░] 0%
 Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecting current work:
 
 - Initialization: Middle-class wedge, MVP = connect + categorize + dashboard, Pluggy, Next.js, Railway sa-east-1, ASAAS billing (pending research-backed confirmation), Gemini Flash 2.0 LLM fallback.
+- Plan 01-00: Bumped @playwright/test 1.49.1 → 1.51.1 to satisfy Next 16.2.4 peer dep.
+- Plan 01-00: shadcn CLI v4 dropped --style flag; used --preset nova then patched components.json style to "new-york" to honour UI-SPEC contract.
+- Plan 01-00: Tailwind 4 @theme inline mapping is the canonical bridge between shadcn HSL CSS variables and utility surfaces — replaces legacy hsl(var(--token)) usage in component files.
+- Plan 01-00: Vitest 3.0.5 ships the workspace API; projects field arrived in 3.2+. vitest.config.ts uses workspace[] for unit + integration projects.
+- Plan 01-00: start:web simplified to "next start" — bash-style ${PORT:-3000} substitution is broken on Windows when Playwright spawns the script; Next honours $PORT natively.
 
 ### Pending Todos
 
-None yet.
+None — Wave 1 is the next active queue (01-01 schema baseline, 01-02 Auth.js, 01-03 LGPD scaffolding, 01-04 observability close-out).
 
 ### Blockers/Concerns
 
 - **LGPD cross-border DPA (Google)** — must be signed by legal before Phase 3 LLM categorization ships to production. Does not block Phase 1–2 work.
 - **ASAAS PIX Automático sandbox** — confirm recurring-PIX is live in sandbox before Phase 5 billing work begins.
 - **Railway sa-east-1 region availability** — verify at project creation in Phase 1, plan 01-01.
+- **Next.js standalone start command** — `pnpm start:web` (`next start`) emits a warning under `output: standalone`; Phase 6 Railway deploy work should switch the production start to `node .next/standalone/server.js`.
 - ~~**`@serwist/next` package name**~~ — RESOLVED 2026-04-22 during Phase 1 research: `@serwist/next@9.5.7` confirmed on npm.
 
 ## Deferred Items
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| *(none)* | | | |
+| Deploy   | Switch production start command to `node .next/standalone/server.js` (next 16 standalone output) | Open | 01-00 |
 
 ## Session Continuity
 
 Last session: 2026-04-22
-Stopped at: Phase 1 planned — 5 plans ready to execute
-Resume file: .planning/phases/01-foundation-identity/
+Stopped at: Phase 1 plan 01-00 complete — Wave 0 scaffold landed; Wave 1 ready
+Resume file: .planning/phases/01-foundation-identity/01-01-PLAN.md
 
-**Planned Phase:** 1 (Foundation & Identity) — 5 plans — 2026-04-22T20:05:28.735Z
+**Planned Phase:** 1 (Foundation & Identity) — 5 plans (1 complete) — 2026-04-22T20:21:12Z
