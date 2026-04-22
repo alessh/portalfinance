@@ -137,25 +137,64 @@ Explicitly excluded. Documented to prevent scope creep and to capture the ration
 
 ## Traceability
 
-Populated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01..06 | TBD | Pending |
-| LGPD-01..06 | TBD | Pending |
-| CONN-01..07 | TBD | Pending |
-| TX-01..06 | TBD | Pending |
-| CAT-01..07 | TBD | Pending |
-| DASH-01..05 | TBD | Pending |
-| BILL-01..05 | TBD | Pending |
-| SEC-01..03 | TBD | Pending |
-| APP-01..02 | TBD | Pending |
-| OPS-01..04 | TBD | Pending |
+| AUTH-01 | Phase 1 | Pending |
+| AUTH-02 | Phase 1 | Pending |
+| AUTH-03 | Phase 1 | Pending |
+| AUTH-04 | Phase 1 | Pending |
+| AUTH-05 | Phase 1 | Pending |
+| AUTH-06 | Phase 1 | Pending |
+| LGPD-01 | Phase 1 | Pending |
+| LGPD-02 | Phase 2 | Pending |
+| LGPD-03 | Phase 6 | Pending |
+| LGPD-04 | Phase 6 | Pending |
+| LGPD-05 | Phase 1 | Pending |
+| LGPD-06 | Phase 1 | Pending |
+| CONN-01 | Phase 2 | Pending |
+| CONN-02 | Phase 2 | Pending |
+| CONN-03 | Phase 2 | Pending |
+| CONN-04 | Phase 2 | Pending |
+| CONN-05 | Phase 2 | Pending |
+| CONN-06 | Phase 2 | Pending |
+| CONN-07 | Phase 2 | Pending |
+| TX-01 | Phase 2 | Pending |
+| TX-02 | Phase 2 | Pending |
+| TX-03 | Phase 2 | Pending |
+| TX-04 | Phase 2 | Pending |
+| TX-05 | Phase 2 | Pending |
+| TX-06 | Phase 2 | Pending |
+| CAT-01 | Phase 3 | Pending |
+| CAT-02 | Phase 3 | Pending |
+| CAT-03 | Phase 3 | Pending |
+| CAT-04 | Phase 3 | Pending |
+| CAT-05 | Phase 3 | Pending |
+| CAT-06 | Phase 3 | Pending |
+| CAT-07 | Phase 3 | Pending |
+| DASH-01 | Phase 4 | Pending |
+| DASH-02 | Phase 4 | Pending |
+| DASH-03 | Phase 4 | Pending |
+| DASH-04 | Phase 4 | Pending |
+| DASH-05 | Phase 4 | Pending |
+| BILL-01 | Phase 5 | Pending |
+| BILL-02 | Phase 5 | Pending |
+| BILL-03 | Phase 5 | Pending |
+| BILL-04 | Phase 5 | Pending |
+| BILL-05 | Phase 5 | Pending |
+| SEC-01 | Phase 1 | Pending |
+| SEC-02 | Phase 1 | Pending |
+| SEC-03 | Phase 6 | Pending |
+| APP-01 | Phase 4 | Pending |
+| APP-02 | Phase 4 | Pending |
+| OPS-01 | Phase 1 | Pending |
+| OPS-02 | Phase 6 | Pending |
+| OPS-03 | Phase 6 | Pending |
+| OPS-04 | Phase 1 | Pending |
 
 **Coverage:**
 - v1 requirements: 51 total
-- Mapped to phases: 0 (to be set by roadmapper)
-- Unmapped: 51 ⚠️ (expected — filled during roadmap step)
+- Mapped to phases: 51
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-22*
