@@ -15,7 +15,7 @@ import { db } from '@/db';
 import { users, user_consents, audit_log } from '@/db/schema';
 import { SignupSchema } from '@/lib/validation';
 import { hashPassword } from '@/lib/password';
-import { CONSENT_VERSION_ACCOUNT_CREATION } from '@/lib/consentVersions';
+import { versions } from '@/lib/consentVersions';
 
 export interface SignupActionResult {
   ok: boolean;
@@ -72,7 +72,7 @@ export async function signup(
       user_id: created.id,
       scope: 'ACCOUNT_CREATION',
       action: 'GRANTED',
-      consent_version: CONSENT_VERSION_ACCOUNT_CREATION,
+      consent_version: versions.ACCOUNT_CREATION,
       ip_address: raw.ip_address ?? null,
       user_agent: raw.user_agent ?? null,
       granted_at: new Date(),

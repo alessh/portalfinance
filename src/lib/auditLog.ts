@@ -5,14 +5,15 @@
  * `AuthAuditAction` union in `src/db/schema/auditLog.ts`. Later phases
  * extend the catalogue.
  *
- * **PII contract.** Plan 01-03 adds `piiScrubber.scrubObject(metadata)`
- * here so `audit_log.metadata` never contains raw CPFs / emails / PIX
- * descriptions. For Phase 1, callers MUST pass already-scrubbed metadata
- * (failed-login records use `{ email_attempted_scrubbed: '[EMAIL]' }`,
- * NOT the raw email — D-19 / RESEARCH.md § Plan slice 01-03 item 5).
+ * **PII contract (plan 01-03):** All metadata passes through
+ * `piiScrubber.scrubObject()` before INSERT so `audit_log.metadata`
+ * never contains raw CPFs / emails / PIX descriptions.
+ * Failed-login records MUST use `{ email_attempted_scrubbed: '[EMAIL]' }`
+ * (NOT the raw email) — D-19 / RESEARCH.md § Plan slice 01-03 item 5.
  */
 import { db } from '@/db';
 import { audit_log, type AuthAuditAction } from '@/db/schema';
+import { scrubObject } from '@/lib/piiScrubber';
 
 export interface RecordAuditParams {
   user_id?: string | null;
@@ -30,7 +31,6 @@ export async function recordAudit(params: RecordAuditParams): Promise<void> {
     action: params.action,
     ip_address: params.ip_address ?? null,
     user_agent: params.user_agent ?? null,
-    // TODO(plan 01-03): wrap with `scrubObject(params.metadata ?? {})`.
-    metadata: (params.metadata ?? null) as never,
+    metadata: params.metadata ? (scrubObject(params.metadata) as never) : null,
   });
 }
