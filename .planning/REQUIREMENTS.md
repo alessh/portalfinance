@@ -89,7 +89,8 @@ Requirements for the initial release. Each maps to a roadmap phase.
 - [ ] **OPS-01**: Structured JSON logging from day one with user IDs hashed, no PII; log retention capped at 30 days with automatic expiration. Sentry EU region (`de.sentry.io`) captures errors with `beforeSend` PII scrubbing.
 - [ ] **OPS-02**: Key metrics are observable before public launch: sync success rate, sync duration p50/p95, categorization match rate (rules vs LLM vs uncategorized), LLM cost per day, webhook processing lag. Alerts fire on threshold breach (sync failure >5%, LLM cost/day above limit, webhook 5xx rate >1%).
 - [ ] **OPS-03**: A scheduled `retention-worker` soft-deletes then hard-deletes data for closed accounts past the privacy-policy retention window, with a 7-day warning email before hard deletion.
-- [ ] **OPS-04**: Sandbox and production Pluggy credentials are distinct and cannot be confused. A runtime assertion throws on startup if `NODE_ENV=production` and a sandbox credential is detected.
+- [x] **OPS-04
+**: Sandbox and production Pluggy credentials are distinct and cannot be confused. A runtime assertion throws on startup if `NODE_ENV=production` and a sandbox credential is detected.
 
 ## v1.x Requirements (post-launch, data-dependent)
 

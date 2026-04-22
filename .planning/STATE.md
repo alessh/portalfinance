@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Completed 01-03-PLAN.md (LGPD scaffolding: piiScrubber + ConsentScreen + pg-boss + SES mailer + DSR routes + workers + Settings/Privacy)"
-last_updated: "2026-04-22T23:24:15.561Z"
+stopped_at: "Completed 01-04-PLAN.md (Task 4 checkpoint:human-action — SES prod access + Sentry EU setup awaiting human)"
+last_updated: "2026-04-22T23:54:49.378Z"
 last_activity: 2026-04-22
 progress:
   total_phases: 6
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 5
-  completed_plans: 4
-  percent: 80
+  completed_plans: 5
+  percent: 100
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 ## Current Position
 
 Phase: 01 (foundation-identity) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Ready to execute
 Last activity: 2026-04-22
 
-Progress: [████████░░] 80%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Progress: [████████░░] 80%
 | Phase 01 P01 | 469     | 2 tasks | 23 files     |
 | Phase 01 P02 | 2166    | 3 tasks | 49 files     |
 | Phase 01 P03 | 5700 | 2 tasks | 33 files |
+| Phase 01-foundation-identity P04 | 180 | 3 tasks | 24 files |
 
 ## Accumulated Context
 
@@ -82,6 +83,9 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - session.ts dual-path cookie resolution: optional req param reads Cookie header for integration tests; falls back to next/headers for App Router
 - mailer credential guard reads process.env at call time (not cached env) so beforeAll() AWS creds in tests take effect
 - DSR PII contract: DSRAcknowledgment template accepts only { request_type, dsr_request_id }; user email is SES Destination only, never in HTML body
+- Synchronous beforeSend: RESEARCH.md Pitfall 5 — Sentry swallows async beforeSend; kept sync
+- NEXT_PHASE build bypass: OPS-04 guards skip during next build, fire at server startup (instrumentation.ts)
+- Single sentry.ts with edge-safe hash gate: edge drops user object entirely rather than hashing
 
 ### Pending Todos
 
@@ -104,8 +108,8 @@ None — Wave 3 is the next active queue (01-03 LGPD scaffolding, 01-04 observab
 
 ## Session Continuity
 
-Last session: 2026-04-22T23:24:15.556Z
-Stopped at: Completed 01-03-PLAN.md (LGPD scaffolding: piiScrubber + ConsentScreen + pg-boss + SES mailer + DSR routes + workers + Settings/Privacy)
+Last session: 2026-04-22T23:54:49.372Z
+Stopped at: Completed 01-04-PLAN.md (Task 4 checkpoint:human-action — SES prod access + Sentry EU setup awaiting human)
 Resume file: None
 
 **Planned Phase:** 1 (Foundation & Identity) — 5 plans (3 complete) — 2026-04-22T20:21:12Z
