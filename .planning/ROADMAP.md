@@ -35,13 +35,14 @@ Portal Finance v1 ships a Brazilian personal-finance PWA for the middle-class we
 5. A consent screen exists as a reusable component and records the expected `user_consents` row shape (exercised by a LGPD consent unit test), even if no Pluggy connection is wired yet.
 6. A runtime assertion fails fast when production env is started with sandbox credentials.
 
-**Plans**: TBD (estimated 3–5 plans)
+**Plans**: 5 plans
 
 Plans:
-- [ ] 01-01: Railway project + Postgres sa-east-1 + Drizzle schema baseline + migrations tooling
-- [ ] 01-02: Auth.js v5 credentials provider with email + CPF + password; argon2 + AES-256-GCM for CPF; rate limiting
-- [ ] 01-03: LGPD scaffolding — consent component, `user_consents` schema, DSR export/delete skeleton, `piiScrubber` utility
-- [ ] 01-04: Observability — Sentry EU with `beforeSend`, structured logging, audit/admin log tables, sandbox/prod assertion
+- [ ] 01-00-PLAN.md — Wave 0: Next.js 16 + TS 5.7 + Tailwind 4 + shadcn/ui scaffold, Vitest + Playwright + testcontainers, package.json scripts, pt-BR locale
+- [ ] 01-01-PLAN.md — Railway sa-east-1 project + Drizzle schema baseline (14 tables, accounts_oauth rename, nullable CPF, subscription_tier default paid) + drizzle-kit generate/migrate + [BLOCKING] schema push
+- [ ] 01-02-PLAN.md — Auth.js v5 credentials provider (next-auth@beta + @auth/drizzle-adapter), argon2id + AES-256-GCM + HMAC-SHA-256 CPF helpers, @brazilian-utils/brazilian-utils CPF validator, Postgres rate limit (5/15 + 3/hour + 10/hour-per-IP), Cloudflare Turnstile after 2nd failure, IDOR baseline, UI-SPEC § 2.1–2.7 forms
+- [ ] 01-03-PLAN.md — LGPD scaffolding: piiScrubber with pluggable rules + full corpus, ConsentScreen reusable component (scope discriminated-union), pg-boss singleton + worker entrypoint, React Email templates + SES mailer with suppression guard, DSR /api/privacy/{export,delete} stubs (PENDING only; execution Phase 6), Settings > Privacy UI, ToS/Privacy skeleton markdown + consent_version hash
+- [ ] 01-04-PLAN.md — Observability close-out: Sentry EU (de.sentry.io) with synchronous piiScrubber beforeSend, pino structured logger (Node + edge), instrumentation.ts with OPS-04 env assertion, SES production access request + SNS bounce webhook (idempotent webhook_events — Phase 2 pattern validator), DemoDashboard + EmailVerificationNagBanner per UI-SPEC § 2.9/2.10, docs/ops runbooks + README
 
 ### Phase 2: Pluggy Ingestion
 
