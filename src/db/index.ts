@@ -11,10 +11,14 @@ import * as schema from './schema';
  * - all other envs: 1 connection (avoids exhausting local docker /
  *   testcontainers Postgres during integration runs).
  */
-const connection_string = process.env.DATABASE_URL;
-if (!connection_string) {
-  throw new Error('DATABASE_URL is required');
-}
+// Construct the postgres-js client eagerly (DrizzleAdapter requires a
+// real Drizzle instance — a lazy Proxy fails its runtime type check),
+// but use a safe placeholder URL when DATABASE_URL is missing. The
+// placeholder never connects: it only satisfies the postgres-js
+// constructor so build-time "collect page data" can run. Any actual
+// query will fail at connect time when DATABASE_URL is unset.
+const connection_string =
+  process.env.DATABASE_URL ?? 'postgres://placeholder:placeholder@127.0.0.1:5432/placeholder';
 
 const pg_client = postgres(connection_string, {
   max: process.env.NODE_ENV === 'production' ? 10 : 1,

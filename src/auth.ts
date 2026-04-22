@@ -46,6 +46,11 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     verificationTokensTable: schema.verification_tokens,
   }),
   session: { strategy: 'database', maxAge: 30 * 24 * 60 * 60 },
+  // Auth.js v5 enforces a host allow-list in production. Trust the
+  // proxy-supplied Host header — Railway terminates TLS and forwards
+  // the canonical hostname. For e2e tests (E2E_TEST=1) we also trust
+  // because we hit http://localhost:3000.
+  trustHost: true,
   providers: [
     Credentials({
       credentials: { email: {}, password: {} },
@@ -63,16 +68,34 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       },
     }),
   ],
+  // SEC-02: HttpOnly + Secure + SameSite=Lax in production. The
+  // `__Secure-` cookie prefix requires HTTPS; we drop it (and the
+  // secure flag) outside production OR when explicitly running e2e
+  // tests (E2E_TEST=1 — Playwright globalSetup sets this) so the
+  // browser can store the session cookie over plain http://localhost.
+  // Production must always be served over HTTPS — Railway's edge
+  // does this by default.
   cookies: {
-    sessionToken: {
-      name: '__Secure-authjs.session-token',
-      options: {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'lax',
-        path: '/',
-      },
-    },
+    sessionToken:
+      process.env.NODE_ENV === 'production' && !process.env.E2E_TEST
+        ? {
+            name: '__Secure-authjs.session-token',
+            options: {
+              httpOnly: true,
+              secure: true,
+              sameSite: 'lax',
+              path: '/',
+            },
+          }
+        : {
+            name: 'authjs.session-token',
+            options: {
+              httpOnly: true,
+              secure: false,
+              sameSite: 'lax',
+              path: '/',
+            },
+          },
   },
   pages: { signIn: '/login' },
 });

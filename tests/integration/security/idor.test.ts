@@ -54,14 +54,14 @@ beforeEach(async () => {
  */
 describe('IDOR baseline (SEC-01)', () => {
   it('cross-user audit_log read returns null/404 (not the other user’s data)', async () => {
-    const { signupAction } = await import('@/app/(auth)/signup/actions');
-    const a = await signupAction({
+    const { signup } = await import('@/app/(auth)/signup/actions');
+    const a = await signup({
       email: 'alice@example.com',
       password: 'Correct-Horse-1234',
       confirmPassword: 'Correct-Horse-1234',
       consent: true,
     });
-    const b = await signupAction({
+    const b = await signup({
       email: 'bob@example.com',
       password: 'Correct-Horse-1234',
       confirmPassword: 'Correct-Horse-1234',
@@ -105,14 +105,14 @@ describe('IDOR baseline (SEC-01)', () => {
   }, 60_000);
 
   it('cross-user user_consents read filtered by user_id returns nothing', async () => {
-    const { signupAction } = await import('@/app/(auth)/signup/actions');
-    const a = await signupAction({
+    const { signup } = await import('@/app/(auth)/signup/actions');
+    const a = await signup({
       email: 'carol@example.com',
       password: 'Correct-Horse-1234',
       confirmPassword: 'Correct-Horse-1234',
       consent: true,
     });
-    const b = await signupAction({
+    const b = await signup({
       email: 'dave@example.com',
       password: 'Correct-Horse-1234',
       confirmPassword: 'Correct-Horse-1234',
@@ -134,18 +134,14 @@ describe('IDOR baseline (SEC-01)', () => {
     expect(dave_attempt).toHaveLength(0);
   }, 60_000);
 
-  it('requireSession() throws UnauthorizedError when no session is present', async () => {
-    // requireSession depends on Auth.js's `auth()`. We mock the upstream
-    // module so the test exercises the unauthenticated-throw path without
-    // pulling next-auth's full edge-runtime entrypoint into Vitest (which
-    // resolves `next/server` differently than Next does at build time).
+  it('requireSession() throws UnauthorizedError when the session cookie is absent', async () => {
+    // requireSession reads the session cookie via next/headers cookies().
+    // Mock that so the test exercises the unauthenticated-throw path
+    // without a real Next.js request context.
     const { vi } = await import('vitest');
     vi.resetModules();
-    vi.doMock('@/auth', () => ({
-      auth: async () => null,
-      handlers: { GET: undefined, POST: undefined },
-      signIn: async () => undefined,
-      signOut: async () => undefined,
+    vi.doMock('next/headers', () => ({
+      cookies: async () => ({ get: () => undefined }),
     }));
     try {
       const { requireSession, UnauthorizedError } = await import(
@@ -155,7 +151,7 @@ describe('IDOR baseline (SEC-01)', () => {
         UnauthorizedError,
       );
     } finally {
-      vi.doUnmock('@/auth');
+      vi.doUnmock('next/headers');
       vi.resetModules();
     }
   }, 30_000);

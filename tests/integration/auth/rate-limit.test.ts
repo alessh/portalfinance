@@ -49,8 +49,8 @@ beforeEach(async () => {
 });
 
 async function createTestUser(email: string, password: string): Promise<string> {
-  const { signupAction } = await import('@/app/(auth)/signup/actions');
-  const result = await signupAction({
+  const { signup } = await import('@/app/(auth)/signup/actions');
+  const result = await signup({
     email,
     password,
     confirmPassword: password,

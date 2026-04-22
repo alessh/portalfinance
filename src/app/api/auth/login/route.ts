@@ -13,13 +13,19 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { randomBytes } from 'node:crypto';
 import { eq, and, isNull } from 'drizzle-orm';
 import { db } from '@/db';
-import { users, account_locks } from '@/db/schema';
+import { users, account_locks, sessions } from '@/db/schema';
 import { LoginSchema } from '@/lib/validation';
 import { hashPassword, verifyPassword } from '@/lib/password';
 import { checkAndIncrement, resetCounter } from '@/lib/rateLimit';
 import { verifyTurnstile } from '@/lib/turnstile';
 import { recordAudit } from '@/lib/auditLog';
 import { enqueue } from '@/jobs/boss';
+
+const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+const SESSION_COOKIE_NAME =
+  process.env.NODE_ENV === 'production' && !process.env.E2E_TEST
+    ? '__Secure-authjs.session-token'
+    : 'authjs.session-token';
 
 const LOGIN_FAIL_LIMIT = 5; // 5 failures in window → next is the lockout
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
@@ -121,7 +127,35 @@ export async function POST(req: NextRequest) {
     user_agent: req.headers.get('user-agent'),
   });
 
-  return NextResponse.json({ ok: true, user_id: user.id }, { status: 200 });
+  // Establish the database-backed session ourselves. Auth.js v5's
+  // Credentials provider does NOT support the `database` session
+  // strategy out of the box (returns UnsupportedStrategy at signIn
+  // time); writing the session row + setting the cookie manually
+  // gives us SEC-02 server-side revocation without giving up
+  // Credentials. `auth()` (Drizzle adapter) reads this cookie and
+  // resolves the session normally.
+  const session_token = randomBytes(32).toString('base64url');
+  const expires = new Date(Date.now() + SESSION_TTL_MS);
+  await db.insert(sessions).values({
+    user_id: user.id,
+    session_token,
+    expires,
+  });
+
+  const res = NextResponse.json(
+    { ok: true, user_id: user.id },
+    { status: 200 },
+  );
+  res.cookies.set({
+    name: SESSION_COOKIE_NAME,
+    value: session_token,
+    httpOnly: true,
+    secure: SESSION_COOKIE_NAME.startsWith('__Secure-'),
+    sameSite: 'lax',
+    path: '/',
+    expires,
+  });
+  return res;
 }
 
 async function ensureAccountLock(

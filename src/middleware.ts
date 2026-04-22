@@ -19,6 +19,8 @@ export function middleware(req: NextRequest) {
   const is_protected = PROTECTED_PREFIXES.some((p) => path.startsWith(p));
   if (!is_protected) return NextResponse.next();
 
+  // Either cookie name is acceptable — production (`__Secure-`) and
+  // dev/e2e (no prefix) both indicate an authenticated session.
   const has_session =
     req.cookies.has('__Secure-authjs.session-token') ||
     req.cookies.has('authjs.session-token');

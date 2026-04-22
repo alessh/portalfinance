@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit",
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
-    "test:e2e": "playwright test",
+    "test:e2e": "tsx scripts/run-e2e.ts",
     "test:all": "pnpm test:unit && pnpm test:integration && pnpm test:e2e",
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",

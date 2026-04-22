@@ -8,7 +8,16 @@
 export const runtime = 'nodejs';
 
 import { NextResponse, type NextRequest } from 'next/server';
-import { signupAction } from '@/app/(auth)/signup/actions';
+import { randomBytes } from 'node:crypto';
+import { db } from '@/db';
+import { sessions } from '@/db/schema';
+import { signup as signupAction } from '@/app/(auth)/signup/signupCore';
+
+const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const SESSION_COOKIE_NAME =
+  process.env.NODE_ENV === 'production' && !process.env.E2E_TEST
+    ? '__Secure-authjs.session-token'
+    : 'authjs.session-token';
 
 export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => null)) as Record<
@@ -32,8 +41,31 @@ export async function POST(req: NextRequest) {
     user_agent,
   });
 
-  if (!result.ok) {
+  if (!result.ok || !result.user_id) {
     return NextResponse.json(result, { status: 400 });
   }
-  return NextResponse.json(result, { status: 201 });
+
+  // Auto-sign-in the user after signup — establish the database
+  // session row + set the cookie so the next request is authenticated.
+  // Same pattern as /api/auth/login (Auth.js Credentials does not
+  // support the `database` strategy out of the box).
+  const session_token = randomBytes(32).toString('base64url');
+  const expires = new Date(Date.now() + SESSION_TTL_MS);
+  await db.insert(sessions).values({
+    user_id: result.user_id,
+    session_token,
+    expires,
+  });
+
+  const res = NextResponse.json(result, { status: 201 });
+  res.cookies.set({
+    name: SESSION_COOKIE_NAME,
+    value: session_token,
+    httpOnly: true,
+    secure: SESSION_COOKIE_NAME.startsWith('__Secure-'),
+    sameSite: 'lax',
+    path: '/',
+    expires,
+  });
+  return res;
 }
