@@ -1,0 +1,21 @@
+/**
+ * Sentry server-side configuration — Node runtime.
+ *
+ * Plan 01-04 — OPS-01. Loaded by instrumentation.ts when
+ * NEXT_RUNTIME === 'nodejs'.
+ *
+ * DSN hostname MUST end with de.sentry.io (EU data plane).
+ * Enforced at boot by the OPS-04 refine in lib/env.ts.
+ */
+import * as Sentry from '@sentry/nextjs';
+import { beforeSend } from '@/lib/sentry';
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  environment: process.env.SENTRY_ENV,
+  tracesSampleRate: 0.1,
+  // PII-scrubbing beforeSend — MUST be synchronous (RESEARCH.md Pitfall 5).
+  beforeSend,
+  // Do not send source maps to Sentry in development to keep noise low.
+  enabled: process.env.NODE_ENV !== 'test',
+});

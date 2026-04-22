@@ -20,13 +20,8 @@ import { getBoss, QUEUES } from '@/jobs/boss';
 import { dsrAcknowledgeWorker } from './workers/dsrAcknowledgeWorker';
 import { passwordResetEmailWorker } from './workers/passwordResetEmailWorker';
 import { accountUnlockEmailWorker } from './workers/accountUnlockEmailWorker';
-
-// Temporary logger stub until Plan 01-04 lands pino.
-// Emits the same field shape so Plan 01-04 can swap with zero callers to update.
-const log = {
-  info: (msg: string, ...args: unknown[]) => console.log(JSON.stringify({ level: 'info', msg, ...args })),
-  error: (msg: string, ...args: unknown[]) => console.error(JSON.stringify({ level: 'error', msg, ...args })),
-};
+import { sesBounceWorker } from './workers/sesBounceWorker';
+import { logger as log } from '@/lib/logger';
 
 async function main() {
   const boss = await getBoss();
@@ -35,12 +30,13 @@ async function main() {
   await boss.work(QUEUES.DSR_ACKNOWLEDGE, { localConcurrency: 2 }, dsrAcknowledgeWorker);
   await boss.work(QUEUES.SEND_PASSWORD_RESET_EMAIL, { localConcurrency: 4 }, passwordResetEmailWorker);
   await boss.work(QUEUES.SEND_UNLOCK_EMAIL, { localConcurrency: 4 }, accountUnlockEmailWorker);
+  await boss.work(QUEUES.SES_BOUNCE, { localConcurrency: 2 }, sesBounceWorker);
 
-  log.info('worker started — registered queues', { queues: Object.values(QUEUES) });
+  log.info({ queues: Object.values(QUEUES) }, 'worker started — registered queues');
 
   // Graceful shutdown on SIGTERM (Railway sends this on deploy/stop)
   const stop = async () => {
-    log.info('worker stopping...');
+    log.info({}, 'worker stopping...');
     await boss.stop({ graceful: true });
     process.exit(0);
   };
@@ -49,6 +45,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  log.error('worker failed', { error: String(err) });
+  log.error({ error: String(err) }, 'worker failed');
   process.exit(1);
 });

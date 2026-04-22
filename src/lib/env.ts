@@ -1,3 +1,8 @@
+// SERVER-ONLY. Client code must read process.env.NEXT_PUBLIC_* directly.
+// This module must NOT be imported from the browser bundle — all values here
+// are server-side secrets. Client components that need a public key read
+// process.env.NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY directly at call site.
+
 /**
  * Zod-validated env loader for the whole application.
  *
@@ -49,30 +54,69 @@ const EnvSchema = z
     PLUGGY_ENV: z.enum(['sandbox', 'production']).optional(),
     ASAAS_ENV: z.enum(['sandbox', 'production']).optional(),
 
+    // AWS SES — optional in development, required in production (OPS-04 refine enforces).
     AWS_ACCESS_KEY_ID: z.string().optional(),
     AWS_SECRET_ACCESS_KEY: z.string().optional(),
     AWS_REGION: z.string().default('sa-east-1'),
     SES_FROM_EMAIL: z.string().email().default('no-reply@portalfinance.com.br'),
 
     // Cloudflare Turnstile — server-side secret + client-exposed site key.
-    // Optional in tests; the login route enforces presence at runtime.
+    // Optional in tests; required in production (OPS-04 refine enforces).
     TURNSTILE_SITE_KEY: z.string().optional(),
     TURNSTILE_SECRET_KEY: z.string().optional(),
     NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY: z.string().optional(),
+
+    // Structured logging
+    LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).default('info'),
+    SERVICE_NAME: z.string().default('web'),
   })
   .refine(
     (e) => {
       if (e.NODE_ENV !== 'production') return true;
-      // OPS-04: in production, no sandbox/test credentials may be present.
-      const bad =
-        (e.PLUGGY_ENV !== undefined && e.PLUGGY_ENV !== 'production') ||
-        (e.ASAAS_ENV !== undefined && e.ASAAS_ENV !== 'production') ||
-        (e.SENTRY_ENV !== undefined && e.SENTRY_ENV !== 'production');
-      return !bad;
+
+      // OPS-04: in production, Sentry DSN MUST end with .sentry.io (EU or US
+      // ingest — the exact subdomain is verified at human checkpoint Task 4).
+      if (e.SENTRY_DSN) {
+        try {
+          const hostname = new URL(e.SENTRY_DSN).hostname;
+          if (!/\.sentry\.io$/.test(hostname)) return false;
+        } catch {
+          return false;
+        }
+      }
+
+      // OPS-04: SENTRY_ENV must be 'production' when NODE_ENV is 'production'.
+      if (e.SENTRY_ENV !== 'production') return false;
+
+      // OPS-04: No sandbox credentials in production.
+      if (e.PLUGGY_ENV !== undefined && e.PLUGGY_ENV !== 'production') return false;
+      if (e.ASAAS_ENV !== undefined && e.ASAAS_ENV !== 'production') return false;
+
+      return true;
     },
     {
       message:
-        'OPS-04 violation: NODE_ENV=production with sandbox/test credentials detected',
+        'OPS-04 violation: production NODE_ENV with sandbox credentials or non-prod Sentry',
+    },
+  )
+  .refine(
+    (e) => {
+      if (e.NODE_ENV !== 'production') return true;
+      // AWS SES credentials are required in production.
+      return !!(e.AWS_ACCESS_KEY_ID && e.AWS_SECRET_ACCESS_KEY);
+    },
+    {
+      message: 'OPS-04 violation: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are required in production',
+    },
+  )
+  .refine(
+    (e) => {
+      if (e.NODE_ENV !== 'production') return true;
+      // Cloudflare Turnstile keys are required in production.
+      return !!(e.TURNSTILE_SITE_KEY && e.TURNSTILE_SECRET_KEY && e.NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY);
+    },
+    {
+      message: 'OPS-04 violation: TURNSTILE_SITE_KEY, TURNSTILE_SECRET_KEY, and NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY are required in production',
     },
   );
 
