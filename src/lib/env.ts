@@ -78,12 +78,14 @@ const EnvSchema = z
       // actually boots to serve traffic, which is the correct enforcement point.
       if (process.env.NEXT_PHASE === 'phase-production-build') return true;
 
-      // OPS-04: in production, Sentry DSN MUST end with .sentry.io (EU or US
-      // ingest — the exact subdomain is verified at human checkpoint Task 4).
+      // OPS-04: in production, Sentry DSN MUST target the EU data plane
+      // (de.sentry.io or *.ingest.de.sentry.io). A US ingest DSN such as
+      // oNNNN.ingest.sentry.io would satisfy \.sentry\.io$ but violates LGPD
+      // data-residency requirements. The regex requires `.de.sentry.io` suffix.
       if (e.SENTRY_DSN) {
         try {
           const hostname = new URL(e.SENTRY_DSN).hostname;
-          if (!/\.sentry\.io$/.test(hostname)) return false;
+          if (!/\.de\.sentry\.io$/.test(hostname)) return false;
         } catch {
           return false;
         }
