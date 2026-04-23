@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Completed 01-04-PLAN.md (Task 4 checkpoint:human-action — SES prod access + Sentry EU setup awaiting human)"
-last_updated: "2026-04-22T23:54:49.378Z"
-last_activity: 2026-04-22
+stopped_at: "Plan 01-04 complete (Sentry EU + pino + SES bounce + demo dashboard; SES/Sentry console setup deferred to ops); ready for phase 01 verification"
+last_updated: "2026-04-22T23:59:00.000Z"
+last_activity: "2026-04-22 — Plan 01-04 complete (task 4 deferred to ops)"
 progress:
   total_phases: 6
   completed_phases: 1
@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 ## Current Position
 
 Phase: 01 (foundation-identity) — EXECUTING
-Plan: 3 of 5
-Status: Ready to execute
+Plan: 5 of 5 — all plans complete, awaiting phase verification
+Status: Ready for phase 01 verification
 Last activity: 2026-04-22
 
 Progress: [██████████] 100%
@@ -105,11 +105,12 @@ None — Wave 3 is the next active queue (01-03 LGPD scaffolding, 01-04 observab
 |----------|------|--------|-------------|
 | Deploy   | Switch production start command to `node .next/standalone/server.js` (next 16 standalone output) | Open | 01-00 |
 | Deploy   | Railway sa-east-1 provisioning + live schema push (Task 3 of 01-01) — runbook ready at `docs/ops/railway-setup.md` | Open | 01-01 |
+| Ops      | SES production access (24-48h AWS approval) + Sentry EU project (DSN must end with de.sentry.io) — runbooks at `docs/ops/ses-production-access.md` and Railway env vars listed in plan 01-04 task 4 | Open | 01-04 |
 
 ## Session Continuity
 
-Last session: 2026-04-22T23:54:49.372Z
-Stopped at: Completed 01-04-PLAN.md (Task 4 checkpoint:human-action — SES prod access + Sentry EU setup awaiting human)
+Last session: 2026-04-22T23:59:00.000Z
+Stopped at: Plan 01-04 complete (Sentry EU + pino + SES bounce + demo dashboard; SES/Sentry console setup deferred to docs/ops); ready for phase 01 verification
 Resume file: None
 
 **Planned Phase:** 1 (Foundation & Identity) — 5 plans (3 complete) — 2026-04-22T20:21:12Z
