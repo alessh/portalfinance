@@ -7,6 +7,7 @@
 import type { Job } from 'pg-boss';
 import { sendEmail } from '@/lib/mailer';
 import { AccountUnlock } from '@/emails/AccountUnlock';
+import { logger } from '@/lib/logger';
 import React from 'react';
 
 export interface AccountUnlockEmailPayload {
@@ -19,13 +20,21 @@ export async function accountUnlockEmailWorker(
   jobs: Job<AccountUnlockEmailPayload>[],
 ): Promise<void> {
   for (const job of jobs) {
-    await sendEmail({
-      to: job.data.to,
-      subject: 'Desbloqueie sua conta — Portal Finance',
-      template: React.createElement(AccountUnlock, {
-        unlock_link: job.data.unlock_link,
-        expires_at: new Date(job.data.expires_at),
-      }),
-    });
+    try {
+      await sendEmail({
+        to: job.data.to,
+        subject: 'Desbloqueie sua conta — Portal Finance',
+        template: React.createElement(AccountUnlock, {
+          unlock_link: job.data.unlock_link,
+          expires_at: new Date(job.data.expires_at),
+        }),
+      });
+    } catch (err) {
+      logger.error(
+        { event: 'worker_job_failed', job_id: job.id, worker: 'accountUnlockEmail', error: String(err) },
+        'Job processing failed — pg-boss will retry',
+      );
+      throw err;
+    }
   }
 }

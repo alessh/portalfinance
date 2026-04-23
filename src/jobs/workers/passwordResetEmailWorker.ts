@@ -7,6 +7,7 @@
 import type { Job } from 'pg-boss';
 import { sendEmail } from '@/lib/mailer';
 import { PasswordReset } from '@/emails/PasswordReset';
+import { logger } from '@/lib/logger';
 import React from 'react';
 
 export interface PasswordResetEmailPayload {
@@ -19,13 +20,21 @@ export async function passwordResetEmailWorker(
   jobs: Job<PasswordResetEmailPayload>[],
 ): Promise<void> {
   for (const job of jobs) {
-    await sendEmail({
-      to: job.data.to,
-      subject: 'Redefinição de senha — Portal Finance',
-      template: React.createElement(PasswordReset, {
-        reset_link: job.data.reset_link,
-        expires_at: new Date(job.data.expires_at),
-      }),
-    });
+    try {
+      await sendEmail({
+        to: job.data.to,
+        subject: 'Redefinição de senha — Portal Finance',
+        template: React.createElement(PasswordReset, {
+          reset_link: job.data.reset_link,
+          expires_at: new Date(job.data.expires_at),
+        }),
+      });
+    } catch (err) {
+      logger.error(
+        { event: 'worker_job_failed', job_id: job.id, worker: 'passwordResetEmail', error: String(err) },
+        'Job processing failed — pg-boss will retry',
+      );
+      throw err;
+    }
   }
 }
