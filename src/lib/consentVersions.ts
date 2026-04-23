@@ -31,10 +31,22 @@ function short_sha(file_path: string): string {
     const content = readFileSync(resolve(process.cwd(), file_path), 'utf8');
     return createHash('sha256').update(content).digest('hex').slice(0, 12);
   } catch {
-    // In environments where the docs/ folder is not available (e.g., some CI
-    // build steps), fall back to a deterministic placeholder so the module
-    // does not throw at import time. Callers should not ship the fallback
-    // value to production — Phase 6 gate enforces the real hash.
+    // OPS-04: In production at runtime (not during next build), the docs/
+    // folder MUST be present. If it is missing, the fallback version string
+    // would be written to user_consents for every new signup, breaking Phase 6
+    // stale-consent detection. Throw loudly so the deploy fails fast rather
+    // than silently storing an invalid consent version for real users.
+    if (
+      process.env.NODE_ENV === 'production' &&
+      process.env.NEXT_PHASE !== 'phase-production-build'
+    ) {
+      throw new Error(
+        `OPS-04 violation: consent document not found at ${file_path}. ` +
+        `Ensure docs/ is included in the production Docker image.`,
+      );
+    }
+    // In development and CI, fall back to a deterministic placeholder so the
+    // module does not throw at import time. Never ship this value in production.
     return 'fallback000000';
   }
 }
