@@ -20,6 +20,7 @@ import { db } from '@/db';
 import { ses_suppressions } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { env } from '@/lib/env';
+import { logger } from '@/lib/logger';
 import type { ReactElement } from 'react';
 
 // ---------------------------------------------------------------------------
@@ -89,11 +90,12 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
   // Read directly from process.env so integration tests that set env vars
   // in beforeAll() (after the `env` module is first parsed) are not blocked.
   if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
-    console.warn(
-      '[mailer] AWS credentials not set — email would be sent to:',
-      to_lower,
-      '| Subject:',
-      params.subject,
+    // Use structured logger so this warning flows through the pino scrubObject
+    // hook and is captured by Railway's JSON log aggregator. The recipient
+    // address is intentionally redacted — raw PII must never appear in logs.
+    logger.warn(
+      { event: 'mailer_no_credentials', email_lower: '[EMAIL REDACTED IN DEV]' },
+      '[mailer] AWS credentials not set — skipping send',
     );
     return { messageId: null, suppressed: false };
   }
