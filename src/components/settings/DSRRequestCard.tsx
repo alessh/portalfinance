@@ -40,6 +40,13 @@ export function DSRRequestCard() {
   }
 
   async function submitDelete(turnstile_token: string) {
+    // TODO(phase2): replace dummy token with real @marsidev/react-turnstile widget token.
+    // In production, passing a dummy token causes 400 from POST /api/privacy/delete.
+    // Guard here to surface the misconfiguration immediately rather than silently failing.
+    if (process.env.NODE_ENV === 'production' && turnstile_token.startsWith('dummy-')) {
+      setError('Verificação anti-bot não configurada. Contate o suporte.');
+      return;
+    }
     setLoading('delete');
     setError(null);
     try {
@@ -136,7 +143,10 @@ export function DSRRequestCard() {
         cancelLabel="Cancelar exclusão"
         confirmVariant="destructive"
         confirmPhrase="EXCLUIR"
-        onConfirm={() => submitDelete('dummy-turnstile-token-for-phase1')}
+        onConfirm={() => {
+          // TODO(phase2): wire real Turnstile widget token here (Phase 1 scaffolding only).
+          void submitDelete('dummy-turnstile-token-for-phase1');
+        }}
         isLoading={loading === 'delete'}
       />
     </div>
