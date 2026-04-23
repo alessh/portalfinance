@@ -16,6 +16,7 @@ Sentry.init({
   tracesSampleRate: 0.1,
   // PII-scrubbing beforeSend — MUST be synchronous (RESEARCH.md Pitfall 5).
   beforeSend,
-  // Do not send source maps to Sentry in development to keep noise low.
-  enabled: process.env.NODE_ENV !== 'test',
+  // Exclude development and test environments — matches the client config
+  // convention. Prevents local stack traces with file paths leaking to Sentry EU.
+  enabled: process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test',
 });

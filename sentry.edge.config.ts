@@ -19,5 +19,7 @@ Sentry.init({
   environment: process.env.SENTRY_ENV,
   tracesSampleRate: 0.1,
   beforeSend,
-  enabled: process.env.NODE_ENV !== 'test',
+  // Exclude development and test environments — matches the client config
+  // convention. Prevents local stack traces with file paths leaking to Sentry EU.
+  enabled: process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test',
 });
