@@ -60,6 +60,7 @@ export async function POST(req: Request) {
     await enqueue(QUEUES.DSR_ACKNOWLEDGE, {
       dsr_request_id: row.id,
       user_email: email,
+      user_id: userId,
     });
 
     return Response.json({ protocol: row.id }, { status: 201 });

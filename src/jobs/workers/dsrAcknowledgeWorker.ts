@@ -19,7 +19,7 @@
 import type { Job } from 'pg-boss';
 import { db } from '@/db';
 import { dsr_requests } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { sendEmail } from '@/lib/mailer';
 import { DSRAcknowledgment } from '@/emails/DSRAcknowledgment';
 import { recordAudit } from '@/lib/auditLog';
@@ -28,16 +28,24 @@ import React from 'react';
 export interface DsrAcknowledgePayload {
   dsr_request_id: string;
   user_email: string;
+  user_id: string; // required for IDOR guard (P26): verify row belongs to enqueuing user
 }
 
 export async function dsrAcknowledgeWorker(
   jobs: Job<DsrAcknowledgePayload>[],
 ): Promise<void> {
   for (const job of jobs) {
+    // IDOR guard (P26): filter by both id AND user_id so a compromised job
+    // payload cannot trigger acknowledgment for a different user's DSR row.
     const [req] = await db
       .select()
       .from(dsr_requests)
-      .where(eq(dsr_requests.id, job.data.dsr_request_id));
+      .where(
+        and(
+          eq(dsr_requests.id, job.data.dsr_request_id),
+          eq(dsr_requests.user_id, job.data.user_id),
+        ),
+      );
 
     if (!req) {
       // Job payload references a non-existent row — skip silently.
