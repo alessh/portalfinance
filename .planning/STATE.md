@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready_to_plan
-stopped_at: "Plan 01-04 complete (Sentry EU + pino + SES bounce + demo dashboard; SES/Sentry console setup deferred to ops); ready for phase 01 verification"
-last_updated: "2026-04-22T23:59:00.000Z"
-last_activity: "2026-04-22 — Plan 01-04 complete (task 4 deferred to ops)"
+status: planning
+stopped_at: Phase 01.1 context gathered
+last_updated: "2026-04-24T21:05:59.208Z"
+last_activity: 2026-04-23
 progress:
-  total_phases: 6
-  completed_phases: 2
+  total_phases: 7
+  completed_phases: 1
   total_plans: 5
   completed_plans: 5
-  percent: 33
+  percent: 100
 ---
 
 # Project State
@@ -87,6 +87,10 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - NEXT_PHASE build bypass: OPS-04 guards skip during next build, fire at server startup (instrumentation.ts)
 - Single sentry.ts with edge-safe hash gate: edge drops user object entirely rather than hashing
 
+### Roadmap Evolution
+
+- Phase 01.1 inserted after Phase 1: Infra Bootstrap (AWS sa-east-1 via Copilot) (URGENT) — Railway has no BR region (`sa-east-1` does not exist at Railway); pivoting to AWS `sa-east-1` via Copilot CLI before Phase 2 (Pluggy) touches real user data.
+
 ### Pending Todos
 
 None — Wave 3 is the next active queue (01-03 LGPD scaffolding, 01-04 observability close-out).
@@ -109,8 +113,8 @@ None — Wave 3 is the next active queue (01-03 LGPD scaffolding, 01-04 observab
 
 ## Session Continuity
 
-Last session: 2026-04-22T23:59:00.000Z
-Stopped at: Plan 01-04 complete (Sentry EU + pino + SES bounce + demo dashboard; SES/Sentry console setup deferred to docs/ops); ready for phase 01 verification
-Resume file: None
+Last session: --stopped-at
+Stopped at: Phase 01.1 context gathered
+Resume file: --resume-file
 
 **Planned Phase:** 1 (Foundation & Identity) — 5 plans (3 complete) — 2026-04-22T20:21:12Z
