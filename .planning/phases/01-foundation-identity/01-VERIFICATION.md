@@ -7,7 +7,7 @@ overrides_applied: 0
 re_verification: false
 human_verification:
   - test: "SES email actually delivered — trigger a password-reset or account-unlock email in production; confirm the recipient receives it"
-    expected: "Email arrives in inbox from no-reply@portalfinance.com.br with correct pt-BR copy; SES delivery metrics show no bounces"
+    expected: "Email arrives in inbox from no-reply@portalfinance.app with correct pt-BR copy; SES delivery metrics show no bounces"
     why_human: "SES production access and SNS subscription (Plan 01-04 Task 4) are deferred ops tasks. Code path cannot be exercised without live AWS credentials and a confirmed SNS subscription."
   - test: "Sentry EU captures a real error with CPF scrubbed — visit a route that throws, confirm the Sentry EU dashboard at de.sentry.io shows the event with [CPF] in place of any CPF digits"
     expected: "Event appears in the Sentry EU (de.sentry.io) project with message containing [CPF] rather than the raw digits; user.id is a 16-char hex hash, not a UUID"
@@ -242,7 +242,7 @@ No blockers found. Both flagged stubs are documented intentional deferences, not
 
 **Test:** In the deployed production Railway environment, trigger a password-reset request or account-unlock email for a real email address. Confirm the email arrives in the recipient's inbox.
 
-**Expected:** Email arrives from `no-reply@portalfinance.com.br` with correct pt-BR copy, DKIM signature validates, no SPF errors. SES delivery metrics show 0 bounces for the test send. After a forced bounce (using `bounce@simulator.amazonses.com`), confirm a `ses_suppressions` row is created and a subsequent send attempt returns `{ suppressed: true }`.
+**Expected:** Email arrives from `no-reply@portalfinance.app` with correct pt-BR copy, DKIM signature validates, no SPF errors. SES delivery metrics show 0 bounces for the test send. After a forced bounce (using `bounce@simulator.amazonses.com`), confirm a `ses_suppressions` row is created and a subsequent send attempt returns `{ suppressed: true }`.
 
 **Why human:** AWS SES production access is pending (human-action gate from plan 01-04 Task 4, deferred in STATE.md). The SNS topic subscription cannot be confirmed without a live HTTPS endpoint. All code-side implementation is verified by `tests/integration/webhooks/ses-bounce.test.ts` and `tests/integration/lgpd/dsr.test.ts`.
 
@@ -256,7 +256,7 @@ No blockers found. Both flagged stubs are documented intentional deferences, not
 
 ### 3. Production Session Lifecycle on Deployed Railway Instance
 
-**Test:** On the deployed `portalfinance.com.br` URL, complete a full register → login → browser refresh → logout cycle.
+**Test:** On the deployed `portalfinance.app` URL, complete a full register → login → browser refresh → logout cycle.
 
 **Expected:** After signup, user is redirected to /dashboard. Browser refresh keeps the user logged in (session cookie + DB session row). Clicking logout redirects to /login and the session row is deleted from the `sessions` table.
 

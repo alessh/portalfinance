@@ -103,7 +103,7 @@ export function PasswordReset({ reset_link, expires_at }: PasswordResetProps) {
               <strong>Não fui eu.</strong> Se você não solicitou a redefinição de
               senha, ignore este e-mail. Sua senha permanece inalterada. Se você
               suspeitar de acesso não autorizado, entre em contato imediatamente:{' '}
-              <strong>suporte@portalfinance.com.br</strong>
+              <strong>suporte@portalfinance.app</strong>
             </Text>
           </Section>
 

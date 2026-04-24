@@ -125,7 +125,7 @@ export function DSRAcknowledgment({
           <Text style={{ fontSize: '13px', color: '#6b8080', lineHeight: '1.5' }}>
             Se você não realizou esta solicitação ou tem dúvidas, entre em contato
             com o nosso Encarregado de Dados (DPO):{' '}
-            <strong>dpo@portalfinance.com.br</strong>
+            <strong>dpo@portalfinance.app</strong>
           </Text>
 
           <Text style={{ fontSize: '12px', color: '#9aabab', lineHeight: '1.5' }}>

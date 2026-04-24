@@ -37,7 +37,7 @@ beforeAll(async () => {
   process.env.AWS_ACCESS_KEY_ID = 'test-access-key-id';
   process.env.AWS_SECRET_ACCESS_KEY = 'test-secret-access-key';
   process.env.AWS_REGION = 'sa-east-1';
-  process.env.SES_FROM_EMAIL = 'no-reply@portalfinance.com.br';
+  process.env.SES_FROM_EMAIL = 'no-reply@portalfinance.app';
 
   const client = postgres(td.url, { max: 1 });
   const db = drizzle(client);

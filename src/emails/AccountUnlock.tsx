@@ -103,7 +103,7 @@ export function AccountUnlock({ unlock_link, expires_at }: AccountUnlockProps) {
             >
               <strong>Não fui eu.</strong> Se você não tentou acessar sua conta,
               sua senha pode ter sido comprometida. Entre em contato imediatamente
-              com nosso suporte: <strong>suporte@portalfinance.com.br</strong>
+              com nosso suporte: <strong>suporte@portalfinance.app</strong>
             </Text>
           </Section>
 

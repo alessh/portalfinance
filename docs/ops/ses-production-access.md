@@ -13,7 +13,7 @@ production access.
 ## Step 1 — Verify the sending domain
 
 1. Open the AWS console → **SES** → **Verified identities** → **Create identity**.
-2. Select **Domain**, enter your apex domain (e.g. `portalfinance.com.br`).
+2. Select **Domain**, enter your apex domain (e.g. `portalfinance.app`).
 3. Add the DKIM CNAME records shown by AWS to your DNS provider.
 4. Wait for status to reach **Verified** (usually 5–30 minutes).
 
@@ -50,7 +50,7 @@ and do not share PII with third parties outside contractual DPAs. We have
 a full account-deletion workflow that removes all PII including email
 addresses within 30 days of a DSR request.
 
-Technical contact: ops@portalfinance.com.br
+Technical contact: ops@portalfinance.app
 ```
 
 3. For **Use case type** select **Transactional**.
@@ -120,7 +120,7 @@ message.
 
 | Variable | Value |
 |---|---|
-| `SES_FROM_ADDRESS` | `no-reply@portalfinance.com.br` (verified domain) |
+| `SES_FROM_ADDRESS` | `no-reply@portalfinance.app` (verified domain) |
 | `SES_CONFIGURATION_SET` | `portal-finance` |
 | `AWS_REGION` | `sa-east-1` |
 | `AWS_ACCESS_KEY_ID` | IAM key with `ses:SendEmail` + `ses:SendRawEmail` |

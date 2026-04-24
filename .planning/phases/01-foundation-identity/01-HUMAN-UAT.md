@@ -13,7 +13,7 @@ updated: 2026-04-22T23:59:00Z
 ## Tests
 
 ### 1. SES email delivery end-to-end
-expected: Email arrives in inbox from `no-reply@portalfinance.com.br` with correct pt-BR copy; SES delivery metrics show no bounces. Trigger via password-reset or account-unlock flow.
+expected: Email arrives in inbox from `no-reply@portalfinance.app` with correct pt-BR copy; SES delivery metrics show no bounces. Trigger via password-reset or account-unlock flow.
 why_human: SES production access and SNS subscription (Plan 01-04 Task 4) are deferred ops tasks. Code path cannot be exercised without live AWS credentials and a confirmed SNS subscription.
 result: [pending]
 

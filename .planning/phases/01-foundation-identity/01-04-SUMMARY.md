@@ -95,11 +95,11 @@ metrics:
 
 Task 4 is a `checkpoint:human-action`. The following manual steps are required before SES email delivery goes live:
 
-1. **Verify apex domain** `portalfinance.com.br` is registered and DNS zone is under your control.
+1. **Verify apex domain** `portalfinance.app` is registered and DNS zone is under your control.
 2. **Configure SPF + DKIM** via AWS SES Verified Identities (SES manages DKIM keys; add CNAMEs to DNS).
-3. **Configure DMARC** `p=none rua=mailto:dmarc@portalfinance.com.br` on apex DNS.
+3. **Configure DMARC** `p=none rua=mailto:dmarc@portalfinance.app` on apex DNS.
 4. **Request SES production access** — use the verbatim justification in `docs/ops/ses-production-access.md`. Wait 24–48h for AWS approval.
-5. **Create SNS topic** `ses-bounces` in `sa-east-1` and subscribe `https://portalfinance.com.br/api/webhooks/ses/bounces` (HTTPS). The webhook auto-confirms the subscription on first SubscriptionConfirmation message.
+5. **Create SNS topic** `ses-bounces` in `sa-east-1` and subscribe `https://portalfinance.app/api/webhooks/ses/bounces` (HTTPS). The webhook auto-confirms the subscription on first SubscriptionConfirmation message.
 6. **Wire SES identity notifications** — Bounces + Complaints publish to the SNS topic.
 7. **Create Sentry EU project** at `https://sentry.io/signup/` → select EU data residency → copy DSN (must end with `de.sentry.io`).
 8. **Set Railway env vars:** `SENTRY_DSN`, `SENTRY_ENV=production`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION=sa-east-1`, `SES_FROM_EMAIL`, `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, `NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY`, `NEXT_PUBLIC_SENTRY_DSN`.
