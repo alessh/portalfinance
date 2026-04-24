@@ -35,7 +35,7 @@ Establish the Railway `sa-east-1` deployment topology (three services: `web`, `w
 
 - **D-09:** **AWS SES `sa-east-1`** is the transactional email provider for Phase 1 and forward. Strongest LGPD residency story (matches Pluggy/ASAAS/Sentry-EU pattern). Used for password-reset, account-unlock, DSR acknowledgment, and later Phase 2 re-auth + Phase 5 billing notifications.
 - **D-10:** **Email templates authored as React Email components in-repo** (`src/emails/*.tsx`), rendered to HTML at send time via `@react-email/render`. Type-safe variables; unit-testable; templates live with the code.
-- **D-11:** Sender address = **`no-reply@portalfinance.com.br` (apex domain)**. SPF + DKIM (SES-managed) + DMARC configured on the apex.
+- **D-11:** Sender address = **`no-reply@portalfinance.app` (apex domain)**. SPF + DKIM (SES-managed) + DMARC configured on the apex.
 - **D-12:** **Request SES production access during Phase 1 plan `01-04` (Observability)**. AWS review typically takes 24–48 hours — the plan must initiate the request early enough that dev/staging emails reach real addresses before the phase completes.
 - **D-13:** **DMARC policy starts at `p=none` with `rua` aggregate reporting** — monitoring only in Phase 1. Upgrade to `p=quarantine` → `p=reject` during Phase 6 LGPD hardening once reports are clean.
 - **D-14:** Use the **AWS SDK v3 SES client** (`@aws-sdk/client-ses`), not SMTP / Nodemailer. Native TypeScript, IAM credentials, better retry handling.

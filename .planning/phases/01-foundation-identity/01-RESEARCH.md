@@ -28,7 +28,7 @@
 **Email / Transactional Provider**
 - **D-09:** AWS SES `sa-east-1` is the transactional email provider for Phase 1 and forward.
 - **D-10:** Email templates authored as React Email components in-repo (`src/emails/*.tsx`), rendered via `@react-email/render`.
-- **D-11:** Sender address = `no-reply@portalfinance.com.br` (apex). SPF + DKIM (SES-managed) + DMARC on the apex.
+- **D-11:** Sender address = `no-reply@portalfinance.app` (apex). SPF + DKIM (SES-managed) + DMARC on the apex.
 - **D-12:** Request SES production access during plan `01-04` — AWS review is 24–48 h.
 - **D-13:** DMARC starts at `p=none` with `rua` aggregate reporting. Upgrade to `quarantine`/`reject` in Phase 6.
 - **D-14:** Use the **AWS SDK v3 SES client** (`@aws-sdk/client-ses`). Not SMTP / Nodemailer.
@@ -570,7 +570,7 @@ const EnvSchema = z.object({
   AWS_ACCESS_KEY_ID: z.string(),
   AWS_SECRET_ACCESS_KEY: z.string(),
   AWS_REGION: z.string().default("sa-east-1"),
-  SES_FROM_EMAIL: z.string().email().default("no-reply@portalfinance.com.br"),
+  SES_FROM_EMAIL: z.string().email().default("no-reply@portalfinance.app"),
   TURNSTILE_SITE_KEY: z.string(),
   TURNSTILE_SECRET_KEY: z.string(),
   NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY: z.string(), // mirrors TURNSTILE_SITE_KEY for the client bundle
@@ -600,11 +600,11 @@ export async function register() {
 
    The worker entrypoint (`src/jobs/worker.ts`) imports `lib/env` as its first statement before starting pg-boss.
 
-6. **SES production access (D-12).** In the AWS console → SES → "Request production access." Justification template: "Transactional email for user authentication, password reset, account unlock, and LGPD data subject request acknowledgments on a Brazilian personal-finance SaaS. Expected monthly volume: < 10k emails. Bounce-handling webhook configured against SNS, with automatic suppression of bouncing addresses. DMARC, SPF, and DKIM configured at the apex (`portalfinance.com.br`). DMARC starts at `p=none` for aggregate reporting and will be upgraded after 30 days of clean reports." Submit on day 1 of 01-04.
+6. **SES production access (D-12).** In the AWS console → SES → "Request production access." Justification template: "Transactional email for user authentication, password reset, account unlock, and LGPD data subject request acknowledgments on a Brazilian personal-finance SaaS. Expected monthly volume: < 10k emails. Bounce-handling webhook configured against SNS, with automatic suppression of bouncing addresses. DMARC, SPF, and DKIM configured at the apex (`portalfinance.app`). DMARC starts at `p=none` for aggregate reporting and will be upgraded after 30 days of clean reports." Submit on day 1 of 01-04.
 
 7. **SES bounce → SNS → webhook → worker (D-15).** End-to-end:
    - Configure SES to publish bounces + complaints to an SNS topic (one-time setup in 01-04).
-   - Subscribe the topic to `https://portalfinance.com.br/api/webhooks/ses/bounces` (HTTPS endpoint).
+   - Subscribe the topic to `https://portalfinance.app/api/webhooks/ses/bounces` (HTTPS endpoint).
    - Webhook handler: (a) handle SNS subscription-confirmation GET/POST (call the `SubscribeURL`); (b) verify SNS message signature using `aws-sdk/client-sns` or a lightweight verifier; (c) `INSERT INTO webhook_events ... ON CONFLICT DO NOTHING` keyed on `(source='SES', event_id=Message.MessageId)`; (d) `boss.send('ses.bounce', { messageId })`; (e) return 200.
    - Worker `ses-bounce-worker`: SELECT the `webhook_events` row, extract `bouncedRecipients[]` from the payload, upsert `ses_suppressions` rows. Mark `processed_at`.
    - Pre-send guard: every SES-sending service (DSR acknowledge worker, password-reset worker, unlock worker) checks `ses_suppressions` and refuses to send to a suppressed address.
@@ -932,7 +932,7 @@ If any of A1–A10 is wrong at verification time, the planner should update PLAN
 
 ## Open Questions / Blockers for Planner
 
-1. **Do we own `portalfinance.com.br`?** D-11 hardcodes this sender. If the apex is not yet registered, DNS setup (MX, SPF, DKIM, DMARC) becomes a dependency on registration completing — planner should surface this as the first task of 01-04 alongside the SES production-access request. If not yet owned: halt at the end of 01-02 and escalate.
+1. **Do we own `portalfinance.app`?** D-11 hardcodes this sender. If the apex is not yet registered, DNS setup (MX, SPF, DKIM, DMARC) becomes a dependency on registration completing — planner should surface this as the first task of 01-04 alongside the SES production-access request. If not yet owned: halt at the end of 01-02 and escalate.
    - What we know: CONTEXT.md specifies the domain; STATE.md does not note ownership.
    - What's unclear: whether the domain is registered and the DNS zone is under our control.
    - Recommendation: The planner adds a "verify apex domain ownership and nameservers" subtask at the top of 01-04. If not owned, 01-04 splits into a blocking subtask before SES work can proceed.
@@ -1147,7 +1147,7 @@ export async function register() {
 
 ### Open Questions for Planner
 
-1. Domain ownership of `portalfinance.com.br` (blocks SES setup in 01-04).
+1. Domain ownership of `portalfinance.app` (blocks SES setup in 01-04).
 2. ToS / Privacy Policy draft existence (needed for `consent_version` hash).
 3. CPF_HASH_PEPPER vs ENCRYPTION_KEY — recommend two distinct env vars.
 4. Logo SVG authoring for `AuthShell` + Phase-4 PWA manifest.

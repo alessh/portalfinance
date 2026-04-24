@@ -126,8 +126,8 @@
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| `no-reply@mail.portalfinance.com.br` (subdomain) | Dedicated subdomain isolates sending reputation. Industry standard. | |
-| `no-reply@portalfinance.com.br` (apex) | Main domain; simpler DNS; couples reputation. | ✓ |
+| `no-reply@mail.portalfinance.app` (subdomain) | Dedicated subdomain isolates sending reputation. Industry standard. | |
+| `no-reply@portalfinance.app` (apex) | Main domain; simpler DNS; couples reputation. | ✓ |
 | Decide during plan — domain not yet secured | Defer until domain registration state is confirmed. | |
 
 **User's choice:** Apex domain.

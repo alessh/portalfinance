@@ -58,7 +58,7 @@ const EnvSchema = z
     AWS_ACCESS_KEY_ID: z.string().optional(),
     AWS_SECRET_ACCESS_KEY: z.string().optional(),
     AWS_REGION: z.string().default('sa-east-1'),
-    SES_FROM_EMAIL: z.string().email().default('no-reply@portalfinance.com.br'),
+    SES_FROM_EMAIL: z.string().email().default('no-reply@portalfinance.app'),
 
     // Cloudflare Turnstile — server-side secret + client-exposed site key.
     // Optional in tests; required in production (OPS-04 refine enforces).

@@ -13,7 +13,7 @@ export const piiCorpus = {
   },
   emails: [
     'user@example.com',
-    'suporte+tag@portalfinance.com.br',
+    'suporte+tag@portalfinance.app',
     'a.b.c@test.co',
   ],
   phonesBr: ['+55 11 98765-4321', '(11) 98765-4321', '11 987654321'],

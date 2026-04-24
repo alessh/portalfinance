@@ -185,8 +185,8 @@ Estes Termos são regidos pelas leis da República Federativa do Brasil. Para re
 
 Para dúvidas sobre estes Termos, entre em contato:
 
-- **E-mail:** juridico@portalfinance.com.br
-- **DPO (Encarregado de Dados):** dpo@portalfinance.com.br
+- **E-mail:** juridico@portalfinance.app
+- **DPO (Encarregado de Dados):** dpo@portalfinance.app
 
 > **TODO (legal):** Confirmar endereço de e-mail e designar formalmente o DPO conforme Art. 41 da LGPD.
 

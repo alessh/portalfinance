@@ -15,11 +15,11 @@
 **Controlador:** Portal Finance Ltda.
 **CNPJ:** [TODO: inserir CNPJ após constituição da empresa]
 **Endereço:** [TODO: inserir endereço]
-**E-mail:** privacidade@portalfinance.com.br
+**E-mail:** privacidade@portalfinance.app
 
 **Encarregado de Dados (DPO):**
 Nome: [TODO: designar formalmente conforme Art. 41 da LGPD]
-E-mail: dpo@portalfinance.com.br
+E-mail: dpo@portalfinance.app
 
 ---
 
@@ -133,14 +133,14 @@ Como titular de dados pessoais, você tem os seguintes direitos garantidos pela 
 | Direito | Como Exercer | Prazo de Resposta |
 |---------|-------------|------------------|
 | **Confirmação e Acesso** — saber quais dados possuímos e acessá-los | Configurações > Privacidade > Exportar meus dados | 15 dias úteis (Art. 19 LGPD) |
-| **Correção** — corrigir dados incompletos ou desatualizados | Configurações de conta ou e-mail para dpo@portalfinance.com.br | 15 dias |
+| **Correção** — corrigir dados incompletos ou desatualizados | Configurações de conta ou e-mail para dpo@portalfinance.app | 15 dias |
 | **Eliminação** — solicitar exclusão dos dados | Configurações > Privacidade > Excluir minha conta | 30 dias |
 | **Portabilidade** — receber seus dados em formato estruturado | Configurações > Privacidade > Exportar meus dados | 15 dias |
 | **Revogação do consentimento** — revogar consentimentos previamente dados | Configurações de conta | Imediato |
-| **Oposição** — opor-se a tratamentos com base em legítimo interesse | E-mail para dpo@portalfinance.com.br | 15 dias |
+| **Oposição** — opor-se a tratamentos com base em legítimo interesse | E-mail para dpo@portalfinance.app | 15 dias |
 | **Informação sobre compartilhamento** — saber com quem compartilhamos seus dados | Esta Política de Privacidade | Imediato |
 
-Para exercer qualquer direito, entre em contato com nosso DPO: **dpo@portalfinance.com.br**
+Para exercer qualquer direito, entre em contato com nosso DPO: **dpo@portalfinance.app**
 
 ---
 
@@ -192,10 +192,10 @@ Se você acreditar que seus direitos não foram atendidos, pode registrar reclam
 ## 13. Contato
 
 **Encarregado de Dados (DPO):**
-E-mail: dpo@portalfinance.com.br
+E-mail: dpo@portalfinance.app
 
 **Para solicitações de titulares (DSR):**
-E-mail: privacidade@portalfinance.com.br
+E-mail: privacidade@portalfinance.app
 Prazo de resposta: até 15 dias úteis
 
 > **TODO (legal):** Após designação formal do DPO conforme Art. 41 da LGPD, atualizar com nome completo e registrar na ANPD se aplicável.

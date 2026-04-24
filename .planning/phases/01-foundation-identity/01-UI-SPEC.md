@@ -417,7 +417,7 @@ Display as `Alert variant="destructive"`.
 - Icon: `<ShieldAlert>` from lucide-react, 48px, `text-warning-fg`, centered
 - Heading: "Conta temporariamente bloqueada"
 - Body: "Por segurança, bloqueamos temporariamente o acesso após múltiplas tentativas. Você receberá um e-mail com instruções para desbloquear, ou aguarde [N] minutos."
-- Primary CTA: "Entrar em contato" → `mailto:suporte@portalfinance.com.br` (secondary fallback only)
+- Primary CTA: "Entrar em contato" → `mailto:suporte@portalfinance.app` (secondary fallback only)
 - No retry button on this screen
 
 ---

@@ -19,7 +19,7 @@ export function AccountLockedScreen() {
         a conta, ou aguarde 15 minutos.
       </p>
       <a
-        href="mailto:suporte@portalfinance.com.br"
+        href="mailto:suporte@portalfinance.app"
         className="inline-block text-sm text-primary hover:underline"
       >
         Entrar em contato
