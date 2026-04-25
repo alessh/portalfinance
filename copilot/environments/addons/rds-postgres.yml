@@ -1,0 +1,126 @@
+# RDS Postgres 16 environment addon for Portal Finance prod.
+#
+# Plan 01.1-04 / D-01 (traditional RDS, not Aurora), D-08 (private
+# subnets, PubliclyAccessible false), D-19 (db.t4g.micro, 20 GB gp3,
+# Multi-AZ disabled in v1).
+#
+# This is an ENVIRONMENT addon (RESEARCH Pattern 1 recommendation b)
+# so outputs are visible to all services deployed into prod (web,
+# worker, migrate). Copilot exposes Outputs as SCREAMING_SNAKE_CASE
+# env vars; entrypoint.sh consumes DB_ENDPOINT / DB_PORT / DB_NAME /
+# DB_SECRET_ARN to compose DATABASE_URL.
+#
+# Source shape: https://aws.github.io/copilot-cli/docs/developing/addons/environment/
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  App:
+    Type: String
+    Description: Copilot application name (portalfinance)
+  Env:
+    Type: String
+    Description: Copilot environment name (prod)
+
+Resources:
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: !Sub '${App}-${Env}-rds-subnet-group'
+      SubnetIds:
+        - Fn::ImportValue: !Sub '${App}-${Env}-PrivateSubnet1'
+        - Fn::ImportValue: !Sub '${App}-${Env}-PrivateSubnet2'
+      Tags:
+        - Key: Project
+          Value: PortalFinance
+        - Key: Phase
+          Value: '01.1'
+
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub '${App}-${Env}-rds-sg'
+      VpcId:
+        Fn::ImportValue: !Sub '${App}-${Env}-VpcId'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId:
+            Fn::ImportValue: !Sub '${App}-${Env}-EnvironmentSecurityGroup'
+
+  DBMasterSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub '${App}/${Env}/rds/master'
+      Description: 'RDS Postgres master credentials (auto-managed by RDS)'
+      GenerateSecretString:
+        SecretStringTemplate: '{"username": "portalfinance"}'
+        GenerateStringKey: 'password'
+        ExcludeCharacters: '"@/\'
+        PasswordLength: 32
+
+  DBInstance:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: !Sub '${App}-${Env}-db'
+      DBName: portalfinance
+      Engine: postgres
+      EngineVersion: '16'
+      DBInstanceClass: db.t4g.micro
+      AllocatedStorage: '20'
+      StorageType: gp3
+      StorageEncrypted: true
+      MasterUsername: !Sub '{{resolve:secretsmanager:${DBMasterSecret}:SecretString:username}}'
+      MasterUserPassword: !Sub '{{resolve:secretsmanager:${DBMasterSecret}:SecretString:password}}'
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      VPCSecurityGroups:
+        - !GetAtt DBSecurityGroup.GroupId
+      PubliclyAccessible: false
+      MultiAZ: false
+      BackupRetentionPeriod: 7
+      DeletionProtection: true
+      CopyTagsToSnapshot: true
+      Tags:
+        - Key: Project
+          Value: PortalFinance
+        - Key: Phase
+          Value: '01.1'
+
+  DBSecretAttachment:
+    Type: AWS::SecretsManager::SecretTargetAttachment
+    Properties:
+      SecretId: !Ref DBMasterSecret
+      TargetId: !Ref DBInstance
+      TargetType: AWS::RDS::DBInstance
+
+  DBAccessPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: !Sub '${App}-${Env}-rds-access'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue
+            Resource: !Ref DBMasterSecret
+
+Outputs:
+  DbEndpoint:
+    Description: RDS Postgres endpoint address
+    Value: !GetAtt DBInstance.Endpoint.Address
+  DbPort:
+    Description: RDS Postgres endpoint port
+    Value: !GetAtt DBInstance.Endpoint.Port
+  DbName:
+    Description: Initial database name
+    Value: portalfinance
+  DbSecretArn:
+    Description: Secrets Manager ARN holding master credentials
+    Value: !Ref DBMasterSecret
+  DBAccessPolicy:
+    # Outputs named after ManagedPolicy ARNs are attached by Copilot to
+    # every task role in the environment automatically.
+    Description: Managed policy granting GetSecretValue on DBMasterSecret
+    Value: !Ref DBAccessPolicy

@@ -1,0 +1,53 @@
+# Copilot environment manifest -- Portal Finance prod.
+#
+# Plan 01.1-04 / D-02 (single prod), D-14 (ACM public cert ARN),
+# D-17 (single account), D-18 (VPC endpoints + NAT),
+# D-22 (project tags).
+#
+# The `certificates` array is populated by Plan 01.1-07 after ACM
+# issues the cert. Leave the key present with a placeholder so the
+# manifest parses; Copilot requires an existing ARN at `env deploy`
+# time but not at `env init`.
+name: prod
+type: Environment
+
+network:
+  vpc:
+    cidr: 10.20.0.0/16
+    subnets:
+      public:
+        - cidr: 10.20.0.0/24
+          az: sa-east-1a
+        - cidr: 10.20.1.0/24
+          az: sa-east-1b
+      private:
+        - cidr: 10.20.10.0/24
+          az: sa-east-1a
+        - cidr: 10.20.11.0/24
+          az: sa-east-1b
+  # NAT gateway stays -- external traffic to Pluggy, ASAAS, Gemini, Sentry, SES.
+  # VPC endpoints keep AWS-service traffic off NAT (lower cost + private).
+  vpc_endpoints:
+    - ssm
+    - ssmmessages
+    - secretsmanager
+    - ecr.api
+    - ecr.dkr
+    - sts
+    - logs
+    - s3  # gateway endpoint; free
+
+http:
+  public:
+    # Filled in by Plan 01.1-07 once ACM issues the cert.
+    # certificates:
+    #   - arn:aws:acm:sa-east-1:<account-id>:certificate/<uuid>
+    ingress:
+      cdn: false  # Cloudflare sits in front, not AWS CloudFront
+
+observability:
+  container_insights: false  # cost-saver; revisit Phase 6
+
+tags:
+  Project: PortalFinance
+  Phase: '01.1'
