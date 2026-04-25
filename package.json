@@ -4,12 +4,13 @@
   "private": true,
   "packageManager": "pnpm@9.15.0",
   "engines": {
-    "node": ">=20.0.0 <21.0.0"
+    "node": ">=22.0.0 <23.0.0"
   },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start:web": "next start",
+    "build:worker": "tsup --config tsup.config.ts",
+    "start:web": "node .next/standalone/server.js",
     "start:worker": "tsx src/jobs/worker.ts",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
@@ -20,6 +21,7 @@
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.ts",
+    "db:migrate:prod": "node dist/db/migrate.js",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
