@@ -1,0 +1,50 @@
+# Copilot Backend Service -- Portal Finance worker (pg-boss consumers).
+#
+# Plan 01.1-04 / D-04 (backend, no ALB), D-05 (SSM secrets), D-19
+# (0.25 vCPU, 512 MB).
+#
+# Fixed count: 1 -- pg-boss per-user singleton keys assume a single
+# replica. Horizontal scaling deferred to Phase 6.
+
+name: worker
+type: Backend Service
+
+image:
+  build:
+    dockerfile: Dockerfile
+    context: .
+  # No port -- no ALB, no public listener.
+
+command: ["node", "dist/jobs/worker.js"]
+
+cpu: 256
+memory: 512
+platform: linux/x86_64
+count: 1
+exec: true
+
+variables:
+  NODE_ENV: production
+  SENTRY_ENV: production
+  AWS_REGION: sa-east-1
+  LOG_LEVEL: info
+  SERVICE_NAME: worker
+  SES_FROM_EMAIL: no-reply@portalfinance.app
+  NEXTAUTH_URL: https://portalfinance.app
+
+secrets:
+  NEXTAUTH_SECRET: /copilot/portalfinance/prod/secrets/NEXTAUTH_SECRET
+  ENCRYPTION_KEY: /copilot/portalfinance/prod/secrets/ENCRYPTION_KEY
+  CPF_HASH_PEPPER: /copilot/portalfinance/prod/secrets/CPF_HASH_PEPPER
+  SENTRY_DSN: /copilot/portalfinance/prod/secrets/SENTRY_DSN
+
+network:
+  vpc:
+    placement: private
+
+logging:
+  retention: 30
+
+tags:
+  Project: PortalFinance
+  Phase: '01.1'

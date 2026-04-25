@@ -1,0 +1,64 @@
+# Copilot Load Balanced Web Service -- Portal Finance web (Next.js).
+#
+# Plan 01.1-04 / D-03 (public ALB), D-05 (SSM secrets), D-19 (0.5 vCPU),
+# D-22 (tags), D-24 (/api/health probe).
+
+name: web
+type: Load Balanced Web Service
+
+image:
+  build:
+    dockerfile: Dockerfile
+    context: .
+  port: 8080
+
+http:
+  path: '/'
+  healthcheck:
+    path: '/api/health'
+    port: 8080
+    success_codes: '200'
+    healthy_threshold: 2
+    unhealthy_threshold: 3
+    interval: 30s
+    timeout: 5s
+    grace_period: 60s
+  # Plan 01.1-07 populates alias after ACM cert issuance + Cloudflare DNS.
+  alias: portalfinance.app
+
+cpu: 512
+memory: 1024
+platform: linux/x86_64
+count: 1
+exec: true  # ECS Exec for in-VPC psql + oncall access (Claude's Discretion)
+
+variables:
+  NODE_ENV: production
+  SENTRY_ENV: production
+  AWS_REGION: sa-east-1
+  PORT: '8080'
+  LOG_LEVEL: info
+  SERVICE_NAME: web
+  SES_FROM_EMAIL: no-reply@portalfinance.app
+  NEXTAUTH_URL: https://portalfinance.app
+  TURNSTILE_SITE_KEY: '0x4AAAAAA...'           # public key -- safe in manifest
+  NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY: '0x4AAAAAA...'
+
+secrets:
+  NEXTAUTH_SECRET: /copilot/portalfinance/prod/secrets/NEXTAUTH_SECRET
+  ENCRYPTION_KEY: /copilot/portalfinance/prod/secrets/ENCRYPTION_KEY
+  CPF_HASH_PEPPER: /copilot/portalfinance/prod/secrets/CPF_HASH_PEPPER
+  SENTRY_DSN: /copilot/portalfinance/prod/secrets/SENTRY_DSN
+  TURNSTILE_SECRET_KEY: /copilot/portalfinance/prod/secrets/TURNSTILE_SECRET_KEY
+  # NO AWS_ACCESS_KEY_* -- SES uses task role (Plan 01.1-03 Task 3 pivot).
+
+network:
+  vpc:
+    placement: private  # ALB lives in public subnets; task runs in private
+
+logging:
+  retention: 30  # D-23
+
+tags:
+  Project: PortalFinance
+  Phase: '01.1'
