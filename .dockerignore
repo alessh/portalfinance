@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Next.js
+.next/
+out/
+
+# Build output -- builder stage regenerates these from source
+dist/
+build/
+tsconfig.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Test artifacts
+coverage/
+playwright-report/
+test-results/
+.vitest-cache/
+
+# Tooling caches
+.turbo/
+.cache/
+.eslintcache
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Repo-only -- never ship to image
+.git/
+.github/
+.planning/
+docs/
+copilot/
+tests/
+scripts/run-e2e.ts
+*.md
+Dockerfile
+.dockerignore
