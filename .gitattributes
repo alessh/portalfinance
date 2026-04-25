@@ -1,0 +1,6 @@
+# Plan 01.1-03 -- alpine /bin/sh (busybox) refuses CRLF shebangs.
+# Force POSIX shell scripts and the Dockerfile to stay LF regardless
+# of the host platform's `core.autocrlf` setting.
+*.sh        text eol=lf
+Dockerfile  text eol=lf
+.dockerignore text eol=lf
