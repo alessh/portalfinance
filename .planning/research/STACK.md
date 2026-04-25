@@ -104,6 +104,100 @@ pnpm add dayjs
 | Railway (sa-east-1) | GCP Cloud Run southamerica-east1 | Equivalent; Railway picked for faster pre-seed setup |
 | Sentry EU | GlitchTip self-hosted | If Sentry EU DPA is rejected by legal; adds ops burden |
 
+## Hosting Decision: Railway vs Vercel
+
+Vercel is the better Next.js host in isolation (best-in-class DX, edge CDN, fastest previews). Railway was chosen because two Portal Finance constraints are non-negotiable and Vercel cannot satisfy them at v1 budget: **LGPD data residency** and **long-lived `pg-boss` workers**.
+
+### Comparison
+
+| Dimension | Railway | Vercel |
+|---|---|---|
+| BR region | `sa-east-1` (São Paulo) on web + worker + Postgres | No native BR region on Hobby/Pro; serverless defaults to US/EU; dedicated BR region requires Enterprise |
+| LGPD residency | All compute + DB inside BR territory | Data transits/processes outside BR unless Enterprise + custom region config |
+| Long-lived workers | First-class "service" primitive — `pg-boss` runs as a persistent Node process | No long-running processes (15 min Pro / 5 min Hobby cap); `pg-boss` incompatible |
+| Postgres | Managed Postgres 16 in same region as app, private networking | Vercel Postgres is Neon-backed (US/EU only — disqualified) |
+| Pricing model | Usage-based (CPU/RAM/egress) — predictable for steady-state | Per-invocation + bandwidth — spikes with webhook/sync bursts |
+| Cold starts | None (long-lived containers) | Yes on serverless — hurts the "<200 ms webhook 200" requirement |
+| Pluggy singleton | Per-user `pg-boss` singleton key works naturally | Needs external coordination (Redis lock) because functions are stateless |
+| Cron | Native Railway Cron | Vercel Cron (Pro+), still serverless-bound |
+| DX for Next.js | Solid (Nixpacks / Dockerfile) | Excellent (first-party) |
+| Preview envs | Per-branch | Per-PR, faster |
+
+### Concrete disqualifiers for Vercel
+
+1. **LGPD Art. 33** — transferring personal data abroad requires adequacy decision, SCCs, or explicit consent. Running the DB on Neon-US means every sync transfers CPF + bank data to the US; the compliance and consent-UX cost is not worth it for v1.
+2. **`pg-boss` needs a live Postgres connection held by a long-running worker.** Serverless cannot host that. Porting async jobs to Inngest / Trigger.dev / Temporal is blocked — all disqualified for residency (see "What NOT to Use").
+3. **Webhook and sync fan-out.** Pluggy webhooks arrive in bursts. Serverless pays per-invocation, cold-starts under load, and the per-user singleton pattern (pitfalls P5/P6) needs a warm coordinator.
+
+### Trade-offs accepted with Railway
+
+- Slower Next.js deploys than Vercel's edge pipeline.
+- No zero-config edge/ISR CDN — Next.js served from a single BR region. Acceptable because the audience is in BR.
+- Self-managed Sentry, logging, analytics (already picked: Sentry EU + structured JSON logs).
+- Railway has had platform incidents historically — mitigate via status monitoring and DB backups.
+
+### When Vercel would have won
+
+US-only, stateless product with no background jobs. Not Portal Finance.
+
+## Edge Decision: Cloudflare as Complement to Railway (Not Substitute)
+
+Cloudflare cannot replace Railway for Portal Finance because it does not host the two things the product depends on: **Postgres in BR territory** and **long-lived `pg-boss` workers**. However, Cloudflare covers layers Railway does not do well (CDN, WAF, DDoS, object storage, edge rate limiting) and should be plugged **in front of** Railway.
+
+### Comparison
+
+| Dimension | Railway | Cloudflare (Workers / Pages / D1 / R2) |
+|---|---|---|
+| BR residency (LGPD) | `sa-east-1` explicit on web + worker + Postgres | Workers run in global PoPs (includes BR), but no guarantee that data *stays* in BR. Data Localization Suite with BR jurisdiction is Enterprise-only (expensive). D1 has no BR jurisdiction option |
+| Execution model | Long-lived Node containers (persistent) | V8 isolates, stateless, 30s CPU (paid) / 10ms (free). Durable Objects provide state but are not full Node processes |
+| `pg-boss` worker | ✅ Dedicated Node process holding a Postgres connection with `LISTEN/NOTIFY` | ❌ Impossible on Workers. Durable Objects do not run the full Node ecosystem (no `pg`, no `postgres` driver, no persistent TCP listen/notify) |
+| Managed Postgres | ✅ Postgres 16 in `sa-east-1`, same private network as the app | ❌ No managed Postgres. Hyperdrive is a pooler/cache — you still need Postgres hosted elsewhere |
+| D1 as primary DB | N/A | ❌ Globally-replicated SQLite, cannot be pinned to BR, not suited for transactional finance volume with monthly aggregates |
+| Webhook receiver <200ms | Good (warm container in BR) | ✅ Excellent — Workers at the edge respond in ~5–20ms from the São Paulo PoP |
+| Jobs / queue | `pg-boss` on the same Postgres (shared transaction outbox pattern) | Cloudflare Queues exists, but separate from your DB — loses the "enqueue in same transaction as write" guarantee |
+| Cron | Railway Cron native | Workers Cron Triggers (same execution model caveats) |
+| CDN / static assets | Basic (serve from Next) | ✅ Market leader — free CDN, BR PoPs, aggressive cache |
+| DDoS / WAF / Bot management | None native | ✅ Market leader — L3–L7 protection free on all tiers |
+| R2 (object storage) | None (need external S3/GCS) | ✅ S3-compatible, free egress — ideal for NFS-e PDFs, receipts, backups |
+| Zero Trust / Access | None | ✅ Great for protecting `/admin`, Drizzle Studio, internal dashboards (free up to 50 users) |
+| Pricing (steady-state) | Predictable CPU/RAM/egress | Per-invocation + KV ops + Queue messages + R2 GB. Unpredictable under Pluggy webhook bursts |
+| Next.js server-side DX | ✅ Full SSR + API routes + workers in one project | `@cloudflare/next-on-pages` works but forces all code into the Workers runtime (no `fs`, restricted `net`, no native libs). `argon2` native, `@sentry/nextjs` server, Postgres drivers all require adaptation or replacement |
+
+### Concrete disqualifiers for Cloudflare as the core platform
+
+1. **`pg-boss` does not run in V8 isolates.** It is the backbone of sync, categorization, transfer detection, LGPD retention, and NFS-e issuance. Replacing it with Cloudflare Queues + Workers means a different queue, a different model, and losing the shared-transaction outbox that `pg-boss` gives by living in the project Postgres.
+2. **No Postgres in BR.** Cloudflare does not host Postgres. The alternatives (Neon, Supabase) are outside BR — LGPD violation. Hosting Postgres on a BR VPS and connecting through Hyperdrive adds two providers to replicate what Railway delivers integrated.
+3. **Next.js + Auth.js + argon2 friction.** `argon2` native, Sentry server-side, and several Node-only libs either do not run or require non-trivial swaps in the Workers runtime. Every Next.js release risks breaking `next-on-pages` compatibility.
+4. **Unpredictable cost under webhook bursts.** Pluggy webhooks arrive in spikes (start of month, after bank maintenance windows). Per-invocation pricing can exceed a Railway container during these spikes.
+
+### Recommended layering — Cloudflare on the edge, Railway at the core
+
+| Layer | Use Cloudflare | Why |
+|---|---|---|
+| DNS + CDN | ✅ | BR PoPs, free TLS, Next.js static asset cache |
+| WAF + DDoS + Bot management | ✅ | Free L3–L7 protection for `/api/auth/*` and `/api/webhook/pluggy` |
+| `/static`, `/_next/static`, images | ✅ | Aggressive edge cache, free egress |
+| R2 for NFS-e PDFs, statement exports, DB backups | ✅ | S3-compatible, free egress (vs S3 charging egress) |
+| Cloudflare Access for `/admin`, Drizzle Studio, ops panels | ✅ | SSO + MFA free up to 50 users |
+| Edge rate-limit on `/api/webhook/pluggy` (optional) | ✅ | Reject invalid auth-header requests at the edge before waking Railway |
+| Turnstile captcha on signup | ✅ | Lower-friction than reCAPTCHA, no Google data flow |
+
+Topology:
+
+```
+User (BR)
+  → Cloudflare (DNS, CDN, WAF, R2, Access, Turnstile)
+    → Railway sa-east-1
+      ├── Next.js (web)
+      ├── pg-boss worker (Pluggy sync, categorization, NFS-e)
+      └── Postgres 16 (transactional data + pg-boss queue)
+    → External APIs (Pluggy, ASAAS, Gemini, Sentry EU)
+```
+
+### When Cloudflare would replace Railway
+
+Stateless API, DB small enough to fit in D1, zero long-running jobs, zero native Node libs. Not Portal Finance.
+
 ## What NOT to Use
 
 | Avoid | Why | Use Instead |
