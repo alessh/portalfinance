@@ -9,10 +9,18 @@
  * must accept only opaque IDs (protocol_id, request_type) — never raw user
  * fields. Enforced by template interface design in Plan 01-03.
  *
- * Phase 1 note: AWS credentials are optional (SES production access is a
- * Wave 4 task per D-12). When `AWS_ACCESS_KEY_ID` is absent, `sendEmail()`
- * logs a warning and returns `{ messageId: null, suppressed: false }`.
- * Phase 6 tightens this to throw in production.
+ * Plan 01.1-03 / RESEARCH Recommendation 1 — credential strategy:
+ *   - Production (Copilot Fargate): no AWS_ACCESS_KEY_* env vars; the SES
+ *     SDK falls through its default credential provider chain to the IAM
+ *     task role attached to the service. env.ts (per Plan 01.1-02 Task 2)
+ *     marks both keys .optional(), so the OPS-04 boot guard does not fire.
+ *     If the task role is missing or lacks ses:SendEmail, the SDK throws
+ *     CredentialsProviderError on the first SendEmail call (fail-closed).
+ *   - Local development / tests: set AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY
+ *     to drive the AWS SDK mock. No code change required.
+ *   - Local development without creds AND NODE_ENV !== 'production':
+ *     `sendEmail()` short-circuits with a warning log and returns
+ *     { messageId: null, suppressed: false } so dev flows are not blocked.
  */
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import { render } from '@react-email/render';
@@ -31,20 +39,26 @@ let _ses: SESClient | null = null;
 
 function getSesClient(): SESClient {
   if (_ses) return _ses;
-  // Read credentials from process.env directly so integration tests that set
-  // AWS_ACCESS_KEY_ID in beforeAll() (after env.ts is first parsed) work
-  // correctly without needing to restart the module registry.
-  const access_key = process.env.AWS_ACCESS_KEY_ID ?? env.AWS_ACCESS_KEY_ID;
-  const secret_key = process.env.AWS_SECRET_ACCESS_KEY ?? env.AWS_SECRET_ACCESS_KEY;
+  // Plan 01.1-03 / RESEARCH Rec 1 -- prefer IAM task role in production
+  // (Copilot manifest does NOT inject AWS_ACCESS_KEY_ID). Fall back to
+  // explicit credentials when they are set locally for pnpm dev / tests.
+  // env.ts already marks AWS_ACCESS_KEY_ID/SECRET as optional in prod
+  // (Plan 01.1-02 Task 2) -- this is the consumer pivot.
+  //
+  // Read directly from process.env so integration tests that mutate the
+  // environment in beforeAll() (after env.ts is first parsed) work without
+  // resetting the module registry.
+  const explicitCreds =
+    process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
+      ? {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        }
+      : undefined;
+
   _ses = new SESClient({
     region: process.env.AWS_REGION ?? env.AWS_REGION,
-    credentials:
-      access_key && secret_key
-        ? {
-            accessKeyId: access_key,
-            secretAccessKey: secret_key,
-          }
-        : undefined,
+    ...(explicitCreds ? { credentials: explicitCreds } : {}),
   });
   return _ses;
 }
@@ -86,16 +100,19 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
     return { messageId: null, suppressed: true };
   }
 
-  // --- Guard: abort if credentials missing (Phase 1 dev mode) ---
-  // Read directly from process.env so integration tests that set env vars
-  // in beforeAll() (after the `env` module is first parsed) are not blocked.
-  if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+  // --- Guard: dev-mode skip when no AWS creds AND not production ---
+  // In production the SES SDK uses the IAM task role (Plan 01.1-03 / Rec 1).
+  // The early-return is reserved for local development without explicit creds.
+  if (
+    process.env.NODE_ENV !== 'production' &&
+    (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY)
+  ) {
     // Use structured logger so this warning flows through the pino scrubObject
     // hook and is captured by Railway's JSON log aggregator. The recipient
     // address is intentionally redacted — raw PII must never appear in logs.
     logger.warn(
       { event: 'mailer_no_credentials', email_lower: '[EMAIL REDACTED IN DEV]' },
-      '[mailer] AWS credentials not set — skipping send',
+      '[mailer] AWS credentials not set — skipping send (dev mode only)',
     );
     return { messageId: null, suppressed: false };
   }
