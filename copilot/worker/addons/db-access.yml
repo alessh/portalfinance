@@ -1,0 +1,32 @@
+# Workload addon -- grants the worker task role read access to the RDS
+# master credentials secret. See copilot/web/addons/db-access.yml for
+# the rationale behind workload-level rather than env-level attach.
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  App:
+    Type: String
+    Description: The application name.
+  Env:
+    Type: String
+    Description: The environment name.
+  Name:
+    Type: String
+    Description: The name of the service.
+
+Resources:
+  DBAccessPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: !Sub 'Grants ${Name} task role read access to the RDS master credentials secret.'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue
+            Resource: !Sub 'arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${App}/${Env}/rds/master-*'
+
+Outputs:
+  DBAccessPolicy:
+    Description: ManagedPolicy attached to the worker task role.
+    Value: !Ref DBAccessPolicy

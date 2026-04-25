@@ -1,0 +1,49 @@
+# Workload addon -- grants the web task role read access to the RDS
+# master credentials secret so scripts/entrypoint.sh can compose
+# DATABASE_URL via aws secretsmanager get-secret-value (D-06).
+#
+# Why this file exists at workload level instead of the env addon
+# auto-attach mechanism:
+#   - The env addon (copilot/environments/addons/rds-postgres.yml) has
+#     a DBAccessPolicy ManagedPolicy resource and exposes its ARN as an
+#     Output. Copilot CLI is documented to auto-attach env-addon
+#     ManagedPolicy outputs to every service's task role, but in v1.34
+#     this mechanism did not fire for our env addon (verified by
+#     inspecting the task role -- DBAccessPolicy was not attached).
+#   - Workload-level addon ManagedPolicy outputs ARE reliably
+#     auto-attached to the task role of the corresponding workload.
+#   - Granting permissions per-workload also follows least-privilege
+#     better than env-level attachment to ALL task roles.
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  App:
+    Type: String
+    Description: The application name.
+  Env:
+    Type: String
+    Description: The environment name.
+  Name:
+    Type: String
+    Description: The name of the service.
+
+Resources:
+  DBAccessPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: !Sub 'Grants ${Name} task role read access to the RDS master credentials secret.'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue
+            # Secrets Manager appends a 6-char random suffix to the
+            # CFN-given Name; wildcard the trailing suffix.
+            Resource: !Sub 'arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${App}/${Env}/rds/master-*'
+
+Outputs:
+  # Output values that are valid IAM ManagedPolicy ARNs are
+  # auto-attached to the workload's task role by Copilot.
+  DBAccessPolicy:
+    Description: ManagedPolicy attached to the web task role.
+    Value: !Ref DBAccessPolicy
