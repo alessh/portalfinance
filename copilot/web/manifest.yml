@@ -41,8 +41,8 @@ variables:
   SERVICE_NAME: web
   SES_FROM_EMAIL: no-reply@portalfinance.app
   NEXTAUTH_URL: https://portalfinance.app
-  TURNSTILE_SITE_KEY: '0x4AAAAAA...'           # public key -- safe in manifest
-  NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY: '0x4AAAAAA...'
+  TURNSTILE_SITE_KEY: '0x4AAAAAADC3m3WBesHI5u2M'           # public key -- safe in manifest
+  NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY: '0x4AAAAAADC3m3WBesHI5u2M'  # public key -- safe in manifest
 
 secrets:
   NEXTAUTH_SECRET: /copilot/portalfinance/prod/secrets/NEXTAUTH_SECRET
