@@ -54,7 +54,17 @@ const EnvSchema = z
     PLUGGY_ENV: z.enum(['sandbox', 'production']).optional(),
     ASAAS_ENV: z.enum(['sandbox', 'production']).optional(),
 
-    // AWS SES — optional in development, required in production (OPS-04 refine enforces).
+    // AWS SES credentials.
+    //
+    // Plan 01.1-02 / SEC-02 + Plan 01.1-03 Recommendation 1 --
+    // AWS access keys are OPTIONAL in every environment, including
+    // production. The AWS SDK default credential provider chain
+    // (used by src/mailer.ts) falls through to the IAM task role
+    // attached to the Copilot Fargate service when these env vars
+    // are absent. Local dev + tests can still set them via
+    // AWS_PROFILE or explicit env. If neither env creds nor a task
+    // role are available, the SDK fails fast on the first SendEmail
+    // call (CredentialsProviderError) -- fail-closed, not silent.
     AWS_ACCESS_KEY_ID: z.string().optional(),
     AWS_SECRET_ACCESS_KEY: z.string().optional(),
     AWS_REGION: z.string().default('sa-east-1'),
@@ -68,7 +78,10 @@ const EnvSchema = z
 
     // Structured logging
     LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).default('info'),
-    SERVICE_NAME: z.string().default('web'),
+    // Plan 01.1-02 / D-11 -- the migrate Scheduled Job is a third
+    // SERVICE_NAME alongside web + worker. Copilot manifests in
+    // Plan 01.1-04 set this explicitly; local dev defaults to 'web'.
+    SERVICE_NAME: z.enum(['web', 'worker', 'migrate']).default('web'),
   })
   .refine(
     (e) => {
@@ -105,22 +118,20 @@ const EnvSchema = z
         'OPS-04 violation: production NODE_ENV with sandbox credentials or non-prod Sentry',
     },
   )
+  // Plan 01.1-02 / SEC-02 -- AWS access keys are NO LONGER required
+  // in production. Production runs on Copilot Fargate with an IAM task
+  // role attached to the service; the SDK default credential provider
+  // chain picks up the task-role STS session. Removing the prod refine
+  // unblocks Plan 01.1-03 Task 3 (SES IAM task-role pivot).
   .refine(
     (e) => {
       if (e.NODE_ENV !== 'production') return true;
       if (process.env.NEXT_PHASE === 'phase-production-build') return true;
-      // AWS SES credentials are required in production.
-      return !!(e.AWS_ACCESS_KEY_ID && e.AWS_SECRET_ACCESS_KEY);
-    },
-    {
-      message: 'OPS-04 violation: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are required in production',
-    },
-  )
-  .refine(
-    (e) => {
-      if (e.NODE_ENV !== 'production') return true;
-      if (process.env.NEXT_PHASE === 'phase-production-build') return true;
-      // Cloudflare Turnstile keys are required in production.
+      // Plan 01.1-02 / D-11 -- the migrate Scheduled Job does not render
+      // signup forms, so it does not need TURNSTILE_* keys. Skip the
+      // Turnstile gate when running as the migrate service.
+      if (e.SERVICE_NAME === 'migrate') return true;
+      // Cloudflare Turnstile keys are required in production for web + worker.
       return !!(e.TURNSTILE_SITE_KEY && e.TURNSTILE_SECRET_KEY && e.NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY);
     },
     {

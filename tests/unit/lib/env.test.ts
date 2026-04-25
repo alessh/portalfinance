@@ -126,3 +126,129 @@ describe('lib/env (Zod schema + OPS-04 guard)', () => {
     await expect(import('@/lib/env')).rejects.toThrow(/OPS-04/);
   });
 });
+
+// Plan 01.1-02 additions -- D-11 SERVICE_NAME=migrate widening
+describe('OPS-04 refinement -- migrate job variant (D-11)', () => {
+  beforeEach(async () => {
+    const { vi } = await import('vitest');
+    vi.resetModules();
+    resetEnv();
+  });
+
+  afterEach(() => {
+    resetEnv();
+  });
+
+  it('accepts NODE_ENV=production + SERVICE_NAME=migrate without TURNSTILE + AWS creds', async () => {
+    process.env.ENCRYPTION_KEY = Buffer.alloc(32, 1).toString('base64');
+    process.env.CPF_HASH_PEPPER = 'production-pepper-at-least-32-chars-xx';
+    process.env.NEXTAUTH_SECRET = 'production-secret-at-least-32-chars-x';
+    process.env.DATABASE_URL = 'postgres://x:y@db.example.com:5432/prod';
+    process.env.SENTRY_DSN = 'https://abc@oNNNN.ingest.de.sentry.io/PNNNN';
+    process.env.SENTRY_ENV = 'production';
+    process.env.SERVICE_NAME = 'migrate';
+    // No TURNSTILE_*, no AWS_ACCESS_KEY_*  -- migrate does not need them.
+    (process.env as Record<string, string>).NODE_ENV = 'production';
+
+    const mod = await import('@/lib/env');
+    expect(mod.env.SERVICE_NAME).toBe('migrate');
+    expect(mod.env.AWS_REGION).toBe('sa-east-1');
+  });
+
+  it('still throws for SERVICE_NAME=web when TURNSTILE_SECRET_KEY missing', async () => {
+    process.env.ENCRYPTION_KEY = Buffer.alloc(32, 1).toString('base64');
+    process.env.CPF_HASH_PEPPER = 'production-pepper-at-least-32-chars-xx';
+    process.env.NEXTAUTH_SECRET = 'production-secret-at-least-32-chars-x';
+    process.env.DATABASE_URL = 'postgres://x:y@db.example.com:5432/prod';
+    process.env.SENTRY_DSN = 'https://abc@oNNNN.ingest.de.sentry.io/PNNNN';
+    process.env.SENTRY_ENV = 'production';
+    process.env.SERVICE_NAME = 'web';
+    // No TURNSTILE_* set -- web path must still throw.
+    (process.env as Record<string, string>).NODE_ENV = 'production';
+
+    await expect(import('@/lib/env')).rejects.toThrow(/TURNSTILE/);
+  });
+
+  it('preserves OPS-04 Pluggy sandbox-in-prod throw regardless of SERVICE_NAME', async () => {
+    process.env.ENCRYPTION_KEY = Buffer.alloc(32, 1).toString('base64');
+    process.env.CPF_HASH_PEPPER = 'production-pepper-at-least-32-chars-xx';
+    process.env.NEXTAUTH_SECRET = 'production-secret-at-least-32-chars-x';
+    process.env.DATABASE_URL = 'postgres://x:y@db.example.com:5432/prod';
+    process.env.SENTRY_DSN = 'https://abc@oNNNN.ingest.de.sentry.io/PNNNN';
+    process.env.SENTRY_ENV = 'production';
+    process.env.PLUGGY_ENV = 'sandbox';
+    process.env.SERVICE_NAME = 'migrate';
+    (process.env as Record<string, string>).NODE_ENV = 'production';
+
+    await expect(import('@/lib/env')).rejects.toThrow(/OPS-04/);
+  });
+});
+
+// Plan 01.1-02 additions -- SEC-02 + Plan 01.1-03 prereq -- AWS creds optional in prod
+describe('SEC-02 + Plan 01.1-03 prereq -- AWS creds optional in prod (IAM task-role pivot)', () => {
+  beforeEach(async () => {
+    const { vi } = await import('vitest');
+    vi.resetModules();
+    resetEnv();
+  });
+
+  afterEach(() => {
+    resetEnv();
+  });
+
+  it('accepts SERVICE_NAME=web with no AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY', async () => {
+    process.env.ENCRYPTION_KEY = Buffer.alloc(32, 1).toString('base64');
+    process.env.CPF_HASH_PEPPER = 'production-pepper-at-least-32-chars-xx';
+    process.env.NEXTAUTH_SECRET = 'production-secret-at-least-32-chars-x';
+    process.env.DATABASE_URL = 'postgres://x:y@db.example.com:5432/prod';
+    process.env.SENTRY_DSN = 'https://abc@oNNNN.ingest.de.sentry.io/PNNNN';
+    process.env.SENTRY_ENV = 'production';
+    process.env.SERVICE_NAME = 'web';
+    process.env.TURNSTILE_SITE_KEY = 'prod-site-key';
+    process.env.TURNSTILE_SECRET_KEY = 'prod-secret-key';
+    process.env.NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY = 'prod-public-site-key';
+    // AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY intentionally undefined --
+    // production relies on the IAM task role attached by Copilot.
+    (process.env as Record<string, string>).NODE_ENV = 'production';
+
+    const mod = await import('@/lib/env');
+    expect(mod.env.SERVICE_NAME).toBe('web');
+    expect(mod.env.AWS_ACCESS_KEY_ID).toBeUndefined();
+    expect(mod.env.AWS_SECRET_ACCESS_KEY).toBeUndefined();
+  });
+
+  it('accepts SERVICE_NAME=worker with no AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY', async () => {
+    process.env.ENCRYPTION_KEY = Buffer.alloc(32, 1).toString('base64');
+    process.env.CPF_HASH_PEPPER = 'production-pepper-at-least-32-chars-xx';
+    process.env.NEXTAUTH_SECRET = 'production-secret-at-least-32-chars-x';
+    process.env.DATABASE_URL = 'postgres://x:y@db.example.com:5432/prod';
+    process.env.SENTRY_DSN = 'https://abc@oNNNN.ingest.de.sentry.io/PNNNN';
+    process.env.SENTRY_ENV = 'production';
+    process.env.SERVICE_NAME = 'worker';
+    process.env.TURNSTILE_SITE_KEY = 'prod-site-key';
+    process.env.TURNSTILE_SECRET_KEY = 'prod-secret-key';
+    process.env.NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY = 'prod-public-site-key';
+    // AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY intentionally undefined.
+    (process.env as Record<string, string>).NODE_ENV = 'production';
+
+    const mod = await import('@/lib/env');
+    expect(mod.env.SERVICE_NAME).toBe('worker');
+    expect(mod.env.AWS_ACCESS_KEY_ID).toBeUndefined();
+    expect(mod.env.AWS_SECRET_ACCESS_KEY).toBeUndefined();
+  });
+
+  it('still accepts AWS creds when explicitly set (local dev path)', async () => {
+    process.env.ENCRYPTION_KEY = Buffer.alloc(32, 1).toString('base64');
+    process.env.CPF_HASH_PEPPER = 'test-pepper-at-least-32-chars-long-xyz';
+    process.env.NEXTAUTH_SECRET = 'test-secret-at-least-32-chars-long-xxx';
+    process.env.DATABASE_URL = 'postgres://x:y@localhost:5432/db';
+    process.env.AWS_ACCESS_KEY_ID = 'AKIAIOSFODNN7EXAMPLE';
+    process.env.AWS_SECRET_ACCESS_KEY = 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY';
+    // SERVICE_NAME left at default 'web'; NODE_ENV=development.
+    (process.env as Record<string, string>).NODE_ENV = 'development';
+
+    const mod = await import('@/lib/env');
+    expect(mod.env.AWS_ACCESS_KEY_ID).toBe('AKIAIOSFODNN7EXAMPLE');
+    expect(mod.env.AWS_SECRET_ACCESS_KEY).toBe('wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY');
+  });
+});
