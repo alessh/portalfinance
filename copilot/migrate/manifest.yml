@@ -1,0 +1,50 @@
+# Copilot Scheduled Job -- Drizzle migration runner.
+#
+# Plan 01.1-04 / D-07, D-11. Manually triggered via:
+#   copilot job run --name migrate --env prod
+# Runs `node dist/db/migrate.js` (pre-compiled via tsup; no tsx in prod).
+
+name: migrate
+type: Scheduled Job
+
+on:
+  schedule: "none"  # CRITICAL -- disables cron; manual runs only.
+
+image:
+  build:
+    dockerfile: Dockerfile
+    context: .
+
+command: ["node", "dist/db/migrate.js"]
+
+cpu: 256
+memory: 512
+platform: linux/x86_64
+exec: true
+retries: 0  # Fail-fast; Drizzle migrations are idempotent, but safe
+            # replays after partial failure require human review.
+
+variables:
+  NODE_ENV: production
+  SENTRY_ENV: production
+  AWS_REGION: sa-east-1
+  LOG_LEVEL: info
+  SERVICE_NAME: migrate
+  NEXTAUTH_URL: https://portalfinance.app
+
+secrets:
+  NEXTAUTH_SECRET: /copilot/portalfinance/prod/secrets/NEXTAUTH_SECRET
+  ENCRYPTION_KEY: /copilot/portalfinance/prod/secrets/ENCRYPTION_KEY
+  CPF_HASH_PEPPER: /copilot/portalfinance/prod/secrets/CPF_HASH_PEPPER
+  SENTRY_DSN: /copilot/portalfinance/prod/secrets/SENTRY_DSN
+
+network:
+  vpc:
+    placement: private
+
+logging:
+  retention: 30
+
+tags:
+  Project: PortalFinance
+  Phase: '01.1'
