@@ -25,9 +25,12 @@ Resources:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
       DBSubnetGroupDescription: !Sub '${App}-${Env}-rds-subnet-group'
-      SubnetIds:
-        - Fn::ImportValue: !Sub '${App}-${Env}-PrivateSubnet1'
-        - Fn::ImportValue: !Sub '${App}-${Env}-PrivateSubnet2'
+      # Copilot exports private subnets as a single comma-separated list
+      # under ${App}-${Env}-PrivateSubnets (NOT as individual PrivateSubnet1/2
+      # exports). Split the list inline so DBSubnetGroup spans both AZs.
+      SubnetIds: !Split
+        - ','
+        - Fn::ImportValue: !Sub '${App}-${Env}-PrivateSubnets'
       Tags:
         - Key: Project
           Value: PortalFinance
