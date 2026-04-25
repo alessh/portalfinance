@@ -52,6 +52,15 @@ secrets:
   CPF_HASH_PEPPER: /copilot/portalfinance/prod/secrets/CPF_HASH_PEPPER
   SENTRY_DSN: /copilot/portalfinance/prod/secrets/SENTRY_DSN
   TURNSTILE_SECRET_KEY: /copilot/portalfinance/prod/secrets/TURNSTILE_SECRET_KEY
+  # DB connection info bridged from env-addon Outputs via SSM. The four
+  # SSM Strings are written by ops (manually for now; future: a CFN custom
+  # resource in the env addon could write them). entrypoint.sh consumes
+  # these env vars to compose DATABASE_URL using the secrets-manager-stored
+  # master password (DB_SECRET_ARN). See Plan 01.1-03 / D-06.
+  DB_ENDPOINT: /copilot/portalfinance/prod/secrets/DB_ENDPOINT
+  DB_PORT: /copilot/portalfinance/prod/secrets/DB_PORT
+  DB_NAME: /copilot/portalfinance/prod/secrets/DB_NAME
+  DB_SECRET_ARN: /copilot/portalfinance/prod/secrets/DB_SECRET_ARN
   # NO AWS_ACCESS_KEY_* -- SES uses task role (Plan 01.1-03 Task 3 pivot).
 
 network:

@@ -37,6 +37,11 @@ secrets:
   ENCRYPTION_KEY: /copilot/portalfinance/prod/secrets/ENCRYPTION_KEY
   CPF_HASH_PEPPER: /copilot/portalfinance/prod/secrets/CPF_HASH_PEPPER
   SENTRY_DSN: /copilot/portalfinance/prod/secrets/SENTRY_DSN
+  # DB connection info bridged from env-addon Outputs via SSM (see web/manifest.yml note).
+  DB_ENDPOINT: /copilot/portalfinance/prod/secrets/DB_ENDPOINT
+  DB_PORT: /copilot/portalfinance/prod/secrets/DB_PORT
+  DB_NAME: /copilot/portalfinance/prod/secrets/DB_NAME
+  DB_SECRET_ARN: /copilot/portalfinance/prod/secrets/DB_SECRET_ARN
 
 network:
   vpc:
