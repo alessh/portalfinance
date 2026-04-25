@@ -217,7 +217,7 @@ describe('SEC-02 + Plan 01.1-03 prereq -- AWS creds optional in prod (IAM task-r
     expect(mod.env.AWS_SECRET_ACCESS_KEY).toBeUndefined();
   });
 
-  it('accepts SERVICE_NAME=worker with no AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY', async () => {
+  it('accepts SERVICE_NAME=worker with no AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY and no TURNSTILE_*', async () => {
     process.env.ENCRYPTION_KEY = Buffer.alloc(32, 1).toString('base64');
     process.env.CPF_HASH_PEPPER = 'production-pepper-at-least-32-chars-xx';
     process.env.NEXTAUTH_SECRET = 'production-secret-at-least-32-chars-x';
@@ -225,16 +225,15 @@ describe('SEC-02 + Plan 01.1-03 prereq -- AWS creds optional in prod (IAM task-r
     process.env.SENTRY_DSN = 'https://abc@oNNNN.ingest.de.sentry.io/PNNNN';
     process.env.SENTRY_ENV = 'production';
     process.env.SERVICE_NAME = 'worker';
-    process.env.TURNSTILE_SITE_KEY = 'prod-site-key';
-    process.env.TURNSTILE_SECRET_KEY = 'prod-secret-key';
-    process.env.NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY = 'prod-public-site-key';
-    // AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY intentionally undefined.
+    // Plan 01.1-05 -- worker does NOT render signup forms, so TURNSTILE_*
+    // are not required. AWS_ACCESS_KEY_* also intentionally undefined.
     (process.env as Record<string, string>).NODE_ENV = 'production';
 
     const mod = await import('@/lib/env');
     expect(mod.env.SERVICE_NAME).toBe('worker');
     expect(mod.env.AWS_ACCESS_KEY_ID).toBeUndefined();
     expect(mod.env.AWS_SECRET_ACCESS_KEY).toBeUndefined();
+    expect(mod.env.TURNSTILE_SITE_KEY).toBeUndefined();
   });
 
   it('still accepts AWS creds when explicitly set (local dev path)', async () => {

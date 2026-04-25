@@ -127,11 +127,14 @@ const EnvSchema = z
     (e) => {
       if (e.NODE_ENV !== 'production') return true;
       if (process.env.NEXT_PHASE === 'phase-production-build') return true;
-      // Plan 01.1-02 / D-11 -- the migrate Scheduled Job does not render
-      // signup forms, so it does not need TURNSTILE_* keys. Skip the
-      // Turnstile gate when running as the migrate service.
-      if (e.SERVICE_NAME === 'migrate') return true;
-      // Cloudflare Turnstile keys are required in production for web + worker.
+      // Plan 01.1-02 / D-11 -- only the `web` service renders signup
+      // forms, so only `web` requires the TURNSTILE_* keys. The
+      // `worker` (pg-boss consumers) and `migrate` (one-shot Drizzle
+      // migrator) services neither render forms nor verify Turnstile
+      // tokens, so they skip this gate. The OPS-04 sandbox-in-prod
+      // guard above still fires for ALL services regardless.
+      if (e.SERVICE_NAME !== 'web') return true;
+      // Cloudflare Turnstile keys are required in production for web only.
       return !!(e.TURNSTILE_SITE_KEY && e.TURNSTILE_SECRET_KEY && e.NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY);
     },
     {
