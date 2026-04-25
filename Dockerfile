@@ -18,6 +18,16 @@ RUN apk add --no-cache python3 make g++ libc6-compat
 COPY package.json pnpm-lock.yaml ./
 RUN corepack enable && pnpm install --frozen-lockfile
 
+# ---- prod-deps stage ---------------------------------------------------
+# Prune the deps tree to production-only so the runner image carries
+# the worker's runtime dependencies (zod, drizzle-orm, pg, pg-boss,
+# argon2, @aws-sdk/*, pino, etc.) without devDependencies. tsup
+# auto-externalizes everything in dependencies, so worker.js needs
+# these resolvable at runtime under /app/node_modules.
+FROM deps AS prod-deps
+WORKDIR /app
+RUN corepack enable && pnpm prune --prod
+
 # ---- builder stage -----------------------------------------------------
 FROM public.ecr.aws/docker/library/node:22-alpine AS builder
 WORKDIR /app
@@ -66,6 +76,15 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 # Pre-compiled worker + migrator (from pnpm build:worker)
 COPY --from=builder --chown=nextjs:nodejs /app/dist ./dist
+
+# Production node_modules for the worker / migrate runtime.
+# Web does NOT need this -- Next standalone bundle at /app/node_modules
+# is self-contained from earlier COPY. We overlay prod-deps node_modules
+# into the SAME path; full > traced subset, so web continues to resolve
+# everything it needs and worker / migrate gain their externalised deps.
+# Native bindings (argon2, pg) are ABI-compatible because all stages
+# use node:22-alpine with matching libc.
+COPY --from=prod-deps --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 # Entrypoint shim
 COPY --chown=nextjs:nodejs scripts/entrypoint.sh /entrypoint.sh
