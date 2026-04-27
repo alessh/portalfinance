@@ -75,12 +75,70 @@ if [ "${SKIP_REMOTE:-0}" = "1" ]; then
   exit 0
 fi
 
-# Plan 01.1-07 Task 3 APPENDS the following gates below this line:
-#   - RDS publicly_accessible=false
-#   - SSM secrets all SecureString
-#   - CloudWatch log groups retention=30
-#   - Cloudflare SSL=strict via API
-#   - https://portalfinance.app/api/health returns 200
+# --- Remote AWS gates (Plan 01.1-07 Task 3) ---
+echo "Checking live AWS infrastructure..."
 
-echo "Remote AWS gates not yet implemented -- see Plan 01.1-07."
-echo "All local gates PASSED."
+REGION="sa-east-1"
+
+# Disable Git Bash / MSYS path mangling so /copilot/... SSM names survive
+# shell-to-AWS-CLI marshalling on Windows. Harmless on real POSIX shells.
+export MSYS_NO_PATHCONV=1
+
+# 1. RDS PubliclyAccessible must be false on the prod DB instance.
+DB_PUBLIC=$(aws rds describe-db-instances \
+  --db-instance-identifier "${APP}-${ENV_NAME}-db" \
+  --profile "${PROFILE}" --region "${REGION}" \
+  --query 'DBInstances[0].PubliclyAccessible' --output text 2>/dev/null || echo "ERROR")
+[ "${DB_PUBLIC}" = "False" ] || fail "RDS instance is publicly accessible (got: ${DB_PUBLIC})"
+pass "RDS PubliclyAccessible=false"
+
+# 2. CloudWatch log groups for web / worker / migrate exist with 30-day retention.
+for svc in web worker migrate; do
+  RET=$(aws logs describe-log-groups \
+    --log-group-name-prefix "/copilot/${APP}-${ENV_NAME}-${svc}" \
+    --profile "${PROFILE}" --region "${REGION}" \
+    --query 'logGroups[0].retentionInDays' --output text 2>/dev/null || echo "ERROR")
+  [ "${RET}" = "30" ] || fail "log group /copilot/${APP}-${ENV_NAME}-${svc} retention != 30 (got: ${RET})"
+done
+pass "CloudWatch log retention 30 days for web + worker + migrate"
+
+# 3. SSM secrets backing the Copilot manifests are all SecureString.
+for name in NEXTAUTH_SECRET ENCRYPTION_KEY CPF_HASH_PEPPER SENTRY_DSN TURNSTILE_SECRET_KEY; do
+  TYPE=$(aws ssm describe-parameters \
+    --parameter-filters "Key=Name,Values=/copilot/${APP}/${ENV_NAME}/secrets/${name}" \
+    --profile "${PROFILE}" --region "${REGION}" \
+    --query 'Parameters[0].Type' --output text 2>/dev/null || echo "ERROR")
+  [ "${TYPE}" = "SecureString" ] || fail "/copilot/${APP}/${ENV_NAME}/secrets/${name} is not SecureString (got: ${TYPE})"
+done
+pass "SSM secrets are SecureString"
+
+# 4. ACM cert covering portalfinance.app is ISSUED in sa-east-1.
+CERT_STATUS=$(aws acm list-certificates \
+  --profile "${PROFILE}" --region "${REGION}" \
+  --query "CertificateSummaryList[?DomainName=='portalfinance.app'].Status | [0]" --output text 2>/dev/null || echo "ERROR")
+[ "${CERT_STATUS}" = "ISSUED" ] || fail "ACM cert for portalfinance.app is not ISSUED (got: ${CERT_STATUS})"
+pass "ACM cert ISSUED for portalfinance.app"
+
+# 5. Edge round-trip: https://portalfinance.app/api/health returns 200 via Cloudflare.
+#
+# Use HEAD (-I) to avoid body-write quirks on Git Bash for Windows where
+# `-o /dev/null` can return curl exit 23 even after a successful HTTP 200.
+# `|| true` keeps `set -e` happy when curl exits non-zero; we judge from
+# the captured status code, not the exit code.
+EDGE_STATUS=$(curl -sS -I --max-time 10 -w '%{http_code}' -o /dev/null https://portalfinance.app/api/health 2>/dev/null) || true
+[ "${EDGE_STATUS:-000}" = "200" ] || fail "https://portalfinance.app/api/health did not return 200 (got: ${EDGE_STATUS:-<empty>})"
+pass "edge round-trip portalfinance.app/api/health = 200"
+
+EDGE_WWW_STATUS=$(curl -sS -I --max-time 10 -w '%{http_code}' -o /dev/null https://www.portalfinance.app/api/health 2>/dev/null) || true
+[ "${EDGE_WWW_STATUS:-000}" = "200" ] || fail "https://www.portalfinance.app/api/health did not return 200 (got: ${EDGE_WWW_STATUS:-<empty>})"
+pass "edge round-trip www.portalfinance.app/api/health = 200"
+
+# 6. Confirm Cloudflare is fronting the edge (Server: cloudflare header present).
+CF_HEADER=$(curl -sS -I --max-time 10 https://portalfinance.app/api/health 2>/dev/null \
+  | tr -d '\r' | awk -F': ' 'tolower($1)=="server"{print tolower($2)}')
+case "${CF_HEADER}" in
+  cloudflare) pass "Cloudflare proxy present (Server: cloudflare)" ;;
+  *) fail "expected Server: cloudflare, got: ${CF_HEADER:-<missing>}" ;;
+esac
+
+echo "All gates PASSED."
