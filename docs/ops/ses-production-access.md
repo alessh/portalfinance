@@ -45,7 +45,7 @@ and suppress addresses that hard-bounce or mark as spam within minutes,
 before any retry. Our suppression list is backed by a
 `ses_suppressions` Postgres table with per-address bounce history.
 
-Compliance: Data is stored in Brazil (Railway sa-east-1). We follow LGPD
+Compliance: Data is stored in Brazil (AWS sa-east-1, RDS Postgres + ECS Fargate). We follow LGPD
 and do not share PII with third parties outside contractual DPAs. We have
 a full account-deletion workflow that removes all PII including email
 addresses within 30 days of a DSR request.
@@ -110,21 +110,56 @@ aws ses create-configuration-set-event-destination \
   --region sa-east-1
 ```
 
-Set the `SES_CONFIGURATION_SET=portal-finance` environment variable in
-Railway so the email sender attaches the configuration set to every
-message.
+Set the `SES_CONFIGURATION_SET=portal-finance` value on each Copilot service so the email sender attaches the configuration set to every message. Add it under `variables:` in `copilot/web/manifest.yml` and `copilot/worker/manifest.yml`, then `copilot svc deploy` for both.
 
 ---
 
-## Step 6 — Set environment variables in Railway
+## Step 6 — Wire SES into Copilot
+
+### 6.1 Manifest variables (plain text, committed)
+
+Add to `copilot/web/manifest.yml` and `copilot/worker/manifest.yml` under `variables:`:
 
 | Variable | Value |
 |---|---|
-| `SES_FROM_ADDRESS` | `no-reply@portalfinance.app` (verified domain) |
+| `SES_FROM_EMAIL` | `no-reply@portalfinance.app` (verified domain) |
 | `SES_CONFIGURATION_SET` | `portal-finance` |
 | `AWS_REGION` | `sa-east-1` |
-| `AWS_ACCESS_KEY_ID` | IAM key with `ses:SendEmail` + `ses:SendRawEmail` |
-| `AWS_SECRET_ACCESS_KEY` | Corresponding secret |
+
+### 6.2 IAM task role (NO long-lived AWS keys -- D-17 / SEC-02)
+
+Production tasks authenticate to SES via the ECS task role attached by Copilot. Drop a workload-level addon at `copilot/web/addons/ses-send.yml` (and `copilot/worker/addons/ses-send.yml`):
+
+```yaml
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  App: { Type: String }
+  Env: { Type: String }
+  Name: { Type: String }
+Resources:
+  SESSendPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: !Sub 'Grants ${Name} task role ses:SendEmail / ses:SendRawEmail.'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - ses:SendEmail
+              - ses:SendRawEmail
+            Resource: '*'
+            Condition:
+              StringEquals:
+                ses:FromAddress: 'no-reply@portalfinance.app'
+Outputs:
+  SESSendPolicy:
+    Value: !Ref SESSendPolicy
+```
+
+Copilot auto-attaches any addon output named after a `ManagedPolicy` to the task role. Redeploy the affected services.
+
+`src/lib/mailer.ts` reads no static credentials in production -- the AWS SDK default credential provider chain picks up the task-role STS session automatically. `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` MUST stay unset in production.
 
 ---
 

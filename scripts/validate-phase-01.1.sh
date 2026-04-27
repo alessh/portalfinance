@@ -35,12 +35,9 @@ echo "Checking local files..."
 [ -f src/app/api/health/route.ts ] || fail "health route missing"
 [ -f tsup.config.ts ] || fail "tsup config missing"
 [ -f docs/ops/aws-copilot-setup.md ] || fail "AWS runbook missing"
-# Plan 01.1-08 deprecates docs/ops/railway-setup.md. Until 01.1-08 lands,
-# the legacy runbook may still exist -- emit a warning (not a fail) so the
-# Wave 2 gate passes while Wave 4 docs work is still pending.
-if [ -f docs/ops/railway-setup.md ]; then
-  echo "  [WARN] Railway runbook still present -- Plan 01.1-08 will deprecate it"
-fi
+# Plan 01.1-08 removed docs/ops/railway-setup.md. Its presence now indicates
+# someone has restored a legacy file or merged a stale branch -- hard fail.
+[ ! -f docs/ops/railway-setup.md ] || fail "docs/ops/railway-setup.md MUST be deleted (Railway is deprecated; see docs/ops/aws-copilot-setup.md)"
 pass "all local files present"
 
 # --- Manifest invariant greps (cheap, pre-deploy) ---

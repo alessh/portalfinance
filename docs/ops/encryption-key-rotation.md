@@ -32,7 +32,7 @@ during a low-traffic maintenance window (typically 02:00–04:00 BRT).
 
 - Scheduled annual rotation (compliance best practice).
 - Suspected key leak (rotate immediately).
-- Railway secret management policy change.
+- AWS Copilot SSM secret management policy change.
 
 ### Procedure
 
@@ -42,16 +42,27 @@ during a low-traffic maintenance window (typically 02:00–04:00 BRT).
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-**Step 2 — Set both keys in Railway**
+**Step 2 — Stage both keys as SSM SecureString parameters**
 
-In the Railway environment variables panel:
+The runtime reads `ENCRYPTION_KEY` from `/copilot/portalfinance/prod/secrets/ENCRYPTION_KEY`. During rotation we add a sibling `_OLD` parameter so the migration script can decrypt with the old key before re-encrypting with the new one.
 
+```sh
+aws ssm put-parameter \
+  --name /copilot/portalfinance/prod/secrets/ENCRYPTION_KEY_OLD \
+  --value "$CURRENT_KEY" --type SecureString --overwrite \
+  --region sa-east-1 --profile portalfinance-prod
+aws ssm add-tags-to-resource --resource-type Parameter \
+  --resource-id /copilot/portalfinance/prod/secrets/ENCRYPTION_KEY_OLD \
+  --tags Key=copilot-application,Value=portalfinance Key=copilot-environment,Value=prod \
+  --region sa-east-1 --profile portalfinance-prod
+
+aws ssm put-parameter \
+  --name /copilot/portalfinance/prod/secrets/ENCRYPTION_KEY \
+  --value "$NEW_KEY" --type SecureString --overwrite \
+  --region sa-east-1 --profile portalfinance-prod
 ```
-ENCRYPTION_KEY=<new-hex-key>
-ENCRYPTION_KEY_OLD=<current-hex-key>
-```
 
-Do NOT deploy yet.
+The `copilot-application` + `copilot-environment` tags are mandatory; the task execution role's policy is tag-conditioned and untagged parameters fail at task launch with `AccessDeniedException`. Do NOT redeploy services yet -- the running web/worker tasks must keep using the old key until the migration finishes.
 
 **Step 3 — Deploy the migration worker**
 
@@ -93,14 +104,19 @@ await rotateItems();
 console.log('Key rotation complete.');
 ```
 
-Run via:
+Run via the **migrate** Scheduled Job (it has the IAM task role for Secrets Manager + RDS, runs in the right VPC, and reads the SSM parameters set in Step 2). Add the script as another bundled CMD entry in `tsup.config.ts`, then:
 
-```bash
-DATABASE_URL="$PROD_DATABASE_URL" \
-ENCRYPTION_KEY="$NEW_KEY" \
-ENCRYPTION_KEY_OLD="$OLD_KEY" \
-npx tsx scripts/rotate-encryption-key.ts
+```sh
+copilot job deploy --name migrate --env prod
+copilot job run    --name migrate --env prod \
+  --command "node dist/db/rotate-encryption-key.js"
+aws logs tail /copilot/portalfinance-prod-migrate --since 5m \
+  --region sa-east-1 --profile portalfinance-prod --follow
 ```
+
+The job inherits `ENCRYPTION_KEY` and `ENCRYPTION_KEY_OLD` from the SSM parameters bound by the migrate manifest's `secrets:` block (add `ENCRYPTION_KEY_OLD` there before deploying).
+
+Never run rotation from a developer laptop -- the prod `DATABASE_URL` and `ENCRYPTION_KEY` must stay inside the VPC.
 
 **Step 4 — Verify row counts**
 
@@ -113,7 +129,19 @@ Spot-check 5 random rows by attempting a decrypt with the new key.
 
 **Step 5 — Remove ENCRYPTION_KEY_OLD**
 
-Remove `ENCRYPTION_KEY_OLD` from Railway. Redeploy.
+```sh
+aws ssm delete-parameter \
+  --name /copilot/portalfinance/prod/secrets/ENCRYPTION_KEY_OLD \
+  --region sa-east-1 --profile portalfinance-prod
+```
+
+Remove the `ENCRYPTION_KEY_OLD` line from `copilot/migrate/manifest.yml` (and any other manifest that bound it). Redeploy each affected service:
+
+```sh
+copilot svc deploy --name web    --env prod
+copilot svc deploy --name worker --env prod
+copilot job deploy --name migrate --env prod
+```
 
 **Step 6 — Log the rotation**
 
@@ -144,11 +172,24 @@ Rows affected: [count]
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-**Step 2 — Set both peppers in Railway**
+**Step 2 — Stage both peppers as SSM SecureString parameters**
 
-```
-CPF_HASH_PEPPER=<new-hex-pepper>
-CPF_HASH_PEPPER_OLD=<current-hex-pepper>
+Mirror the procedure from Step 2 of `Rotating ENCRYPTION_KEY`, but for the pepper:
+
+```sh
+aws ssm put-parameter \
+  --name /copilot/portalfinance/prod/secrets/CPF_HASH_PEPPER_OLD \
+  --value "$CURRENT_PEPPER" --type SecureString --overwrite \
+  --region sa-east-1 --profile portalfinance-prod
+aws ssm add-tags-to-resource --resource-type Parameter \
+  --resource-id /copilot/portalfinance/prod/secrets/CPF_HASH_PEPPER_OLD \
+  --tags Key=copilot-application,Value=portalfinance Key=copilot-environment,Value=prod \
+  --region sa-east-1 --profile portalfinance-prod
+
+aws ssm put-parameter \
+  --name /copilot/portalfinance/prod/secrets/CPF_HASH_PEPPER \
+  --value "$NEW_PEPPER" --type SecureString --overwrite \
+  --region sa-east-1 --profile portalfinance-prod
 ```
 
 **Step 3 — Run the hash migration**
@@ -182,16 +223,22 @@ Attempt login with a known test account to confirm hash lookup resolves.
 
 **Step 5 — Remove CPF_HASH_PEPPER_OLD**
 
-Remove from Railway. Redeploy.
+```sh
+aws ssm delete-parameter \
+  --name /copilot/portalfinance/prod/secrets/CPF_HASH_PEPPER_OLD \
+  --region sa-east-1 --profile portalfinance-prod
+```
+
+Drop the `CPF_HASH_PEPPER_OLD` line from any manifest that bound it, then redeploy the affected services with `copilot svc deploy` / `copilot job deploy`.
 
 ---
 
 ## Emergency: suspected key/pepper leak
 
-1. Immediately set `MAINTENANCE_MODE=true` in Railway to block logins.
+1. Immediately set `/copilot/portalfinance/prod/secrets/MAINTENANCE_MODE=true` (SSM `String`, tagged) and bind it in the web manifest's `secrets:` block, then `copilot svc deploy --name web --env prod` to short-circuit the auth route into a 503.
 2. Generate new key/pepper.
 3. Execute the rotation procedure above.
 4. Verify.
-5. Set `MAINTENANCE_MODE=false`.
+5. Set `MAINTENANCE_MODE=false` and redeploy.
 6. Notify affected users per LGPD Art. 48 (within 2 business days).
 7. File incident report in internal ops doc.

@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 01.1 context gathered
-last_updated: "2026-04-24T22:29:38.498Z"
-last_activity: 2026-04-24 -- Phase --phase execution started
+stopped_at: Phase 01.1 complete -- AWS Copilot prod live
+last_updated: "2026-04-27T20:30:00.000Z"
+last_activity: 2026-04-27 -- Phase 01.1 execution complete (web + worker + migrate live, edge round-trip verified)
 progress:
   total_phases: 7
-  completed_phases: 1
-  total_plans: 14
-  completed_plans: 5
-  percent: 36
+  completed_phases: 2
+  total_plans: 23
+  completed_plans: 14
+  percent: 61
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-22)
 
 **Core value:** Seeing, without work, where your money actually goes every month.
-**Current focus:** Phase --phase — 01.1
+**Current focus:** Phase 02 (Pluggy ingestion) — ready to plan
 
 ## Current Position
 
-Phase: --phase (01.1) — EXECUTING
-Plan: 1 of --name
-Status: Executing Phase --phase
-Last activity: 2026-04-24 -- Phase --phase execution started
+Phase: 01.1 (Infra Bootstrap, AWS sa-east-1 via Copilot) — COMPLETE
+Plan: 9 of 9
+Status: Phase 01.1 finished. https://portalfinance.app/api/health verified through Cloudflare → ALB → ECS Fargate → RDS Postgres in sa-east-1.
+Last activity: 2026-04-27 -- Phase 01.1 execution complete (web + worker + migrate live, edge round-trip verified)
 
-Progress: [██████████] 100%
+Progress: [██████████] 100% (Phase 01.1)
 
 ## Performance Metrics
 
@@ -89,32 +89,46 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 
 ### Roadmap Evolution
 
-- Phase 01.1 inserted after Phase 1: Infra Bootstrap (AWS sa-east-1 via Copilot) (URGENT) — Railway has no BR region (`sa-east-1` does not exist at Railway); pivoting to AWS `sa-east-1` via Copilot CLI before Phase 2 (Pluggy) touches real user data.
+- Phase 01.1 inserted after Phase 1: Infra Bootstrap (AWS sa-east-1 via Copilot) (URGENT) — Railway has no BR region (`sa-east-1` does not exist at Railway); pivoting to AWS `sa-east-1` via Copilot CLI before Phase 2 (Pluggy) touches real user data. **COMPLETE 2026-04-27.**
+
+### Phase 01.1 hotfixes captured (production-discovered, all addressed)
+
+- **PrivateSubnets export shape:** Copilot env emits `${App}-${Env}-PrivateSubnets` as a single comma-separated list, not PrivateSubnet1/2; addon uses `Fn::Split`.
+- **Copilot v1.34 `From: env` allowlist:** `VpcId` not on the list. Use `Fn::ImportValue: !Sub '${App}-${Env}-VpcId'`.
+- **Env-addon nested-stack race:** ImportValue cannot resolve while parent env stack is CREATE_IN_PROGRESS. Pivot: deploy env first, then add the addon.
+- **DB-bridge SSM tag-based IAM:** `DbEndpoint`/`DbPort`/`DbName`/`DbSecretArn` written as plain SSM Strings; must be tagged `copilot-application` + `copilot-environment` or task launch returns AccessDeniedException.
+- **DB-access ManagedPolicy:** env-level `DBAccessPolicy` output is NOT auto-attached per service in v1.34. Workload-level `copilot/<svc>/addons/db-access.yml` is the working pattern.
+- **RDS-generated password URL hazard:** `?` chars terminate userinfo, mangling host parsing. Fix: tighten `ExcludeCharacters` in addon + URL-encode in entrypoint.
+- **postgres-js URL forwarding:** `?sslmode=...` / `?sslrootcert=...` ride into Postgres as startup GUCs and the server rejects them. Strip URL params; configure `ssl: { ca, rejectUnauthorized: true }` per client.
+- **pg-connection-string v2:** silently aliases `sslmode=require` to `verify-full`. Bake the global RDS CA bundle into the runner image.
+- **pg-boss v10+:** queues no longer auto-create. `getBoss()` calls `boss.createQueue` for every entry in `QUEUES` after `start()`.
+- **Git Bash path mangling:** `MSYS_NO_PATHCONV=1` mandatory for AWS CLI calls that take `/copilot/...` parameter names on Windows.
 
 ### Pending Todos
 
-None — Wave 3 is the next active queue (01-03 LGPD scaffolding, 01-04 observability close-out).
+Phase 02 (Pluggy ingestion) is the next plannable phase.
 
 ### Blockers/Concerns
 
 - **LGPD cross-border DPA (Google)** — must be signed by legal before Phase 3 LLM categorization ships to production. Does not block Phase 1–2 work.
 - **ASAAS PIX Automático sandbox** — confirm recurring-PIX is live in sandbox before Phase 5 billing work begins.
-- **Railway sa-east-1 region availability** — verify at project creation in Phase 1, plan 01-01.
-- **Next.js standalone start command** — `pnpm start:web` (`next start`) emits a warning under `output: standalone`; Phase 6 Railway deploy work should switch the production start to `node .next/standalone/server.js`.
-- ~~**`@serwist/next` package name**~~ — RESOLVED 2026-04-22 during Phase 1 research: `@serwist/next@9.5.7` confirmed on npm.
+- ~~**Railway sa-east-1 region availability**~~ — RESOLVED via Phase 01.1: pivoted to AWS Copilot.
+- ~~**Next.js standalone start command**~~ — RESOLVED in 01.1-01: `start:web` is `node .next/standalone/server.js`; Dockerfile runner uses Next standalone output.
+- ~~**`@serwist/next` package name**~~ — RESOLVED 2026-04-22.
 
 ## Deferred Items
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| Deploy   | Switch production start command to `node .next/standalone/server.js` (next 16 standalone output) | Open | 01-00 |
-| Deploy   | Railway sa-east-1 provisioning + live schema push (Task 3 of 01-01) — runbook ready at `docs/ops/railway-setup.md` | Open | 01-01 |
-| Ops      | SES production access (24-48h AWS approval) + Sentry EU project (DSN must end with de.sentry.io) — runbooks at `docs/ops/ses-production-access.md` and Railway env vars listed in plan 01-04 task 4 | Open | 01-04 |
+| Ops      | SES production access (24-48h AWS approval) + Sentry EU project (DSN must end with de.sentry.io) — runbooks at `docs/ops/ses-production-access.md`. SES wiring uses IAM task role per workload addon (D-17 / SEC-02). | Open | 01-04 |
+| Image    | Runner image is ~558 MB; Phase 6 may revisit Distroless / scratch + statically-linked node | Open | 01.1-03 |
+| Worker   | Worker is `count: 1` (singleton-key dedup assumes one replica); horizontal scaling deferred to Phase 6 | Open | 01.1-04 |
 
 ## Session Continuity
 
-Last session: --stopped-at
-Stopped at: Phase 01.1 context gathered
-Resume file: --resume-file
+Last session: 2026-04-27 -- Phase 01.1 execution complete
+Stopped at: Phase 01.1 complete -- AWS Copilot prod live
+Resume file: n/a
 
-**Planned Phase:** 01.1 (Infra Bootstrap (AWS sa-east-1 via Copilot)) — 9 plans — 2026-04-24T22:08:05.201Z
+**Planned Phase:** 01.1 (Infra Bootstrap, AWS sa-east-1 via Copilot) -- 9 plans -- COMPLETE 2026-04-27.
+**Next Phase:** 02 (Pluggy ingestion) -- ready to plan.
