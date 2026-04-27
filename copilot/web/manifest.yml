@@ -23,10 +23,11 @@ http:
     interval: 30s
     timeout: 5s
     grace_period: 60s
-  # Plan 01.1-07 will activate this alias after ACM cert issuance +
-  # Cloudflare DNS. Copilot rejects http.alias when the env has no
-  # imported certificate, so the line stays COMMENTED OUT until then.
-  # alias: portalfinance.app
+  # Plan 01.1-07: cert is now imported via env manifest, alias active.
+  # Cloudflare proxies portalfinance.app -> ALB; the ALB matches Host:
+  # portalfinance.app on the HTTPS:443 listener and terminates TLS with
+  # the ACM cert (cf545575-...).
+  alias: portalfinance.app
 
 cpu: 512
 memory: 1024

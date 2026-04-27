@@ -39,9 +39,8 @@ network:
 
 http:
   public:
-    # Filled in by Plan 01.1-07 once ACM issues the cert.
-    # certificates:
-    #   - arn:aws:acm:sa-east-1:<account-id>:certificate/<uuid>
+    certificates:
+      - arn:aws:acm:sa-east-1:057917758639:certificate/cf545575-ca75-4b68-8fa9-6dac62100742
     ingress:
       cdn: false  # Cloudflare sits in front, not AWS CloudFront
 
