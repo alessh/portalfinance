@@ -54,7 +54,12 @@ fi
 DB_USER_ENC=$(printf '%s' "${DB_USER}" | python3 -c 'import sys,urllib.parse; sys.stdout.write(urllib.parse.quote(sys.stdin.read(), safe=""))')
 DB_PASS_ENC=$(printf '%s' "${DB_PASS}" | python3 -c 'import sys,urllib.parse; sys.stdout.write(urllib.parse.quote(sys.stdin.read(), safe=""))')
 
-export DATABASE_URL="postgresql://${DB_USER_ENC}:${DB_PASS_ENC}@${DB_ENDPOINT}:${DB_PORT}/${DB_NAME}?sslmode=require"
+# sslmode=verify-full + sslrootcert=/app/rds-ca-bundle.pem -- the runner
+# image bakes Amazon's global RDS CA bundle (Dockerfile). pg-connection-string
+# v2 already aliases 'require' to 'verify-full' (with a warning), so we set
+# it explicitly to silence the warning and gain proper chain verification
+# without relying on alias-driven defaults.
+export DATABASE_URL="postgresql://${DB_USER_ENC}:${DB_PASS_ENC}@${DB_ENDPOINT}:${DB_PORT}/${DB_NAME}?sslmode=verify-full&sslrootcert=/app/rds-ca-bundle.pem"
 
 # Keep the password out of `env` dumps accidentally surfaced in logs.
 # DO NOT log DATABASE_URL here -- LGPD + SEC-02.

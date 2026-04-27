@@ -69,6 +69,15 @@ RUN apk add --no-cache aws-cli ca-certificates tini \
   && addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 nextjs
 
+# Amazon RDS root CA bundle. pg-connection-string v2 now treats
+# sslmode=require as verify-full, which fails against RDS because
+# Amazon's RDS CA chain is not in Node's default trust store
+# (self-signed certificate in certificate chain). Bake the global
+# bundle into the image so entrypoint.sh can point sslrootcert at it
+# for proper chain verification under sslmode=verify-full.
+ADD --chown=nextjs:nodejs https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /app/rds-ca-bundle.pem
+RUN chmod 0644 /app/rds-ca-bundle.pem
+
 # Next.js standalone output (server.js + minimal node_modules)
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
