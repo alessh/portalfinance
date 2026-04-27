@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import { sql } from 'drizzle-orm';
@@ -23,7 +24,13 @@ async function main(): Promise<void> {
     throw new Error('DATABASE_URL is required for migration');
   }
 
-  const client = postgres(url, { max: 1 });
+  // See src/db/index.ts -- postgres-js does not honor libpq sslrootcert.
+  const ca_path = '/app/rds-ca-bundle.pem';
+  const ssl_opts = fs.existsSync(ca_path)
+    ? { ca: fs.readFileSync(ca_path, 'utf8'), rejectUnauthorized: true as const }
+    : undefined;
+
+  const client = postgres(url, { max: 1, ssl: ssl_opts });
   const db = drizzle(client);
 
   try {
