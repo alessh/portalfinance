@@ -21,6 +21,7 @@
  *
  * See RESEARCH.md § Plan slice 01-03 item 3 — DSR stubs contract.
  */
+import fs from 'node:fs';
 import { PgBoss, type SendOptions } from 'pg-boss';
 import { env } from '@/lib/env';
 
@@ -71,9 +72,18 @@ let _boss: PgBoss | null = null;
  */
 export async function getBoss(): Promise<PgBoss> {
   if (_boss) return _boss;
+  // entrypoint.sh now emits DATABASE_URL with no sslmode / sslrootcert
+  // query params (postgres-js naively forwards them to Postgres as
+  // startup GUCs and the server rejects them). Load the CA bundle baked
+  // into the runner image and configure TLS via the pg-boss/pg ssl option.
+  const ca_path = '/app/rds-ca-bundle.pem';
+  const ssl_opts = fs.existsSync(ca_path)
+    ? { ca: fs.readFileSync(ca_path, 'utf8'), rejectUnauthorized: true as const }
+    : undefined;
   _boss = new PgBoss({
     connectionString: env.DATABASE_URL,
     schema: 'pgboss',
+    ssl: ssl_opts,
   });
   _boss.on('error', (err: Error) => {
     // Log but do not throw — pg-boss errors are often transient network issues.

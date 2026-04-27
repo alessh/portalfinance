@@ -54,12 +54,17 @@ fi
 DB_USER_ENC=$(printf '%s' "${DB_USER}" | python3 -c 'import sys,urllib.parse; sys.stdout.write(urllib.parse.quote(sys.stdin.read(), safe=""))')
 DB_PASS_ENC=$(printf '%s' "${DB_PASS}" | python3 -c 'import sys,urllib.parse; sys.stdout.write(urllib.parse.quote(sys.stdin.read(), safe=""))')
 
-# sslmode=verify-full + sslrootcert=/app/rds-ca-bundle.pem -- the runner
-# image bakes Amazon's global RDS CA bundle (Dockerfile). pg-connection-string
-# v2 already aliases 'require' to 'verify-full' (with a warning), so we set
-# it explicitly to silence the warning and gain proper chain verification
-# without relying on alias-driven defaults.
-export DATABASE_URL="postgresql://${DB_USER_ENC}:${DB_PASS_ENC}@${DB_ENDPOINT}:${DB_PORT}/${DB_NAME}?sslmode=verify-full&sslrootcert=/app/rds-ca-bundle.pem"
+# Compose a clean DATABASE_URL with NO sslmode / sslrootcert query
+# parameters. Why: postgres-js (used by Drizzle in src/db/index.ts and
+# src/db/migrate.ts) naively forwards every URL query parameter to
+# Postgres as a startup parameter, and Postgres rejects sslmode +
+# sslrootcert as "unrecognized configuration parameter". TLS config
+# is loaded explicitly from /app/rds-ca-bundle.pem in:
+#   - src/jobs/boss.ts        (pg-boss / pg)
+#   - src/db/index.ts         (postgres-js for web + worker queries)
+#   - src/db/migrate.ts       (postgres-js for the migrator)
+# Each call site reads the bundle and passes ssl: { ca, rejectUnauthorized }.
+export DATABASE_URL="postgresql://${DB_USER_ENC}:${DB_PASS_ENC}@${DB_ENDPOINT}:${DB_PORT}/${DB_NAME}"
 
 # Keep the password out of `env` dumps accidentally surfaced in logs.
 # DO NOT log DATABASE_URL here -- LGPD + SEC-02.
