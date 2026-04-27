@@ -69,7 +69,13 @@ Resources:
       GenerateSecretString:
         SecretStringTemplate: '{"username": "portalfinance"}'
         GenerateStringKey: 'password'
-        ExcludeCharacters: '"@/\'
+        # Exclude every character that has reserved meaning in a Postgres
+        # connection URI, so the password can be embedded into
+        # postgresql://user:PASS@host without percent-encoding gotchas.
+        # Defense-in-depth -- entrypoint.sh URL-encodes the password too.
+        # First-deploy bug: a password with '?' inside got parsed as the
+        # query-string separator, mangling host resolution to the dbname.
+        ExcludeCharacters: '"@/\?#%&=+ :;,'
         PasswordLength: 32
 
   DBInstance:

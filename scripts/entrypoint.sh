@@ -44,11 +44,22 @@ if [ -z "${DB_USER}" ] || [ -z "${DB_PASS}" ]; then
   exit 1
 fi
 
-export DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@${DB_ENDPOINT}:${DB_PORT}/${DB_NAME}?sslmode=require"
+# RDS GenerateSecretString may emit '?#&%+= ' etc. inside the password.
+# Without percent-encoding, the first '?' in the userinfo terminates
+# the URL authority and pg parses '/portalfinance' (the dbname) as the
+# host -- which is exactly the failure mode we hit on first deploy
+# (getaddrinfo ENOTFOUND portalfinance). aws-cli on alpine pulls python3
+# in as a dependency, so we use it to URL-encode via stdin (never via
+# argv -- the password must not leak into `ps`).
+DB_USER_ENC=$(printf '%s' "${DB_USER}" | python3 -c 'import sys,urllib.parse; sys.stdout.write(urllib.parse.quote(sys.stdin.read(), safe=""))')
+DB_PASS_ENC=$(printf '%s' "${DB_PASS}" | python3 -c 'import sys,urllib.parse; sys.stdout.write(urllib.parse.quote(sys.stdin.read(), safe=""))')
+
+export DATABASE_URL="postgresql://${DB_USER_ENC}:${DB_PASS_ENC}@${DB_ENDPOINT}:${DB_PORT}/${DB_NAME}?sslmode=require"
 
 # Keep the password out of `env` dumps accidentally surfaced in logs.
 # DO NOT log DATABASE_URL here -- LGPD + SEC-02.
 unset DB_PASS
+unset DB_PASS_ENC
 unset SECRET_JSON
 
 # Hand control to the service CMD (e.g. node .next/standalone/server.js)
