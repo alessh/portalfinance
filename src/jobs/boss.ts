@@ -81,6 +81,14 @@ export async function getBoss(): Promise<PgBoss> {
     console.error('[pg-boss] error', err);
   });
   await _boss.start();
+  // pg-boss v10+ no longer auto-creates queues on first work()/send(). Both
+  // the web service (enqueue) and the worker service (work) call getBoss(),
+  // so registering every known queue here is idempotent and unblocks both
+  // sides regardless of cold-start order. createQueue is a no-op if the
+  // queue already exists.
+  for (const queue of Object.values(QUEUES)) {
+    await _boss.createQueue(queue);
+  }
   return _boss;
 }
 
