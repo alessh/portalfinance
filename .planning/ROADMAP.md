@@ -52,18 +52,18 @@ Plans:
 
 **Depends on:** Phase 1
 
-**Plans:** 9 plans
+**Plans:** 9/9 plans complete
 
 Plans:
-- [ ] 01.1-00-PLAN.md — Wave 0 (manual/blocking): Install AWS Copilot CLI + IAM Identity Center SSO setup for profile `portalfinance-prod`; scaffold docs/ops/aws-copilot-setup.md with section 0 (D-17)
-- [ ] 01.1-01-PLAN.md — Wave 1: Bump engines.node to 22.x; rewrite start:web to `node .next/standalone/server.js`; add /api/health route + unit test; annotate next.config.ts (D-10, D-12, D-24)
-- [ ] 01.1-02-PLAN.md — Wave 1: tsup.config.ts bundling worker + migrate to dist/; widen env.ts to accept SERVICE_NAME=migrate without TURNSTILE/AWS creds (D-11)
-- [ ] 01.1-03-PLAN.md — Wave 1: Multi-stage Dockerfile + .dockerignore + scripts/entrypoint.sh composing DATABASE_URL from RDS + Secrets Manager; SES IAM task-role pivot (D-06, D-09, D-12, RESEARCH Rec 1)
-- [ ] 01.1-04-PLAN.md — Wave 2: Copilot manifests (env, web, worker, migrate) + environment-level RDS addon CFN (private, db.t4g.micro, deletion-protected) + scripts/validate-phase-01.1.sh skeleton (D-01..D-05, D-07, D-08, D-18, D-19, D-22, D-23, D-24)
-- [ ] 01.1-05-PLAN.md — Wave 3 (remote): copilot app/env init + env deploy (VPC + ALB + RDS) + copilot secret init for 5 SSM SecureStrings + copilot svc deploy web/worker (D-02, D-05, D-13, D-17)
-- [ ] 01.1-06-PLAN.md — Wave 3 (remote): copilot job run --name migrate (Drizzle migrations against prod RDS) + schema parity check via copilot svc exec + psql + idempotency re-run (D-07)
-- [ ] 01.1-07-PLAN.md — Wave 3 (remote): ACM cert issue + Cloudflare DNS orange-cloud CNAME + SSL mode = Full Strict + end-to-end /api/health through Cloudflare + append remote gates to validate-phase-01.1.sh (D-13, D-14, D-15, D-16)
-- [ ] 01.1-08-PLAN.md — Wave 4 (docs): Populate docs/ops/aws-copilot-setup.md sections 1-7; scrub Railway refs from encryption-key-rotation.md + ses-production-access.md; delete railway-setup.md; update STATE.md deferred items (Closed by 01.1)
+- [x] 01.1-00-PLAN.md — Wave 0 (manual/blocking): Install AWS Copilot CLI + IAM Identity Center SSO setup for profile `portalfinance-prod`; scaffold docs/ops/aws-copilot-setup.md with section 0 (D-17)
+- [x] 01.1-01-PLAN.md — Wave 1: Bump engines.node to 22.x; rewrite start:web to `node .next/standalone/server.js`; add /api/health route + unit test; annotate next.config.ts (D-10, D-12, D-24)
+- [x] 01.1-02-PLAN.md — Wave 1: tsup.config.ts bundling worker + migrate to dist/; widen env.ts to accept SERVICE_NAME=migrate without TURNSTILE/AWS creds (D-11)
+- [x] 01.1-03-PLAN.md — Wave 1: Multi-stage Dockerfile + .dockerignore + scripts/entrypoint.sh composing DATABASE_URL from RDS + Secrets Manager; SES IAM task-role pivot (D-06, D-09, D-12, RESEARCH Rec 1)
+- [x] 01.1-04-PLAN.md — Wave 2: Copilot manifests (env, web, worker, migrate) + environment-level RDS addon CFN (private, db.t4g.micro, deletion-protected) + scripts/validate-phase-01.1.sh skeleton (D-01..D-05, D-07, D-08, D-18, D-19, D-22, D-23, D-24)
+- [x] 01.1-05-PLAN.md — Wave 3 (remote): copilot app/env init + env deploy (VPC + ALB + RDS) + copilot secret init for 5 SSM SecureStrings + copilot svc deploy web/worker (D-02, D-05, D-13, D-17)
+- [x] 01.1-06-PLAN.md — Wave 3 (remote): copilot job run --name migrate (Drizzle migrations against prod RDS) + schema parity check via copilot svc exec + psql + idempotency re-run (D-07)
+- [x] 01.1-07-PLAN.md — Wave 3 (remote): ACM cert issue + Cloudflare DNS orange-cloud CNAME + SSL mode = Full Strict + end-to-end /api/health through Cloudflare + append remote gates to validate-phase-01.1.sh (D-13, D-14, D-15, D-16)
+- [x] 01.1-08-PLAN.md — Wave 4 (docs): Populate docs/ops/aws-copilot-setup.md sections 1-7; scrub Railway refs from encryption-key-rotation.md + ses-production-access.md; delete railway-setup.md; update STATE.md deferred items (Closed by 01.1)
 
 ### Phase 2: Pluggy Ingestion
 
@@ -190,7 +190,7 @@ Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Identity | 5/5 | Complete | 2026-04-22 |
-| 01.1. Infra Bootstrap (AWS Copilot) | 0/9 | Planned | - |
+| 01.1. Infra Bootstrap (AWS Copilot) | 9/9 | Complete    | 2026-04-27 |
 | 2. Pluggy Ingestion | 0/TBD | Not started | - |
 | 3. Categorization & Learning | 0/TBD | Not started | - |
 | 4. Dashboard & Monthly Insight | 0/TBD | Not started | - |

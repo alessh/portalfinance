@@ -76,7 +76,7 @@ Requirements for the initial release. Each maps to a roadmap phase.
 ### Security & Authorization
 
 - [ ] **SEC-01**: Every API endpoint and server-rendered page that reads user data filters by the session user's `user_id`. Accessing another user's transaction, account, or connection returns 404. Integration tests verify that user B cannot retrieve user A's data via any endpoint.
-- [ ] **SEC-02**: Session cookies are `HttpOnly`, `Secure`, `SameSite=Lax` (or `Strict` where possible); session tokens are rotated on privilege changes.
+- [x] **SEC-02**: Session cookies are `HttpOnly`, `Secure`, `SameSite=Lax` (or `Strict` where possible); session tokens are rotated on privilege changes.
 - [ ] **SEC-03**: Admin or support access to user data is gated behind an elevated session (re-authentication required) and every access is written to an immutable `admin_access_log`; admin views show summaries, not raw transaction descriptions.
 
 ### Platform & Distribution
@@ -86,7 +86,7 @@ Requirements for the initial release. Each maps to a roadmap phase.
 
 ### Operational Readiness
 
-- [ ] **OPS-01**: Structured JSON logging from day one with user IDs hashed, no PII; log retention capped at 30 days with automatic expiration. Sentry EU region (`de.sentry.io`) captures errors with `beforeSend` PII scrubbing.
+- [x] **OPS-01**: Structured JSON logging from day one with user IDs hashed, no PII; log retention capped at 30 days with automatic expiration. Sentry EU region (`de.sentry.io`) captures errors with `beforeSend` PII scrubbing.
 - [ ] **OPS-02**: Key metrics are observable before public launch: sync success rate, sync duration p50/p95, categorization match rate (rules vs LLM vs uncategorized), LLM cost per day, webhook processing lag. Alerts fire on threshold breach (sync failure >5%, LLM cost/day above limit, webhook 5xx rate >1%).
 - [ ] **OPS-03**: A scheduled `retention-worker` soft-deletes then hard-deletes data for closed accounts past the privacy-policy retention window, with a 7-day warning email before hard deletion.
 - [x] **OPS-04
@@ -153,7 +153,7 @@ Explicitly excluded. Documented to prevent scope creep and to capture the ration
 | LGPD-02 | Phase 2 | Pending |
 | LGPD-03 | Phase 6 | Pending |
 | LGPD-04 | Phase 6 | Pending |
-| LGPD-05 | Phase 1 | Pending |
+| LGPD-05 | Phase 1 | Complete |
 | LGPD-06 | Phase 1 | Pending |
 | CONN-01 | Phase 2 | Pending |
 | CONN-02 | Phase 2 | Pending |
@@ -186,14 +186,14 @@ Explicitly excluded. Documented to prevent scope creep and to capture the ration
 | BILL-04 | Phase 5 | Pending |
 | BILL-05 | Phase 5 | Pending |
 | SEC-01 | Phase 1 | Pending |
-| SEC-02 | Phase 1 | Pending |
+| SEC-02 | Phase 1 | Complete |
 | SEC-03 | Phase 6 | Pending |
 | APP-01 | Phase 4 | Pending |
 | APP-02 | Phase 4 | Pending |
-| OPS-01 | Phase 1 | Pending |
+| OPS-01 | Phase 1 | Complete |
 | OPS-02 | Phase 6 | Pending |
 | OPS-03 | Phase 6 | Pending |
-| OPS-04 | Phase 1 | Pending |
+| OPS-04 | Phase 1 | Complete |
 
 **Coverage:**
 - v1 requirements: 51 total
