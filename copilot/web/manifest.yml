@@ -24,10 +24,13 @@ http:
     timeout: 5s
     grace_period: 60s
   # Plan 01.1-07: cert is now imported via env manifest, alias active.
-  # Cloudflare proxies portalfinance.app -> ALB; the ALB matches Host:
-  # portalfinance.app on the HTTPS:443 listener and terminates TLS with
-  # the ACM cert (cf545575-...).
-  alias: portalfinance.app
+  # Cloudflare proxies portalfinance.app + www.portalfinance.app to the
+  # ALB; the ALB matches both Host headers on the HTTPS:443 listener and
+  # terminates TLS with the ACM cert (cf545575-...). Both names are in
+  # the cert (the SAN list includes www.portalfinance.app).
+  alias:
+    - portalfinance.app
+    - www.portalfinance.app
 
 cpu: 512
 memory: 1024
