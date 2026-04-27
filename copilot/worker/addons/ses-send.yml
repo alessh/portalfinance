@@ -1,0 +1,30 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  App:
+    Type: String
+    Description: The application name.
+  Env:
+    Type: String
+    Description: The environment name.
+  Name:
+    Type: String
+    Description: The name of the service.
+Resources:
+  SESSendPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: !Sub 'Grants ${Name} task role ses:SendEmail / ses:SendRawEmail.'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - ses:SendEmail
+              - ses:SendRawEmail
+            Resource: '*'
+            Condition:
+              StringEquals:
+                ses:FromAddress: 'no-reply@portalfinance.app'
+Outputs:
+  SESSendPolicy:
+    Value: !Ref SESSendPolicy

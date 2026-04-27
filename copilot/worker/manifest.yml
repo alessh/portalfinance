@@ -30,6 +30,7 @@ variables:
   LOG_LEVEL: info
   SERVICE_NAME: worker
   SES_FROM_EMAIL: no-reply@portalfinance.app
+  SES_CONFIGURATION_SET: portal-finance
   NEXTAUTH_URL: https://portalfinance.app
 
 secrets:
