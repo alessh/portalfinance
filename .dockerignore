@@ -53,3 +53,8 @@ scripts/run-e2e.ts
 *.md
 Dockerfile
 .dockerignore
+
+# Re-include legal documents needed at runtime by src/lib/consentVersions.ts
+# (OPS-04). Must come AFTER docs/ and *.md rules to override them.
+!docs/legal/
+!docs/legal/**

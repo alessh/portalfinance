@@ -62,10 +62,13 @@ ENV NODE_ENV=production \
     PORT=8080 \
     HOSTNAME=0.0.0.0
 
-# aws-cli  -- entrypoint.sh needs secretsmanager:GetSecretValue (D-06)
-# tini     -- PID 1, propagates SIGTERM to the node process cleanly
-# ca-certs -- TLS to RDS + external APIs
-RUN apk add --no-cache aws-cli ca-certificates tini \
+# aws-cli            -- entrypoint.sh needs secretsmanager:GetSecretValue (D-06)
+# tini               -- PID 1, propagates SIGTERM to the node process cleanly
+# ca-certs           -- TLS to RDS + external APIs
+# postgresql-client  -- operator psql for `copilot svc exec` schema inspection
+#                      (db-shell.sh covers programmatic queries; psql gives
+#                      \dt / \dx / \d for interactive ops use)
+RUN apk add --no-cache aws-cli ca-certificates tini postgresql-client \
   && addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 nextjs
 
@@ -83,6 +86,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
+# Legal documents read at runtime by src/lib/consentVersions.ts to compute
+# consent version hashes (OPS-04). Web service throws on cold start if absent.
+COPY --from=builder --chown=nextjs:nodejs /app/docs ./docs
+
 # Pre-compiled worker + migrator (from pnpm build:worker)
 COPY --from=builder --chown=nextjs:nodejs /app/dist ./dist
 
@@ -98,6 +105,11 @@ COPY --from=prod-deps --chown=nextjs:nodejs /app/node_modules ./node_modules
 # Entrypoint shim
 COPY --chown=nextjs:nodejs scripts/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+
+# Operator helper: composes DATABASE_URL inside a `copilot svc exec` shell
+# (entrypoint exports it only for the CMD process tree). One-shot or REPL.
+COPY --chown=nextjs:nodejs scripts/db-shell.sh /app/scripts/db-shell.sh
+RUN chmod +x /app/scripts/db-shell.sh
 
 USER nextjs
 EXPOSE 8080
