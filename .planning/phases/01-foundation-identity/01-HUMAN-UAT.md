@@ -3,7 +3,7 @@ status: partial
 phase: 01-foundation-identity
 source: [01-VERIFICATION.md]
 started: 2026-04-22T23:59:00Z
-updated: 2026-05-01T00:00:00Z
+updated: 2026-05-01T19:30:00Z
 ---
 
 ## Current Test
@@ -51,9 +51,25 @@ diagnostic_finding: |
 ### 3. End-to-end register → login → refresh persistence on deployed AWS Copilot prod
 expected: User completes signup on the production URL (https://portalfinance.app), logs in, refreshes — session persists. Logout deletes the server-side session row.
 why_human: The e2e Playwright test runs against localhost with a testcontainers DB. Production verification (AWS Copilot sa-east-1 RDS Postgres with real `DATABASE_URL`, `NEXTAUTH_SECRET`, etc., per Phase 01.1) requires human interaction on the deployed site.
-result: issue
-reported: "Login error: POST https://portalfinance.app/api/auth/login 401 (Unauthorized)"
-severity: blocker
+result: pass
+verified: 2026-05-01
+verified_via: |
+  Re-tested on https://portalfinance.app after PR #1 merged + AWS Copilot
+  Fargate sa-east-1 deploy. Signup + login + refresh + logout cycle
+  works end-to-end; session persists across refresh; logout deletes the
+  server-side session row.
+diagnostic_finding: |
+  Initial run failed with `POST /api/auth/login 401 (Unauthorized)` on
+  every first login. Two-cycle scientific-method debug session
+  (.planning/debug/login-401-on-prod.md) pinned the root cause: the
+  LoginForm submitted `turnstileToken: null` on first attempt, but
+  `LoginSchema` declared `z.string().optional()` which rejects null —
+  the handler returned 401 at the Zod-parse branch before any password
+  check ran. Fix landed in PR #1 (commit 20a32c5):
+    - LoginSchema.turnstileToken → .nullish()
+    - LoginForm spreads the field only when truthy (defensive)
+  Three regression tests added in tests/integration/auth/rate-limit.test.ts
+  to lock the fix in (commit 5f07ef5).
 
 ### 4. SES bounce pipeline end-to-end
 expected: Send to `bounce@simulator.amazonses.com` from the production environment; a row appears in `ses_suppressions` for that address within 60 seconds of send; a second send attempt returns `{ suppressed: true }` from the mailer.
@@ -75,21 +91,13 @@ severity: blocker
 ## Summary
 
 total: 4
-passed: 1
-issues: 2
+passed: 2
+issues: 1
 pending: 0
 skipped: 0
 blocked: 1
 
 ## Gaps
-
-- truth: "User completes signup on https://portalfinance.app, logs in, and stays logged in across refresh; logout deletes the server-side session row."
-  status: failed
-  reason: "User reported: Login error: POST https://portalfinance.app/api/auth/login 401 (Unauthorized)"
-  severity: blocker
-  test: 3
-  artifacts: []
-  missing: []
 
 - truth: "Send to bounce@simulator.amazonses.com from prod produces (a) a write to ses_suppressions within 60s and (b) suppression-blocked second send."
   status: failed
