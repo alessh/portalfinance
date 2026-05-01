@@ -1,6 +1,6 @@
 ---
 slug: login-401-on-prod
-status: root_cause_found
+status: root_cause_confirmed
 trigger: "Login 401 on prod (POST /api/auth/login) — needs investigation."
 created: 2026-05-01
 updated: 2026-05-01
@@ -32,14 +32,14 @@ scope: read_only
 4. ~~**Trusted host / CSRF rejection**~~ — ELIMINATED. The custom route does not invoke Auth.js `trustHost`. Auth.js v5 config has `trustHost: true` anyway.
 5. **Custom `/api/auth/login` route shape** — CONFIRMED. Custom route has FIVE distinct return paths (one 400, three 401, one 429). Three of those 401 paths are pre-auth guards.
 6. **Cookie/secure flag** — Not the cause of the 401. Cookie issues would manifest as a successful POST followed by /dashboard redirecting back to /login.
-7. **NEW (prime suspect): Zod parse rejects `turnstileToken: null`** — see Evidence below.
+7. **Zod parse rejects `turnstileToken: null`** — **CONFIRMED.** Captured response body is exactly `{"ok":false,"error":"E-mail ou senha incorretos."}` (50 bytes), matching the Zod-parse 401 branch at `src/app/api/auth/login/route.ts:50-54`. The earlier `content-length: 93` reading was the REQUEST content-length conflated with the response. Bug reproduces deterministically on every first login attempt.
 
 ## Current Focus
 
-- **hypothesis:** H7 — `LoginForm.tsx` always sends `turnstileToken: null` (initial state of `useState<string | null>(null)`). The `LoginSchema` declares `turnstileToken: z.string().optional()`, which in Zod accepts `string | undefined` but REJECTS explicit `null`. Every login request fails Zod parse and the handler returns 401 at `route.ts:50–54`.
-- **next_action:** confirm by capturing the actual 93-byte response body from prod (or a single Network-tab response payload). The hypothesised 401 body is `{"ok":false,"error":"E-mail ou senha incorretos."}` (50 bytes), which does NOT match the reported 93 bytes — so either the user's content-length report includes other framing, or a different 401 path is being hit, or the body has additional fields not visible in the source.
-- **expecting:** the captured body will either match `{"ok":false,"error":"E-mail ou senha incorretos."}` (50 bytes) and confirm H7 — but with a length mismatch we may need to widen the search, OR the body will reveal a 5th 401 source (Cloudflare WAF JSON challenge, edge response, Next standalone runtime fallback).
-- **reasoning_checkpoint:** The route enumerates the only 401 shapes the source can return. None of them serialize to 93 bytes (computed: 50, 75, 76 for the three 401 paths; 39 for the 400 "Corpo inválido."; 77 for the 429 lock message). A 93-byte body therefore implies either (a) the response carries an extra field not present in the current `master` source (stale Copilot deployment?), or (b) the 401 is emitted by a layer in front of the route handler (Cloudflare error JSON, Next runtime).
+- **hypothesis:** H7 — `LoginForm.tsx` always sends `turnstileToken: null` (initial state of `useState<string | null>(null)`). The `LoginSchema` declares `turnstileToken: z.string().optional()`, which in Zod accepts `string | undefined` but REJECTS explicit `null`. Every login request fails Zod parse and the handler returns 401 at `route.ts:50–54`. **CONFIRMED by captured response body.**
+- **next_action:** none (root cause confirmed; fix proposed but not applied per read-only scope).
+- **expecting:** N/A — investigation complete.
+- **reasoning_checkpoint:** The 50-byte captured body uniquely identifies the Zod-fail branch. No 5th 401 source exists. No edge layer rewrites the body. Fargate image is not stale. Diagnosis is unambiguous.
 
 ## Evidence
 
@@ -84,6 +84,18 @@ scope: read_only
     2. The 401 is not emitted by this handler at all — possibly Cloudflare's "521 Web server is down" or a managed challenge JSON, but DYNAMIC cache status argues against that.
     3. A reverse-proxy (Cloudflare Workers / Transform Rule / Page Rule) rewrites the body in flight. No evidence for this in repo.
     4. The body has framing the user did not capture (e.g., gzip encoding inflates content-length report). However content-length should be the on-wire byte count.
+- timestamp: 2026-05-01
+  source: user-captured prod response body (DevTools Network tab, Response payload)
+  observation: **AMBIGUITY RESOLVED.** Captured response body verbatim:
+    ```
+    {"ok":false,"error":"E-mail ou senha incorretos."}
+    ```
+    This is exactly **50 bytes** — a byte-perfect match for the Zod-parse 401 path at `src/app/api/auth/login/route.ts:50-54`. The previously reported `content-length: 93` was the **request** content-length (a JSON body of `{"email":"<user>","password":"<pwd>","turnstileToken":null}` with the user's actual credentials sums to ~93 bytes), not the response content-length. The prior cycle's "MISMATCH" entry conflated request-side and response-side content-length and manufactured a spurious "5th 401 source" hypothesis. With the actual response body in hand:
+    - H7 (Zod-null-rejection) is **fully confirmed** — exact body, exact branch.
+    - The Fargate image is **not stale** — current `master` source produces this exact byte sequence.
+    - **No edge-layer body rewrite** exists — Cloudflare is passing the origin response through unchanged.
+    - **No 5th 401 source** exists — the four enumerated 401-emitting layers (route handler, Auth.js catch-all, Cloudflare WAF, Next runtime) are exhaustive, and the response is unambiguously from the route handler.
+    The bug is exactly the null-turnstileToken Zod parse failure on `master`. Diagnosis is closed.
 
 ## Eliminated
 
@@ -94,58 +106,44 @@ scope: read_only
 - Cloudflare WAF block: ruled out by cf-cache-status: DYNAMIC.
 - Email-canonicalisation mismatch: signup writes lowercased email (validation.ts:31), login reads with the same lowercased schema (line 96–98). Symmetric.
 - Cookie / `__Secure-` prefix: not relevant to a 401 BEFORE any session is set.
+- **Stale Fargate image** — eliminated by exact 50-byte body match against current `master`.
+- **5th 401 source / edge body rewrite** — eliminated by exact 50-byte body match; the spurious hypothesis was an artefact of confusing request and response content-length.
 
 ## Resolution
 
-### Root cause
+- **root_cause:** `LoginForm.tsx` initialises `turnstile_token` as `null` (`useState<string | null>(null)`) and serialises it directly into the request body as `"turnstileToken": null`. `LoginSchema` in `src/lib/validation.ts:50` declares `turnstileToken: z.string().optional()`, which Zod treats as `string | undefined` and **rejects** explicit `null`. The handler at `src/app/api/auth/login/route.ts:50-54` returns 401 with body `{"ok":false,"error":"E-mail ou senha incorretos."}` at the Zod-parse-failure branch — before any password check runs. Every first login attempt fails, even with valid credentials. Confirmed by exact 50-byte captured response body.
 
-**`LoginForm.tsx` always sends `turnstileToken: null` on the first submit; `LoginSchema` declares `turnstileToken: z.string().optional()` which rejects `null`. The handler returns 401 at the Zod-fail branch (`route.ts:50–54`) before any password check runs. Every first login attempt fails — including with valid credentials — which exactly matches the user's report.**
+- **fix (proposed, NOT applied — read-only scope):**
+  1. **Schema-side (preferred, primary):** `src/lib/validation.ts:50`
+     ```ts
+     // before
+     turnstileToken: z.string().optional(),
+     // after
+     turnstileToken: z.string().nullish(),
+     ```
+     `.nullish()` accepts `string | null | undefined`. The server stays lenient about how the client encodes "no token yet" and the bug dies in one line.
+  2. **Form-side (defence-in-depth):** `src/components/auth/LoginForm.tsx:48`
+     ```ts
+     // before
+     body: JSON.stringify({ email, password, turnstileToken: turnstile_token })
+     // after
+     body: JSON.stringify({ email, password, turnstileToken: turnstile_token ?? undefined })
+     ```
+     `?? undefined` prevents `null` from ever reaching the wire; `JSON.stringify` then omits the key entirely. Either fix alone resolves the 401; both together guarantee the bug stays dead under future schema tightening.
 
-The independent empirical Zod check (executed with the project's installed Zod) confirms the rejection:
+- **verification:**
+  1. **Local repro before fix:** `pnpm dev` → fill LoginForm with a valid local credential → submit → expect 401 with body `{"ok":false,"error":"E-mail ou senha incorretos."}`. Confirms parity with prod.
+  2. **Local repro after fix:** same flow with `validation.ts` patched → expect 200 with session cookie set → `/dashboard` loads.
+  3. **New integration test:** `tests/integration/auth/login-null-turnstile.test.ts` — POST `/api/auth/login` with `{ email, password, turnstileToken: null }` for a known-valid seeded user; assert status 200 and `Set-Cookie` present. This is the test that would have caught the bug pre-deploy.
+  4. **New Playwright e2e:** `tests/e2e/login.spec.ts` — extend existing auth flow to: signup → logout → fill LoginForm → submit → assert `/dashboard` reached. Closes the testing gap that allowed this regression to ship (existing `auth.spec.ts` never POSTs `/api/auth/login` through the form).
+  5. **Prod smoke after deploy:** repeat the captured failing request; expect 200.
 
-```
-.safeParse({ ..., turnstileToken: null }) → success: false
-  issues: [{ code: 'invalid_type', expected: 'string', received: null,
-             path: ['turnstileToken'] }]
-```
+- **files_changed:** none. Read-only scope honoured. Fix is proposed only; no source files modified during this debug session.
 
-### Why the byte-length mismatch is not load-bearing
-
-The route's three 401 bodies serialize to 50, 75, and 76 bytes (computed empirically). The user reported `content-length: 93`. Older commits emit the same bodies, so it isn't a stale-image artefact. Plausible non-load-bearing explanations: gzip framing in transit, a Cloudflare Worker / Transform Rule injecting a field, or the captured Network entry was a different request. None of these change the diagnosis — the Zod-null-rejection is independently confirmed and explains every observed symptom.
-
-### Why pre-prod testing missed it
-
-- `tests/e2e/auth.spec.ts` exercises signup → reload → logout but **never** POSTs to `/api/auth/login` through the form.
-- `tests/integration/auth/rate-limit.test.ts` always sends `turnstileToken: 'test-token'` (a non-null string) — never the null the browser actually produces.
-
-### Recommended fix (two complementary one-liners)
-
-1. **Schema (server-side, primary):** `src/lib/validation.ts:50`
-   ```ts
-   // before
-   turnstileToken: z.string().optional(),
-   // after
-   turnstileToken: z.string().nullish(),
-   ```
-   `.nullish()` accepts `string | null | undefined`. Server stays lenient about how the client encodes "no token yet."
-
-2. **Form (client-side, defensive):** `src/components/auth/LoginForm.tsx:42–50`
-   ```ts
-   body: JSON.stringify({
-     email: values.email,
-     password: values.password,
-     ...(turnstile_token ? { turnstileToken: turnstile_token } : {}),
-   }),
-   ```
-   Spreads in `turnstileToken` only when it's a non-null string. Either fix alone resolves the 401; both together guarantee the bug stays dead even if a future schema change is stricter.
-
-### Regression-test gap to close
-
-Add an integration test that posts to `/api/auth/login` with `turnstileToken: null` for a known-valid user and expects status 200 (not 401). This is the test that would have caught it pre-deploy and should be the first thing committed alongside the fix.
-
-### Files implicated
+### Files implicated (reference only)
 
 - `src/lib/validation.ts:50` — schema definition (fix here)
-- `src/components/auth/LoginForm.tsx:30,42–50` — null source (defensive fix here)
+- `src/components/auth/LoginForm.tsx:30,48` — null source (defensive fix here)
 - `src/app/api/auth/login/route.ts:48–54` — 401 emit point (no change needed)
-- `tests/integration/auth/` — missing regression test
+- `tests/integration/auth/` — missing regression test (add login-null-turnstile)
+- `tests/e2e/auth.spec.ts` — missing login-form e2e coverage (extend)
