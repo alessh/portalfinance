@@ -20,6 +20,7 @@ import { checkAndIncrement, resetCounter } from '@/lib/rateLimit';
 import { verifyTurnstile } from '@/lib/turnstile';
 import { recordAudit } from '@/lib/auditLog';
 import { enqueue, QUEUES } from '@/jobs/boss';
+import { env } from '@/lib/env';
 
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const SESSION_COOKIE_NAME =
@@ -192,7 +193,7 @@ async function ensureAccountLock(
   await enqueue(QUEUES.SEND_UNLOCK_EMAIL, {
     user_id: user.id,
     to: user.email,
-    unlock_link: `/api/auth/unlock?token=${token}`,
+    unlock_link: `${env.NEXTAUTH_URL}/api/auth/unlock?token=${token}`,
     expires_at: new Date(now.getTime() + UNLOCK_TOKEN_TTL_MS).toISOString(),
   });
 
