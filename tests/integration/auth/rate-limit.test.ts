@@ -254,3 +254,79 @@ describe('rate limiter — password reset (D-08)', () => {
     expect(await known_res.json()).toEqual(await unknown_res.json());
   }, 60_000);
 });
+
+// Regression for the prod 401-on-every-first-login bug captured in
+// .planning/debug/login-401-on-prod.md. The browser LoginForm initializes
+// `turnstile_token` as `useState<string | null>(null)` and submits the
+// field unconditionally, so the on-wire payload contains
+// `"turnstileToken": null` on the first attempt. Earlier `LoginSchema`
+// declared `turnstileToken: z.string().optional()`, which Zod rejects
+// when the explicit value is `null`, returning 401 BEFORE password
+// verification — every first login failed regardless of credentials.
+describe('login schema — turnstileToken null tolerance (regression)', () => {
+  it('accepts turnstileToken: null on the first attempt for a valid user (200)', async () => {
+    const email = 'first-login-null-token@example.com';
+    const password = 'Correct-Horse-1234';
+    await createTestUser(email, password);
+    const { POST: loginPOST } = await import('@/app/api/auth/login/route');
+
+    const res = await loginPOST(
+      new Request('http://localhost/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-forwarded-for': '198.51.100.42',
+          'user-agent': 'vitest',
+        },
+        body: JSON.stringify({ email, password, turnstileToken: null }),
+      }) as never,
+    );
+    expect(res.status).toBe(200);
+    const json = (await res.json()) as { ok: boolean; user_id?: string };
+    expect(json.ok).toBe(true);
+    expect(json.user_id).toBeDefined();
+  }, 60_000);
+
+  it('accepts turnstileToken omitted from the payload for a valid user (200)', async () => {
+    const email = 'first-login-omitted-token@example.com';
+    const password = 'Correct-Horse-1234';
+    await createTestUser(email, password);
+    const { POST: loginPOST } = await import('@/app/api/auth/login/route');
+
+    const res = await loginPOST(
+      new Request('http://localhost/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-forwarded-for': '198.51.100.43',
+          'user-agent': 'vitest',
+        },
+        body: JSON.stringify({ email, password }),
+      }) as never,
+    );
+    expect(res.status).toBe(200);
+  }, 60_000);
+
+  it('still 401s with turnstileToken: null and a wrong password (schema accepts null, password gate enforces)', async () => {
+    const email = 'first-login-null-bad-pwd@example.com';
+    await createTestUser(email, 'Correct-Horse-1234');
+    const { POST: loginPOST } = await import('@/app/api/auth/login/route');
+
+    const res = await loginPOST(
+      new Request('http://localhost/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-forwarded-for': '198.51.100.44',
+          'user-agent': 'vitest',
+        },
+        body: JSON.stringify({
+          email,
+          password: 'wrong-password',
+          turnstileToken: null,
+        }),
+      }) as never,
+    );
+    expect(res.status).toBe(401);
+  }, 60_000);
+});

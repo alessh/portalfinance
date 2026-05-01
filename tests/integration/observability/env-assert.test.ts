@@ -29,6 +29,7 @@ function goodProductionEnv(): Record<string, string> {
     CPF_HASH_PEPPER: 'production-pepper-at-least-32-chars-xx',
     SENTRY_DSN: 'https://abc@oNNNN.ingest.de.sentry.io/PNNNN',
     SENTRY_ENV: 'production',
+    NEXTAUTH_URL: 'https://portalfinance.app',
     AWS_ACCESS_KEY_ID: 'AKIAIOSFODNN7EXAMPLE',
     AWS_SECRET_ACCESS_KEY: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
     TURNSTILE_SITE_KEY: 'prod-site-key',

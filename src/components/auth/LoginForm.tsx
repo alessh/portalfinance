@@ -45,7 +45,7 @@ export function LoginForm() {
         body: JSON.stringify({
           email: values.email,
           password: values.password,
-          turnstileToken: turnstile_token,
+          ...(turnstile_token ? { turnstileToken: turnstile_token } : {}),
         }),
       });
       const json = (await res.json()) as {
