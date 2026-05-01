@@ -224,12 +224,16 @@ describe('DSR acknowledge worker', () => {
       '@/jobs/workers/dsrAcknowledgeWorker'
     );
 
-    // Run the worker with a fake job
+    // Run the worker with a fake job. user_id is required by the
+    // worker's IDOR guard (dsrAcknowledgeWorker.ts:48) — omitting it
+    // makes drizzle pass `undefined` to postgres-js, which rejects
+    // with UNDEFINED_VALUE.
     const fake_jobs = [
       {
         data: {
           dsr_request_id: req_row!.id,
           user_email: email,
+          user_id: userId,
         },
       },
     ];
@@ -266,7 +270,13 @@ describe('DSR acknowledge worker', () => {
     );
 
     await dsrAcknowledgeWorker([
-      { data: { dsr_request_id: req_row!.id, user_email: email } },
+      {
+        data: {
+          dsr_request_id: req_row!.id,
+          user_email: email,
+          user_id: userId,
+        },
+      },
     ] as never);
 
     const sent = ses_mock.sent[0];
