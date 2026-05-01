@@ -930,19 +930,19 @@ If any of A1–A10 is wrong at verification time, the planner should update PLAN
 
 ---
 
-## Open Questions / Blockers for Planner
+## Open Questions / Blockers for Planner (RESOLVED)
 
-1. **Do we own `portalfinance.app`?** D-11 hardcodes this sender. If the apex is not yet registered, DNS setup (MX, SPF, DKIM, DMARC) becomes a dependency on registration completing — planner should surface this as the first task of 01-04 alongside the SES production-access request. If not yet owned: halt at the end of 01-02 and escalate.
+1. **Do we own `portalfinance.app`?** _RESOLVED — production lives at https://portalfinance.app (verified Phase 01.1)._ D-11 hardcodes this sender. If the apex is not yet registered, DNS setup (MX, SPF, DKIM, DMARC) becomes a dependency on registration completing — planner should surface this as the first task of 01-04 alongside the SES production-access request. If not yet owned: halt at the end of 01-02 and escalate.
    - What we know: CONTEXT.md specifies the domain; STATE.md does not note ownership.
    - What's unclear: whether the domain is registered and the DNS zone is under our control.
    - Recommendation: The planner adds a "verify apex domain ownership and nameservers" subtask at the top of 01-04. If not owned, 01-04 splits into a blocking subtask before SES work can proceed.
 
-2. **Where does the ToS / Privacy Policy live?** LGPD-01 requires a version-hashable document. Is legal counsel writing it, or do we ship a template? The `consent_version` column depends on this existing.
+2. **Where does the ToS / Privacy Policy live?** _RESOLVED — docs/legal/terms-v1.md and docs/legal/privacy-v1.md both exist (Phase 01-03)._ LGPD-01 requires a version-hashable document. Is legal counsel writing it, or do we ship a template? The `consent_version` column depends on this existing.
    - What we know: CONTEXT.md D-16 writes `ACCOUNT_CREATION` consent with a version.
    - What's unclear: the actual content.
    - Recommendation: Include a skeleton `docs/legal/terms-v1.md` and `docs/legal/privacy-v1.md` in 01-03 with a TODO for legal review. Hash the markdown at build time into `consentVersions.ts`. Pre-launch gate for legal review lands in Phase 6.
 
-3. **CPF_HASH_PEPPER vs ENCRYPTION_KEY — same secret or different?** Recommendation in the research is HMAC with a separate pepper to resist rainbow attacks if the DB leaks but the key is unchanged.
+3. **CPF_HASH_PEPPER vs ENCRYPTION_KEY — same secret or different?** _RESOLVED — two distinct env vars wired in src/lib/env.ts and documented in docs/ops/encryption-key-rotation.md (Phase 01-01)._ Recommendation in the research is HMAC with a separate pepper to resist rainbow attacks if the DB leaks but the key is unchanged.
    - What we know: neither CONTEXT.md nor STACK.md specifies.
    - Recommendation: two distinct env vars (`ENCRYPTION_KEY` and `CPF_HASH_PEPPER`). Document the rationale in `docs/ops/encryption-key-rotation.md`.
 
@@ -950,7 +950,7 @@ If any of A1–A10 is wrong at verification time, the planner should update PLAN
    - What we know: UI-SPEC §2.10 hardcodes the numbers.
    - Recommendation: Static constants in `src/lib/demoData.ts`. Render the demo dashboard purely client-side for the first post-signup session; real dashboard lands in Phase 4.
 
-5. **Manifest `public/logo.svg` — who creates it?** UI-SPEC §2.1 references `public/logo.svg` at 32px height and as the PWA manifest base (Phase 4). Phase 1 needs it for `AuthShell`.
+5. **Manifest `public/logo.svg` — who creates it?** _RESOLVED — public/logo.svg placeholder exists (Phase 01-00)._ UI-SPEC §2.1 references `public/logo.svg` at 32px height and as the PWA manifest base (Phase 4). Phase 1 needs it for `AuthShell`.
    - Recommendation: Plan 01-01 includes a "placeholder logo SVG" task (simple wordmark) with a note to replace during Phase 4 PWA polish.
 
 ---
@@ -1145,12 +1145,12 @@ export async function register() {
 | Runtime / deploy | MEDIUM | Railway region + SES prod access + argon2 prebuild are ASSUMED; fallbacks documented |
 | Validation | HIGH | Every requirement has an automated test command; Wave-0 gap list is explicit |
 
-### Open Questions for Planner
+### Open Questions for Planner (RESOLVED)
 
-1. Domain ownership of `portalfinance.app` (blocks SES setup in 01-04).
-2. ToS / Privacy Policy draft existence (needed for `consent_version` hash).
-3. CPF_HASH_PEPPER vs ENCRYPTION_KEY — recommend two distinct env vars.
-4. Logo SVG authoring for `AuthShell` + Phase-4 PWA manifest.
+1. Domain ownership of `portalfinance.app` (blocks SES setup in 01-04). _RESOLVED — production lives at https://portalfinance.app (verified Phase 01.1)._
+2. ToS / Privacy Policy draft existence (needed for `consent_version` hash). _RESOLVED — docs/legal/terms-v1.md and docs/legal/privacy-v1.md both exist (Phase 01-03)._
+3. CPF_HASH_PEPPER vs ENCRYPTION_KEY — recommend two distinct env vars. _RESOLVED — two distinct env vars wired in src/lib/env.ts and documented in docs/ops/encryption-key-rotation.md (Phase 01-01)._
+4. Logo SVG authoring for `AuthShell` + Phase-4 PWA manifest. _RESOLVED — public/logo.svg placeholder exists (Phase 01-00)._
 
 ### Ready for Planning
 

@@ -35,7 +35,7 @@ Portal Finance v1 ships a Brazilian personal-finance PWA for the middle-class we
 5. A consent screen exists as a reusable component and records the expected `user_consents` row shape (exercised by a LGPD consent unit test), even if no Pluggy connection is wired yet.
 6. A runtime assertion fails fast when production env is started with sandbox credentials.
 
-**Plans**: 5 plans
+**Plans**: 8 plans (5 base + 3 gap-closure)
 
 Plans:
 - [x] 01-00-PLAN.md — Wave 0: Next.js 16 + TS 5.7 + Tailwind 4 + shadcn/ui scaffold, Vitest + Playwright + testcontainers, package.json scripts, pt-BR locale (completed 2026-04-22)
@@ -43,6 +43,9 @@ Plans:
 - [x] 01-02-PLAN.md — Auth.js v5 credentials provider (next-auth@beta + @auth/drizzle-adapter), argon2id + AES-256-GCM + HMAC-SHA-256 CPF helpers, @brazilian-utils/brazilian-utils CPF validator, Postgres rate limit (5/15 + 3/hour + 10/hour-per-IP), Cloudflare Turnstile after 2nd failure, IDOR baseline, UI-SPEC § 2.1–2.7 forms (completed 2026-04-22)
 - [x] 01-03-PLAN.md — LGPD scaffolding: piiScrubber with pluggable rules + full corpus, ConsentScreen reusable component (scope discriminated-union), pg-boss singleton + worker entrypoint, React Email templates + SES mailer with suppression guard, DSR /api/privacy/{export,delete} stubs (PENDING only; execution Phase 6), Settings > Privacy UI, ToS/Privacy skeleton markdown + consent_version hash (completed 2026-04-22)
 - [x] 01-04-PLAN.md — Observability close-out: Sentry EU (de.sentry.io) with synchronous piiScrubber beforeSend, pino structured logger (Node + edge), instrumentation.ts with OPS-04 env assertion, SES production access request + SNS bounce webhook (idempotent webhook_events — Phase 2 pattern validator), DemoDashboard + EmailVerificationNagBanner per UI-SPEC § 2.9/2.10, docs/ops runbooks + README (completed 2026-04-22 — Task 4 SES/Sentry console setup deferred to ops)
+- [ ] 01-05-PLAN.md — Gap closure (HUMAN-UAT Test 4 / Blocker 2): mailer pipeline observability — structured email_send_attempt logs on every exit branch, ConfigurationSetName attached to SendEmailCommand, plaintext alternate body, worker-side worker_job_received/completed logs, integration test for password-reset enqueue→worker→mailer pipeline
+- [ ] 01-06-PLAN.md — Gap closure (HUMAN-UAT Test 4 / Blocker 3 lockdown): regression tests on rendered email HTML (3 templates) + integration test asserting enqueue-time URL shape for reset_link and unlock_link; locks the fix from commit 486a98a; audits adjacent unlock-email URL
+- [ ] 01-07-PLAN.md — Gap closure (HUMAN-UAT Test 1 / third-party block): docs-only — record AWS SES production-access denial verbatim, document three remediation paths (appeal / new account / ESP pivot — Postmark recommended), update STATE.md Deferred Items
 
 ### Phase 01.1: Infra Bootstrap (AWS sa-east-1 via Copilot) (INSERTED)
 
