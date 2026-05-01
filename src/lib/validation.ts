@@ -46,8 +46,11 @@ export const LoginSchema = z.object({
     .email({ message: 'Digite um e-mail válido.' })
     .transform((s) => s.trim().toLowerCase()),
   password: z.string().min(1),
-  // Present from the 2nd failed attempt onward (D-07).
-  turnstileToken: z.string().optional(),
+  // Present from the 2nd failed attempt onward (D-07). `.nullish()`
+  // (not `.optional()`) because the LoginForm initializes the token
+  // as `useState<string | null>(null)` and submits `null` on the
+  // first attempt — a bare `.optional()` would 401 every first login.
+  turnstileToken: z.string().nullish(),
 });
 
 export const PasswordResetRequestSchema = z.object({
