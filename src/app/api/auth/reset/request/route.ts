@@ -21,6 +21,7 @@ import { hashPassword } from '@/lib/password';
 import { checkAndIncrement } from '@/lib/rateLimit';
 import { recordAudit } from '@/lib/auditLog';
 import { enqueue, QUEUES } from '@/jobs/boss';
+import { env } from '@/lib/env';
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
 const RESET_TOKEN_TTL_MS = ONE_HOUR_MS;
@@ -92,7 +93,7 @@ export async function POST(req: NextRequest) {
     await enqueue(QUEUES.SEND_PASSWORD_RESET_EMAIL, {
       user_id: user.id,
       to: user.email,
-      reset_link: `/api/auth/reset/confirm?token=${token}`,
+      reset_link: `${env.NEXTAUTH_URL}/reset/confirm?token=${token}`,
       expires_at: new Date(Date.now() + RESET_TOKEN_TTL_MS).toISOString(),
     });
     await recordAudit({

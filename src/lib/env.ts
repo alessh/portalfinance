@@ -30,6 +30,12 @@ const EnvSchema = z
     DATABASE_URL: z.string().url(),
     NEXTAUTH_SECRET: z.string().min(32),
 
+    // Public origin used when generating absolute URLs in transactional
+    // emails (password-reset link, account-unlock link, etc.). Defaults
+    // to localhost for dev/tests; the OPS-04 refine below requires
+    // https + non-localhost in production.
+    NEXTAUTH_URL: z.string().url().default('http://localhost:3000'),
+
     // Base64-encoded 32-byte AES-256-GCM master key.
     ENCRYPTION_KEY: z
       .string()
@@ -106,6 +112,18 @@ const EnvSchema = z
 
       // OPS-04: SENTRY_ENV must be 'production' when NODE_ENV is 'production'.
       if (e.SENTRY_ENV !== 'production') return false;
+
+      // OPS-04: NEXTAUTH_URL must be https + non-localhost in production.
+      // Email links (password reset, account unlock) embed this origin;
+      // an http or localhost value silently breaks every transactional
+      // email and is a clear deployment misconfig.
+      try {
+        const u = new URL(e.NEXTAUTH_URL);
+        if (u.protocol !== 'https:') return false;
+        if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') return false;
+      } catch {
+        return false;
+      }
 
       // OPS-04: No sandbox credentials in production.
       if (e.PLUGGY_ENV !== undefined && e.PLUGGY_ENV !== 'production') return false;

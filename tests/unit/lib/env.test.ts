@@ -147,6 +147,7 @@ describe('OPS-04 refinement -- migrate job variant (D-11)', () => {
     process.env.SENTRY_DSN = 'https://abc@oNNNN.ingest.de.sentry.io/PNNNN';
     process.env.SENTRY_ENV = 'production';
     process.env.SERVICE_NAME = 'migrate';
+    process.env.NEXTAUTH_URL = 'https://portalfinance.app';
     // No TURNSTILE_*, no AWS_ACCESS_KEY_*  -- migrate does not need them.
     (process.env as Record<string, string>).NODE_ENV = 'production';
 
@@ -207,6 +208,7 @@ describe('SEC-02 + Plan 01.1-03 prereq -- AWS creds optional in prod (IAM task-r
     process.env.TURNSTILE_SITE_KEY = 'prod-site-key';
     process.env.TURNSTILE_SECRET_KEY = 'prod-secret-key';
     process.env.NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY = 'prod-public-site-key';
+    process.env.NEXTAUTH_URL = 'https://portalfinance.app';
     // AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY intentionally undefined --
     // production relies on the IAM task role attached by Copilot.
     (process.env as Record<string, string>).NODE_ENV = 'production';
@@ -225,6 +227,7 @@ describe('SEC-02 + Plan 01.1-03 prereq -- AWS creds optional in prod (IAM task-r
     process.env.SENTRY_DSN = 'https://abc@oNNNN.ingest.de.sentry.io/PNNNN';
     process.env.SENTRY_ENV = 'production';
     process.env.SERVICE_NAME = 'worker';
+    process.env.NEXTAUTH_URL = 'https://portalfinance.app';
     // Plan 01.1-05 -- worker does NOT render signup forms, so TURNSTILE_*
     // are not required. AWS_ACCESS_KEY_* also intentionally undefined.
     (process.env as Record<string, string>).NODE_ENV = 'production';
