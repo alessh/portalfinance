@@ -15,6 +15,13 @@
       "when": 1777728564397,
       "tag": "0001_02_pluggy_ingestion",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777744255187,
+      "tag": "0002_02_account_unique_per_user",
+      "breakpoints": true
     }
   ]
 }

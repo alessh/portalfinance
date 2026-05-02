@@ -241,7 +241,11 @@ export async function pluggySyncWorker(jobs: Job<SyncJobPayload>[]): Promise<voi
                 owner: a.owner ?? null,
               })
               .onConflictDoUpdate({
-                target: accounts.pluggy_account_id,
+                // WR-03: target is (user_id, pluggy_account_id) so joint
+                // accounts shared by two users do not collide globally — the
+                // unique index was widened to include user_id in migration
+                // 0002_02_account_unique_per_user.
+                target: [accounts.user_id, accounts.pluggy_account_id],
                 set: {
                   name: sql.raw('excluded.name'),
                   balance: sql.raw('excluded.balance'),

@@ -9,8 +9,12 @@ import { users } from './users';
  * Design notes (D-44):
  * - `user_id` duplicated from `pluggy_items.user_id` for IDOR guard (P26).
  *   Every query MUST include `AND user_id = $session`.
- * - `pluggy_account_id` text UNIQUE — Pluggy's stable external identifier.
- *   Upsert key: ON CONFLICT (pluggy_account_id) DO UPDATE (TX-01 dedup pattern).
+ * - `pluggy_account_id` text — Pluggy's stable external identifier.
+ *   UNIQUE is scoped per `(user_id, pluggy_account_id)` (review WR-03):
+ *   joint accounts shared by two users would otherwise collide on a
+ *   global UNIQUE and let an upsert from user B silently mutate the row
+ *   owned by user A. Upsert key: ON CONFLICT (user_id, pluggy_account_id)
+ *   DO UPDATE (TX-01 dedup pattern).
  * - `account_status_enum` includes FROZEN (shipped Phase 2 to support Phase 5
  *   BILL-04 downgrade-as-freeze without a future migration — D-44 decision).
  * - `balance` and `credit_limit` use numeric(15,2) to avoid floating-point
@@ -40,7 +44,11 @@ export const accounts = pgTable(
     updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
+    // WR-03: scope uniqueness per user so joint accounts shared by two users
+    // do not collide on a global UNIQUE. Upsert target updated to
+    // (user_id, pluggy_account_id) in the worker.
     pluggy_account_unique: uniqueIndex('accounts_pluggy_account_id_unique').on(
+      t.user_id,
       t.pluggy_account_id,
     ),
     by_user_status: index('accounts_user_status_idx').on(t.user_id, t.status),
