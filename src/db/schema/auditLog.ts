@@ -10,6 +10,7 @@ import { users } from './users';
  * each time. App-layer enforcement via this type is the chosen trade-off.
  */
 export type AuthAuditAction =
+  // Phase 1 (auth catalogue — D-19)
   | 'signup'
   | 'login_success'
   | 'login_failure'
@@ -19,7 +20,18 @@ export type AuthAuditAction =
   | 'account_locked'
   | 'account_unlocked'
   | 'consent_granted'
-  | 'consent_revoked';
+  | 'consent_revoked'
+  // Phase 2 — Pluggy ingestion events (D-13)
+  // audit_log.action is text (not a DB CHECK) so extending the TS union
+  // requires NO DB migration — deliberate trade-off documented in D-19.
+  | 'item_connected'
+  | 'item_disconnected'
+  | 'item_reauth_started'
+  | 'item_reauth_succeeded'
+  | 'item_reauth_failed'
+  | 'manual_sync_triggered'
+  | 'transfer_detected'
+  | 'fatura_detected';
 
 /**
  * `audit_log` — append-only event trail.

@@ -54,8 +54,70 @@ function short_sha(file_path: string): string {
 const terms_hash = short_sha('docs/legal/terms-v1.md');
 const privacy_hash = short_sha('docs/legal/privacy-v1.md');
 
+/**
+ * Pluggy consent version hash — D-10.
+ *
+ * SHA-256 of the privacy policy + terms + scope constant
+ * 'pluggy_connect_v1'. Returns a 64-character lowercase hex string.
+ *
+ * Bump to 'pluggy_connect_v2' (new constant + new key) whenever the Pluggy
+ * disclosure copy changes (D-10). Stale-consent detection in Phase 6 compares
+ * this value against user_consents.consent_version on login.
+ */
+function pluggy_connect_version_hash(): string {
+  const privacy = (() => {
+    try {
+      return readFileSync(resolve(process.cwd(), 'docs/legal/privacy-v1.md'), 'utf8');
+    } catch {
+      if (
+        process.env.NODE_ENV === 'production' &&
+        process.env.NEXT_PHASE !== 'phase-production-build'
+      ) {
+        throw new Error(
+          'OPS-04 violation: docs/legal/privacy-v1.md not found — required for pluggy_connect_v1 hash.',
+        );
+      }
+      return 'fallback-privacy';
+    }
+  })();
+  const tos = (() => {
+    try {
+      return readFileSync(resolve(process.cwd(), 'docs/legal/terms-v1.md'), 'utf8');
+    } catch {
+      if (
+        process.env.NODE_ENV === 'production' &&
+        process.env.NEXT_PHASE !== 'phase-production-build'
+      ) {
+        throw new Error(
+          'OPS-04 violation: docs/legal/terms-v1.md not found — required for pluggy_connect_v1 hash.',
+        );
+      }
+      return 'fallback-terms';
+    }
+  })();
+  return createHash('sha256')
+    .update(privacy)
+    .update(tos)
+    .update('pluggy_connect_v1')
+    .digest('hex');
+}
+
 export const versions = {
   ACCOUNT_CREATION: `v1.0.0+terms.${terms_hash}+privacy.${privacy_hash}`,
+  /**
+   * Pluggy-scoped consent version (D-10). 64-char lowercase hex.
+   * Bump scope constant to 'pluggy_connect_v2' when disclosure copy changes.
+   */
+  PLUGGY_CONNECT: pluggy_connect_version_hash(),
 } as const;
 
 export type ConsentVersionKey = keyof typeof versions;
+
+/**
+ * Helper for callers that want a typed Pluggy consent version string.
+ * Returns the same value as versions.PLUGGY_CONNECT — provided as a
+ * function so callers have a stable import path (D-10).
+ */
+export function getPluggyConsentVersionHash(): string {
+  return versions.PLUGGY_CONNECT;
+}

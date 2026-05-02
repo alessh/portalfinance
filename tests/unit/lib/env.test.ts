@@ -211,6 +211,12 @@ describe('SEC-02 + Plan 01.1-03 prereq -- AWS creds optional in prod (IAM task-r
     process.env.NEXTAUTH_URL = 'https://portalfinance.app';
     // AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY intentionally undefined --
     // production relies on the IAM task role attached by Copilot.
+    // Phase 2 (plan 02-01) OPS-04 refine requires Pluggy prod creds for web/worker.
+    process.env.PLUGGY_ENV = 'production';
+    process.env.PLUGGY_CLIENT_ID = 'prod-pluggy-client-id';
+    process.env.PLUGGY_CLIENT_SECRET = 'prod-pluggy-client-secret';
+    process.env.PLUGGY_WEBHOOK_SECRET = 'prod-pluggy-webhook-secret-at-least-32c';
+    process.env.PLUGGY_ITEM_ID_HASH_PEPPER = 'prod-pluggy-pepper-at-least-32-chars-xx';
     (process.env as Record<string, string>).NODE_ENV = 'production';
 
     const mod = await import('@/lib/env');
@@ -230,6 +236,12 @@ describe('SEC-02 + Plan 01.1-03 prereq -- AWS creds optional in prod (IAM task-r
     process.env.NEXTAUTH_URL = 'https://portalfinance.app';
     // Plan 01.1-05 -- worker does NOT render signup forms, so TURNSTILE_*
     // are not required. AWS_ACCESS_KEY_* also intentionally undefined.
+    // Phase 2 (plan 02-01) OPS-04 refine requires Pluggy prod creds for web/worker.
+    process.env.PLUGGY_ENV = 'production';
+    process.env.PLUGGY_CLIENT_ID = 'prod-pluggy-client-id';
+    process.env.PLUGGY_CLIENT_SECRET = 'prod-pluggy-client-secret';
+    process.env.PLUGGY_WEBHOOK_SECRET = 'prod-pluggy-webhook-secret-at-least-32c';
+    process.env.PLUGGY_ITEM_ID_HASH_PEPPER = 'prod-pluggy-pepper-at-least-32-chars-xx';
     (process.env as Record<string, string>).NODE_ENV = 'production';
 
     const mod = await import('@/lib/env');

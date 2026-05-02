@@ -1,0 +1,6 @@
+{
+  "event": "item/created",
+  "eventId": "evt_001",
+  "itemId": "item-abc-123",
+  "createdAt": "2026-05-01T10:00:00.000Z"
+}

@@ -1,0 +1,41 @@
+{
+  "results": [
+    {
+      "id": "acc-checking-001",
+      "itemId": "item-abc-123",
+      "type": "BANK",
+      "subtype": "CHECKING_ACCOUNT",
+      "name": "Conta Corrente Teste",
+      "marketingName": "Conta Corrente",
+      "number": "00001-0",
+      "balance": 1250.75,
+      "currencyCode": "BRL",
+      "owner": "TITULAR TESTE LTDA",
+      "taxNumber": "000.000.000/0000-00",
+      "createdAt": "2026-04-01T00:00:00.000Z",
+      "updatedAt": "2026-05-01T10:00:00.000Z"
+    },
+    {
+      "id": "acc-credit-001",
+      "itemId": "item-abc-123",
+      "type": "CREDIT",
+      "subtype": "CREDIT_CARD",
+      "name": "Cartão de Crédito Teste",
+      "marketingName": "Cartão Platinum Teste",
+      "number": "xxxx-xxxx-xxxx-0001",
+      "balance": -450.00,
+      "currencyCode": "BRL",
+      "creditData": {
+        "creditLimit": 5000.00,
+        "availableCreditLimit": 4550.00,
+        "balanceCloseDate": "2026-05-15",
+        "balanceDueDate": "2026-05-22"
+      },
+      "owner": "TITULAR TESTE LTDA",
+      "taxNumber": "000.000.000/0000-00",
+      "createdAt": "2026-04-01T00:00:00.000Z",
+      "updatedAt": "2026-05-01T10:00:00.000Z"
+    }
+  ],
+  "total": 2
+}

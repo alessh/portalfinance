@@ -1,0 +1,7 @@
+{
+  "event": "transactions/created",
+  "eventId": "evt_003",
+  "itemId": "item-abc-123",
+  "createdAt": "2026-05-01T12:00:00.000Z",
+  "transactionIds": ["tx_1", "tx_2"]
+}

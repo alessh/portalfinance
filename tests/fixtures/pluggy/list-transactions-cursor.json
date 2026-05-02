@@ -1,0 +1,81 @@
+{
+  "results": [
+    {
+      "id": "tx_101",
+      "accountId": "acc-checking-001",
+      "description": "COMPRA POSTO COMBUSTIVEL TESTE",
+      "descriptionRaw": "COMPRA POSTO COMBUSTIVEL TESTE 10/05",
+      "currencyCode": "BRL",
+      "amount": -180.00,
+      "type": "DEBIT",
+      "status": "POSTED",
+      "date": "2026-05-10",
+      "postedDate": "2026-05-10",
+      "category": "Transporte",
+      "merchant": {
+        "name": "POSTO COMBUSTIVEL TESTE LTDA",
+        "businessName": "POSTO COMBUSTIVEL TESTE LTDA",
+        "cnpj": "00.000.000/0006-00",
+        "type": "MERCHANT"
+      },
+      "paymentData": {
+        "paymentMethod": "CARD",
+        "receiver": {
+          "name": "POSTO COMBUSTIVEL TESTE LTDA",
+          "taxNumber": "00.000.000/0006-00",
+          "type": "CNPJ"
+        }
+      }
+    },
+    {
+      "id": "tx_102",
+      "accountId": "acc-checking-001",
+      "description": "NETFLIX STREAMING SERVICO",
+      "descriptionRaw": "NETFLIX.COM STREAMING BR 11/05",
+      "currencyCode": "BRL",
+      "amount": -44.90,
+      "type": "DEBIT",
+      "status": "POSTED",
+      "date": "2026-05-11",
+      "postedDate": "2026-05-11",
+      "category": "Assinaturas",
+      "merchant": {
+        "name": "STREAMING SERVICO TESTE LTDA",
+        "businessName": "STREAMING SERVICO TESTE LTDA",
+        "cnpj": "00.000.000/0007-00",
+        "type": "MERCHANT"
+      },
+      "paymentData": {
+        "paymentMethod": "CARD",
+        "receiver": {
+          "name": "STREAMING SERVICO TESTE LTDA",
+          "taxNumber": "00.000.000/0007-00",
+          "type": "CNPJ"
+        }
+      }
+    },
+    {
+      "id": "tx_103",
+      "accountId": "acc-checking-001",
+      "description": "PIX ENVIADO ALUGUEL",
+      "descriptionRaw": "PIX ENVIADO ALUGUEL IMOVEL TESTE 12/05",
+      "currencyCode": "BRL",
+      "amount": -1800.00,
+      "type": "DEBIT",
+      "status": "POSTED",
+      "date": "2026-05-12",
+      "postedDate": "2026-05-12",
+      "category": "Moradia",
+      "merchant": null,
+      "paymentData": {
+        "paymentMethod": "PIX",
+        "receiver": {
+          "name": "IMOBILIARIA TESTE LTDA",
+          "taxNumber": "00.000.000/0008-00",
+          "type": "CNPJ"
+        }
+      }
+    }
+  ],
+  "nextCursor": null
+}

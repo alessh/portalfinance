@@ -12,7 +12,10 @@
  *   - PLUGGY_CONNECTOR_TEMPLATE: used for any PLUGGY_CONNECTOR:<id> scope
  */
 
-export type ConsentScope = 'ACCOUNT_CREATION' | `PLUGGY_CONNECTOR:${string}`;
+export type ConsentScope =
+  | 'ACCOUNT_CREATION'
+  | 'PLUGGY_CONNECT_PENDING'
+  | `PLUGGY_CONNECTOR:${string}`;
 
 export interface ScopeConfig {
   title: string;
@@ -30,6 +33,28 @@ const ACCOUNT_CREATION: ScopeConfig = {
   legalBasis: 'Base legal: Art. 7º, I da LGPD (consentimento)',
 };
 
+/**
+ * Shown at the Pluggy connect flow before the user authorizes bank data
+ * sharing. UI-SPEC § 3.2 verbatim text. (D-08, D-14)
+ *
+ * LGPD Art. 7º, I — consent basis: user actively clicks "Concordar e conectar".
+ */
+const PLUGGY_CONNECT_PENDING: ScopeConfig = {
+  title: 'Conectar sua conta bancária',
+  dataPoints: [
+    'Saldos e detalhes da conta',
+    'Histórico de transações (até 12 meses)',
+    'Limites e datas de vencimento do cartão',
+  ],
+  legalBasis: 'Base legal: Art. 7º, I da LGPD (consentimento)',
+};
+
+/**
+ * Per-connector disclosure — same copy as PLUGGY_CONNECT_PENDING.
+ * Phase 2 records a per-connector scope (PLUGGY_CONNECTOR:<id>) in
+ * user_consents AFTER the widget succeeds. The UI rendering reuses
+ * the generic PLUGGY_CONNECT_PENDING config.
+ */
 const PLUGGY_CONNECTOR_TEMPLATE: ScopeConfig = {
   title: 'Conectar instituição financeira',
   dataPoints: [
@@ -43,6 +68,7 @@ const PLUGGY_CONNECTOR_TEMPLATE: ScopeConfig = {
 
 export const consentScopes = {
   ACCOUNT_CREATION,
+  PLUGGY_CONNECT_PENDING,
   PLUGGY_CONNECTOR_TEMPLATE,
 } as const;
 
@@ -54,7 +80,10 @@ export const consentScopes = {
  */
 export function getScopeConfig(scope: ConsentScope): ScopeConfig {
   if (scope === 'ACCOUNT_CREATION') return consentScopes.ACCOUNT_CREATION;
+  if (scope === 'PLUGGY_CONNECT_PENDING') return consentScopes.PLUGGY_CONNECT_PENDING;
+  // Per-connector row recorded post-widget; UI rendering reuses the generic
+  // PLUGGY_CONNECT_PENDING disclosure (same LGPD basis, same data points).
   if (scope.startsWith('PLUGGY_CONNECTOR:'))
-    return consentScopes.PLUGGY_CONNECTOR_TEMPLATE;
+    return consentScopes.PLUGGY_CONNECT_PENDING;
   throw new Error(`Unknown consent scope: ${scope}`);
 }

@@ -52,3 +52,28 @@ export function decryptCPF(blob: Buffer): string {
 export function hashCPF(plaintext: string): Buffer {
   return createHmac('sha256', env.CPF_HASH_PEPPER).update(plaintext).digest();
 }
+
+/**
+ * Mirror of hashCPF() shape — distinct pepper for defense-in-depth.
+ *
+ * RESEARCH.md OQ#6 RESOLVED: Phase 2 uses a SEPARATE pepper
+ * (PLUGGY_ITEM_ID_HASH_PEPPER) so that a database leak of one hash set
+ * cannot be used to reverse-engineer the other. Do NOT substitute bare
+ * createHash('sha256') — bare SHA-256 of a Pluggy itemId string is
+ * trivially pre-imageable without a pepper.
+ *
+ * Used everywhere a pluggy_item_id needs a deterministic uniqueness lookup
+ * (pluggy_items.pluggy_item_id_hash bytea column).
+ *
+ * NEVER log the plaintext input or the resulting Buffer.
+ */
+export function hashPluggyItemId(plaintext: string): Buffer {
+  const pepper = env.PLUGGY_ITEM_ID_HASH_PEPPER;
+  if (!pepper) {
+    throw new Error(
+      'PLUGGY_ITEM_ID_HASH_PEPPER missing — required for hashPluggyItemId(). ' +
+      'Set min-32-char value in env (mirrors CPF_HASH_PEPPER pattern).',
+    );
+  }
+  return createHmac('sha256', Buffer.from(pepper, 'utf8')).update(plaintext).digest();
+}

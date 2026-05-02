@@ -1,0 +1,201 @@
+{
+  "results": [
+    {
+      "id": "tx_001",
+      "accountId": "acc-checking-001",
+      "description": "COMPRA MERCADO TESTE LTDA",
+      "descriptionRaw": "COMPRA MERCADO TESTE LTDA 01/05",
+      "currencyCode": "BRL",
+      "amount": -89.90,
+      "type": "DEBIT",
+      "status": "POSTED",
+      "date": "2026-05-01",
+      "postedDate": "2026-05-01",
+      "category": "Alimentação",
+      "merchant": {
+        "name": "MERCADO TESTE LTDA",
+        "businessName": "MERCADO TESTE LTDA",
+        "cnpj": "00.000.000/0000-00",
+        "type": "MERCHANT"
+      },
+      "paymentData": {
+        "paymentMethod": "CARD",
+        "receiver": {
+          "name": "MERCADO TESTE LTDA",
+          "taxNumber": "00.000.000/0000-00",
+          "type": "CNPJ"
+        }
+      }
+    },
+    {
+      "id": "tx_002",
+      "accountId": "acc-checking-001",
+      "description": "PIX RECEBIDO AMIGO TESTE",
+      "descriptionRaw": "PIX RECEBIDO AMIGO TESTE 02/05",
+      "currencyCode": "BRL",
+      "amount": 500.00,
+      "type": "CREDIT",
+      "status": "POSTED",
+      "date": "2026-05-02",
+      "postedDate": "2026-05-02",
+      "category": "Transferência",
+      "merchant": null,
+      "paymentData": {
+        "paymentMethod": "PIX",
+        "payer": {
+          "name": "AMIGO TESTE",
+          "taxNumber": "000.000.000-00",
+          "type": "CPF"
+        }
+      }
+    },
+    {
+      "id": "tx_003",
+      "accountId": "acc-checking-001",
+      "description": "BOLETO CONDOMINIO TESTE IMOVEIS",
+      "descriptionRaw": "BOLETO CONDOMINIO TESTE IMOVEIS 03/05",
+      "currencyCode": "BRL",
+      "amount": -1200.00,
+      "type": "DEBIT",
+      "status": "POSTED",
+      "date": "2026-05-03",
+      "postedDate": "2026-05-03",
+      "category": "Moradia",
+      "merchant": {
+        "name": "CONDOMINIO TESTE IMOVEIS LTDA",
+        "businessName": "CONDOMINIO TESTE IMOVEIS LTDA",
+        "cnpj": "00.000.000/0001-00",
+        "type": "MERCHANT"
+      },
+      "paymentData": {
+        "paymentMethod": "BOLETO",
+        "receiver": {
+          "name": "CONDOMINIO TESTE IMOVEIS LTDA",
+          "taxNumber": "00.000.000/0001-00",
+          "type": "CNPJ"
+        }
+      }
+    },
+    {
+      "id": "tx_004",
+      "accountId": "acc-checking-001",
+      "description": "SALARIO EMPRESA TESTE SA",
+      "descriptionRaw": "SALARIO EMPRESA TESTE SA 05/05",
+      "currencyCode": "BRL",
+      "amount": 4500.00,
+      "type": "CREDIT",
+      "status": "POSTED",
+      "date": "2026-05-05",
+      "postedDate": "2026-05-05",
+      "category": "Salário",
+      "merchant": null,
+      "paymentData": {
+        "paymentMethod": "PIX",
+        "payer": {
+          "name": "EMPRESA TESTE SA",
+          "taxNumber": "00.000.000/0002-00",
+          "type": "CNPJ"
+        }
+      }
+    },
+    {
+      "id": "tx_005",
+      "accountId": "acc-checking-001",
+      "description": "COMPRA FARMACIA TESTE",
+      "descriptionRaw": "COMPRA FARMACIA TESTE 06/05",
+      "currencyCode": "BRL",
+      "amount": -45.50,
+      "type": "DEBIT",
+      "status": "POSTED",
+      "date": "2026-05-06",
+      "postedDate": "2026-05-06",
+      "category": "Saúde",
+      "merchant": {
+        "name": "FARMACIA TESTE LTDA",
+        "businessName": "FARMACIA TESTE LTDA",
+        "cnpj": "00.000.000/0003-00",
+        "type": "MERCHANT"
+      },
+      "paymentData": {
+        "paymentMethod": "CARD",
+        "receiver": {
+          "name": "FARMACIA TESTE LTDA",
+          "taxNumber": "00.000.000/0003-00",
+          "type": "CNPJ"
+        }
+      }
+    },
+    {
+      "id": "tx_006",
+      "accountId": "acc-checking-001",
+      "description": "TED TRANSFERENCIA PROPRIA",
+      "descriptionRaw": "TED TRANSFERENCIA PROPRIA CC 07/05",
+      "currencyCode": "BRL",
+      "amount": -2000.00,
+      "type": "DEBIT",
+      "status": "POSTED",
+      "date": "2026-05-07",
+      "postedDate": "2026-05-07",
+      "category": "Transferência",
+      "merchant": null,
+      "paymentData": {
+        "paymentMethod": "PIX",
+        "receiver": {
+          "name": "TITULAR TESTE LTDA",
+          "taxNumber": "000.000.000-00",
+          "type": "CPF"
+        }
+      }
+    },
+    {
+      "id": "tx_007",
+      "accountId": "acc-checking-001",
+      "description": "PAGAMENTO FATURA CARTAO",
+      "descriptionRaw": "PAGAMENTO FATURA CARTAO PLATINUM 08/05",
+      "currencyCode": "BRL",
+      "amount": -450.00,
+      "type": "DEBIT",
+      "status": "POSTED",
+      "date": "2026-05-08",
+      "postedDate": "2026-05-08",
+      "category": "Cartão de crédito",
+      "merchant": null,
+      "paymentData": {
+        "paymentMethod": "PIX",
+        "receiver": {
+          "name": "BANCO TESTE SA",
+          "taxNumber": "00.000.000/0004-00",
+          "type": "CNPJ"
+        }
+      }
+    },
+    {
+      "id": "tx_008",
+      "accountId": "acc-checking-001",
+      "description": "COMPRA SUPERMERCADO ATACADO TESTE",
+      "descriptionRaw": "COMPRA SUPERMERCADO ATACADO TESTE 09/05",
+      "currencyCode": "BRL",
+      "amount": -320.00,
+      "type": "DEBIT",
+      "status": "PENDING",
+      "date": "2026-05-09",
+      "postedDate": null,
+      "category": "Alimentação",
+      "merchant": {
+        "name": "SUPERMERCADO ATACADO TESTE LTDA",
+        "businessName": "SUPERMERCADO ATACADO TESTE LTDA",
+        "cnpj": "00.000.000/0005-00",
+        "type": "MERCHANT"
+      },
+      "paymentData": {
+        "paymentMethod": "CARD",
+        "receiver": {
+          "name": "SUPERMERCADO ATACADO TESTE LTDA",
+          "taxNumber": "00.000.000/0005-00",
+          "type": "CNPJ"
+        }
+      }
+    }
+  ],
+  "nextCursor": "cursor_001"
+}

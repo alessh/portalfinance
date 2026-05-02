@@ -1,0 +1,10 @@
+{
+  "event": "item/error",
+  "eventId": "evt_002",
+  "itemId": "item-abc-123",
+  "createdAt": "2026-05-01T11:00:00.000Z",
+  "error": {
+    "code": "USER_INPUT_TIMEOUT",
+    "message": "User did not complete multi-factor authentication in time."
+  }
+}
