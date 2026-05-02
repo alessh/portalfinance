@@ -119,6 +119,19 @@ export async function pluggySyncWorker(jobs: Job<SyncJobPayload>[]): Promise<voi
           'sync job missing item_id and item_id_pluggy',
         );
         continue;
+      } else {
+        // WR-02 (review fix): payload contained none of item_id, item_id_pluggy,
+        // or user_id. Previously item_row stayed undefined and the next guard
+        // silently swallowed the job with reason='item_not_found', masking a
+        // miscoded enqueue call. Log explicitly at error level — the job is
+        // unrecoverable (bad payload), so we do NOT throw (pg-boss would just
+        // retry with the same broken payload until the retry budget is
+        // exhausted), but the log is loud enough for ops to notice.
+        logger.error(
+          { event: 'sync_skipped', reason: 'empty_payload', job_id: job.id },
+          'sync job has no item_id, item_id_pluggy, or user_id — cannot resolve item',
+        );
+        continue;
       }
 
       if (!item_row) {
