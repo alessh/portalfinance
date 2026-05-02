@@ -98,7 +98,14 @@ export function ConnectIsland({ scope, hasCpf, reconnectItemId }: ConnectIslandP
   }
 
   function handleWidgetError(err: { message: string }) {
-    console.error('[PluggyConnect] widget error:', err.message);
+    // WR-04 (review fix): gate the console.error behind a development check.
+    // err.message from the Pluggy widget can carry internal connector codes
+    // and credential identifiers — leaking those to the browser console in
+    // production is a small but real PII/info-disclosure risk on shared or
+    // monitored devices.
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[PluggyConnect] widget error:', err.message);
+    }
     toast.error('Não foi possível conectar. Tente novamente ou entre em contato com o suporte.');
     setConnectToken(null);
   }
