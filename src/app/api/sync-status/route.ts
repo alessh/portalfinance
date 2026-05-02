@@ -36,11 +36,21 @@ export async function GET(req: Request): Promise<Response> {
     return NextResponse.json({ phase: 'no_items', transactions_count: 0 });
   }
 
-  // Count accounts for this item (IDOR: scoped to item.id which belongs to session.userId).
+  // Count accounts for this item.
+  // CR-02 (review fix): defense-in-depth IDOR guard — scope by user_id even
+  // though item.id was already resolved under session.userId. The accounts
+  // table has user_id duplicated explicitly for P26; relying on that column
+  // makes the IDOR contract explicit and keeps the query parallel with the
+  // transaction count below.
   const accountCountResult = await db
     .select({ n: sql<number>`count(*)::int` })
     .from(accounts)
-    .where(eq(accounts.pluggy_item_id, item.id));
+    .where(
+      and(
+        eq(accounts.pluggy_item_id, item.id),
+        eq(accounts.user_id, session.userId),
+      ),
+    );
   const account_count = (accountCountResult[0]?.n as number) ?? 0;
 
   // Count transactions for this user (IDOR: user_id column).
