@@ -91,11 +91,28 @@ export async function POST(req: Request): Promise<Response> {
   // --- 1. Verify custom signature header (D-42, T-02-A) ---
   // Constant-time compare prevents timing-side-channel attacks that would
   // allow an attacker to guess the secret byte-by-byte.
+  //
+  // CR-01 (review fix): if PLUGGY_WEBHOOK_SECRET is not configured we MUST
+  // reject the request outright. Comparing two empty buffers via
+  // timingSafeEqual would otherwise pass for any request that omits the
+  // signature header, opening the webhook to forgery in any environment
+  // where the secret was not set (staging, misconfigured prod, dev-as-prod).
+  const expected = env.PLUGGY_WEBHOOK_SECRET;
+  if (!expected) {
+    logger.error(
+      { event: 'pluggy_webhook_no_secret' },
+      'PLUGGY_WEBHOOK_SECRET not configured — rejecting all webhook requests',
+    );
+    return new Response('service unavailable', { status: 503 });
+  }
   const sig_header = req.headers.get('x-pluggy-signature') ?? '';
-  const expected = env.PLUGGY_WEBHOOK_SECRET ?? '';
   const sig_buf = Buffer.from(sig_header);
   const exp_buf = Buffer.from(expected);
-  if (sig_buf.length !== exp_buf.length || !timingSafeEqual(sig_buf, exp_buf)) {
+  if (
+    sig_buf.length === 0 ||
+    sig_buf.length !== exp_buf.length ||
+    !timingSafeEqual(sig_buf, exp_buf)
+  ) {
     logger.warn({ event: 'pluggy_webhook_signature_failed' }, 'invalid signature');
     return new Response('unauthorized', { status: 401 });
   }
