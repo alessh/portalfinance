@@ -85,15 +85,15 @@ Plans:
 6. `pluggy_item_id` is never visible in plaintext in the DB, logs, or any API response; a dev-mode `SELECT` confirms the column stores ciphertext.
 7. Requesting manual sync inside the cooldown window returns a clear "please wait N minutes" response; free-tier users cannot trigger manual sync at all.
 
-**Plans**: TBD (estimated 4–6 plans)
+**Plans**: 6 plans
 
 Plans:
-- [ ] 02-01: Pluggy client + connect-token endpoint + consent screen gating the widget
-- [ ] 02-02: Webhook receiver with auth header + idempotent `webhook_events` + pg-boss enqueue
-- [ ] 02-03: `pluggy-sync-worker` for initial and incremental syncs, encrypted `pluggy_item_id`, per-user singleton key
-- [ ] 02-04: `TransferDetector` worker + credit-card fatura detection
-- [ ] 02-05: Re-auth flow (item/error → banner + email; reconnect deep link)
-- [ ] 02-06: Raw transaction list UI + item health badges + manual-sync cooldown
+- [x] 02-01-PLAN.md — Wave 1: Install pluggy-sdk@0.85.2 + react-pluggy-connect@2.12.0 + date-fns; extend env.ts (PLUGGY_*); declare 5 pgEnums; create pluggy_items + accounts + transactions schemas (D-43/D-44/D-45); CPF NOT NULL migration; register 5 Phase 2 pg-boss queues; [BLOCKING] schema push (completed 2026-05-02)
+- [x] 02-02-PLAN.md — Wave 1: PluggyService SDK wrapper (decrypt-on-use + Sentry span + log scrubbing); extend consentScopes (PLUGGY_CONNECT_PENDING + PLUGGY_CONNECTOR:{id}); extend AuthAuditAction with 8 D-13 events; consentVersions Pluggy hash; pluggyEnv reader; Wave 0 test scaffolds (PluggyService unit + encryption integration + 6 Pluggy fixtures) (completed 2026-05-02)
+- [ ] 02-03-PLAN.md — Wave 2: ConsentScreen extension (inline CPF + Pluggy scopes); /connect page (paywall stub vs ConsentScreen branch); PluggyConnectWidget; PaywallStubCard; POST /api/connect/init; POST /api/pluggy/items (with per-user singletonKey enqueue + audit + per-connector consent); /connect/success polling (every 2s, 60s timeout); GET /api/sync-status
+- [ ] 02-04-PLAN.md — Wave 3: POST /api/webhooks/pluggy (constant-time header compare + idempotent webhook_events + event→queue mapping); pluggySyncWorker (cursor pagination + 12mo/7d window + ON CONFLICT DO UPDATE preserving detector flags + skip broken items + Sentry span + sync log catalogue); Cloudflare WAF runbook
+- [ ] 02-05-PLAN.md — Wave 4: TransferDetector (D-33 deterministic SQL self-join); FaturaDetector (P8 balance match); ReAuthRequired email + plaintext alternate; ReAuthBanner (z-50 persistent) + BannerStack (priority composition); ReAuthNotifier (24h debounce); ReconcileStaleItems hourly cron (TZ America/Sao_Paulo)
+- [ ] 02-06-PLAN.md — Wave 5: /transactions (date-grouped + chips + month/account filters + paywall older months for free); /settings/connections (per-item ConnectionCard with status pill + balance + cooldown-aware sync button); POST /api/pluggy/items/:id/sync (cooldown + free-tier paywall); DELETE /api/pluggy/items/:id (Pluggy DELETE first + accounts cascade + LGPD revocation row + audit); DisconnectConfirmModal (typed DISCONNECT); AuthenticatedShell wrapper; E2E happy path
 
 ### Phase 3: Categorization & Learning
 
