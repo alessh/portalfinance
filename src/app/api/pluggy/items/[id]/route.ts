@@ -73,26 +73,37 @@ export async function DELETE(
     );
   }
 
-  // 4. Soft-delete: mark all ACTIVE accounts under this item as DELETED
-  //    Transactions remain readable (history preserved per D-04)
-  await db
-    .update(accounts)
-    .set({ status: 'DELETED', updated_at: new Date() })
-    .where(eq(accounts.pluggy_item_id, it.id));
+  // 4-5. Atomically soft-delete accounts + insert consent revocation.
+  //      WR-01 (review fix): previously these two writes ran as separate
+  //      statements. A crash between them would leave accounts ACTIVE while
+  //      Pluggy already considers the item deleted, or — for concurrent
+  //      DELETE requests — interleave the writes inconsistently. Wrapping
+  //      in a tx ensures the local state mutation is all-or-nothing.
+  //      Soft-delete: mark all ACTIVE accounts under this item as DELETED.
+  //      Transactions remain readable (history preserved per D-04).
+  //      Consent revocation is append-only (LGPD-02 + D-04); the
+  //      scope='PLUGGY_CONNECTOR:{connector_id}' mirrors the GRANTED row
+  //      written at connect time.
+  await db.transaction(async (tx) => {
+    await tx
+      .update(accounts)
+      .set({ status: 'DELETED', updated_at: new Date() })
+      .where(eq(accounts.pluggy_item_id, it.id));
 
-  // 5. Append-only consent revocation (LGPD-02 + D-04)
-  //    scope='PLUGGY_CONNECTOR:{connector_id}' mirrors the GRANTED row written at connect time
-  await db.insert(user_consents).values({
-    user_id: session.userId,
-    scope: `PLUGGY_CONNECTOR:${it.connector_id}`,
-    action: 'REVOKED',
-    consent_version: getPluggyConsentVersionHash(),
-    revoked_at: new Date(),
-    ip_address: req.headers.get('x-forwarded-for'),
-    user_agent: req.headers.get('user-agent'),
+    await tx.insert(user_consents).values({
+      user_id: session.userId,
+      scope: `PLUGGY_CONNECTOR:${it.connector_id}`,
+      action: 'REVOKED',
+      consent_version: getPluggyConsentVersionHash(),
+      revoked_at: new Date(),
+      ip_address: req.headers.get('x-forwarded-for'),
+      user_agent: req.headers.get('user-agent'),
+    });
   });
 
-  // 6. Audit log (D-13)
+  // 6. Audit log (D-13) — outside the tx is acceptable: audit_log is
+  //    append-only and a missing audit row is a smaller harm than rolling
+  //    back the disconnect because the audit insert failed.
   await recordAudit({
     user_id: session.userId,
     action: 'item_disconnected',
