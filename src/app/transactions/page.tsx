@@ -145,8 +145,15 @@ export default async function TransactionsPage({
     .where(eq(accounts.user_id, session.userId))
     .orderBy(accounts.name);
 
-  // Pagination offset
-  const cursor = Number(cursor_param ?? '0');
+  // Pagination offset.
+  // CR-03 (review fix): validate the cursor search param before passing it
+  // to Drizzle's .offset(). Number('abc') → NaN and Number('-1') → -1 would
+  // be sent verbatim to PostgreSQL, which rejects OFFSET NaN / OFFSET -1
+  // with a query error and returns a 500 to the user — a reliable DoS for
+  // any authenticated user who constructs `/transactions?cursor=-1`.
+  const cursor_raw = Number(cursor_param ?? '0');
+  const cursor =
+    Number.isFinite(cursor_raw) && cursor_raw >= 0 ? Math.floor(cursor_raw) : 0;
 
   // Transaction query with optional account filter (P26 IDOR: user_id on transactions)
   const query_conditions = [
