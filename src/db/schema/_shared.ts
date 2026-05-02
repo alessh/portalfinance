@@ -1,4 +1,4 @@
-import { customType } from 'drizzle-orm/pg-core';
+import { customType, pgEnum } from 'drizzle-orm/pg-core';
 
 /**
  * Postgres `bytea` (binary blob) custom type for Drizzle.
@@ -12,3 +12,40 @@ import { customType } from 'drizzle-orm/pg-core';
 export const bytea = customType<{ data: Buffer; driverData: Buffer }>({
   dataType: () => 'bytea',
 });
+
+// ---------------------------------------------------------------------------
+// Phase 2 enum declarations (D-43/D-44/D-45)
+// All pgEnum declarations live here to avoid collision across schema files.
+// ---------------------------------------------------------------------------
+
+/** Pluggy item sync status — maps 1:1 to Pluggy item.status field. */
+export const item_status_enum = pgEnum('item_status', [
+  'UPDATING',
+  'LOGIN_ERROR',
+  'OUTDATED',
+  'WAITING_USER_INPUT',
+  'UPDATED',
+]);
+
+/** Account type taxonomy — includes FROZEN (Phase 5 downgrade-as-freeze, D-44). */
+export const account_type_enum = pgEnum('account_type', [
+  'CHECKING',
+  'SAVINGS',
+  'CREDIT_CARD',
+  'LOAN',
+  'INVESTMENT',
+  'OTHER',
+]);
+
+/** Account lifecycle status (D-44). */
+export const account_status_enum = pgEnum('account_status', [
+  'ACTIVE',
+  'FROZEN',
+  'DELETED',
+]);
+
+/** Transaction flow direction (D-45). */
+export const tx_type_enum = pgEnum('tx_type', ['DEBIT', 'CREDIT']);
+
+/** Transaction settlement status (D-45). Pending excluded from totals (Phase 4). */
+export const tx_status_enum = pgEnum('tx_status', ['PENDING', 'POSTED']);

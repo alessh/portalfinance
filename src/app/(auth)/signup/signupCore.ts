@@ -10,6 +10,7 @@
  * The runtime declaration lives on the route + on the server action's
  * caller; this file is a plain TS module.
  */
+import { randomBytes } from 'node:crypto';
 import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '@/db';
 import { users, user_consents, audit_log } from '@/db/schema';
@@ -62,9 +63,21 @@ export async function signup(
   const password_hash = await hashPassword(password);
 
   const user_id = await db.transaction(async (tx) => {
+    // cpf_hash and cpf_enc are NOT NULL (Phase 2 migration, D-04). CPF is
+    // collected on the connect/consent screen (D-02), not at signup. Seed with
+    // random placeholder bytes — the connect flow (plan 02-02) replaces them
+    // via UPDATE once the user provides their CPF. The random cpf_hash ensures
+    // the UNIQUE constraint allows multiple signups until real CPF is set.
+    const cpf_hash_placeholder = randomBytes(32);
+    const cpf_enc_placeholder = randomBytes(44); // iv(12) + tag(16) + ciphertext padding
     const [created] = await tx
       .insert(users)
-      .values({ email, password_hash })
+      .values({
+        email,
+        password_hash,
+        cpf_hash: cpf_hash_placeholder,
+        cpf_enc: cpf_enc_placeholder,
+      })
       .returning({ id: users.id });
     if (!created) throw new Error('Failed to create user');
 
