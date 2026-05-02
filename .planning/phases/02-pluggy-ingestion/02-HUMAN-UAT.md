@@ -1,14 +1,18 @@
 ---
-status: partial
+status: testing
 phase: 02-pluggy-ingestion
 source: [02-VERIFICATION.md]
 started: 2026-05-02T13:00:00Z
-updated: 2026-05-02T13:00:00Z
+updated: 2026-05-02T14:30:00Z
 ---
 
 ## Current Test
 
-[awaiting human testing]
+number: 1
+name: End-to-end connect flow against Pluggy sandbox (criterion 1)
+expected: |
+  User opens `/connect`, grants consent, completes Pluggy Connect for a sandbox bank, and within 60 seconds sees accounts and transactions on `/transactions`.
+awaiting: user response
 
 ## Tests
 
