@@ -14,8 +14,11 @@
  *
  * Phase 2 workers registered (plan 02-04):
  *   - pluggy.sync → pluggySyncWorker (this plan)
- * Phase 2 workers registered (plan 02-05 — transferDetector, faturaDetector,
- *   reAuthNotifier, reconcileStaleItems will be added in plan 02-05):
+ * Phase 2 workers registered (plan 02-05):
+ *   - pluggy.transfer-detector → transferDetectorWorker
+ *   - pluggy.fatura-detector → faturaDetectorWorker
+ *   - pluggy.re-auth-notifier → reAuthNotifierWorker
+ *   - pluggy.reconcile.stale-items → reconcileStaleItemsWorker
  *
  * TODO (Phase 6): Replace `tsx src/jobs/worker.ts` with a tsup-bundled
  * production binary (RESEARCH.md Decision 2 — tsup for worker bundle).
@@ -28,6 +31,8 @@ import { passwordResetEmailWorker } from './workers/passwordResetEmailWorker';
 import { accountUnlockEmailWorker } from './workers/accountUnlockEmailWorker';
 import { sesBounceWorker } from './workers/sesBounceWorker';
 import { pluggySyncWorker } from './workers/pluggySyncWorker';
+import { transferDetectorWorker } from './workers/transferDetectorWorker';
+import { faturaDetectorWorker } from './workers/faturaDetectorWorker';
 import { logger as log } from '@/lib/logger';
 
 async function main() {
@@ -44,6 +49,10 @@ async function main() {
   // Per-user singletonKey at enqueue (D-41) prevents the same user from having
   // more than 1 sync in flight at a time — independent of localConcurrency.
   await boss.work(QUEUES.PLUGGY_SYNC, { localConcurrency: 4 }, pluggySyncWorker);
+
+  // Phase 2 workers (plan 02-05) — post-ingestion detector workers
+  await boss.work(QUEUES.PLUGGY_TRANSFER_DETECTOR, { localConcurrency: 2 }, transferDetectorWorker);
+  await boss.work(QUEUES.PLUGGY_FATURA_DETECTOR, { localConcurrency: 2 }, faturaDetectorWorker);
 
   log.info({ queues: Object.values(QUEUES) }, 'worker started — registered queues');
 
