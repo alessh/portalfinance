@@ -154,6 +154,8 @@ Phase 2 introduces the first post-auth pages with real data. The shell wraps all
 
 ### Connect Page Layout (`/connect`)
 
+**Primary focal point:** The bottom full-width primary CTA `"Concordar e conectar"` (teal-600) is the visual anchor — placed after the consent review content so the user has read the disclosure and data points before the call to action.
+
 ```
 ┌─────────────────────────────────────────┐
 │ [BannerStack if any active banners]     │
@@ -172,7 +174,7 @@ Phase 2 introduces the first post-auth pages with real data. The shell wraps all
 │     │  [Collapsible "Detalhes legais"]  │
 │     │  [Consent checkbox]           │   │
 │     │  "Concordar e conectar"       │   │  primary CTA (full-width)
-│     │  "Cancelar"                   │   │  ghost CTA (full-width)
+│     │  "Não conectar agora"         │   │  ghost CTA (full-width)
 │     └───────────────────────────────┘   │
 │                                         │
 └─────────────────────────────────────────┘
@@ -239,6 +241,8 @@ Replaces transaction list with a `<Card>` containing blurred list behind an over
 
 ### Settings > Connections Page Layout (`/settings/connections`)
 
+**Primary focal point:** The per-card status pill row is the page's primary visual anchor — health-at-a-glance is the page's reason to exist. The status pill (ATUALIZADO / SINCRONIZANDO / ERRO DE LOGIN) is right-aligned in each card header and uses semantic color to communicate urgency at a glance before the user reads any text.
+
 ```
 ┌────────────────────────────────────────────┐
 │ [BannerStack]                              │
@@ -300,7 +304,8 @@ interface ReAuthBannerProps {
 - Left icon: `<AlertTriangle>` 16px `text-warning-fg`
 - Text (1 broken item): `"Sua conexão com {institution_name} expirou."`
 - Text (2+ broken items): `"Suas conexões com {institution_1} e mais {N} precisam de atenção."`
-- CTA: "Reconectar" — `text-primary font-semibold underline` — navigates to `/connect?reconnect={item.id}` for single item, or `/settings/connections` for multiple
+- CTA (single item): `"Reconectar {institution_name}"` — `text-primary font-semibold underline` — navigates to `/connect?reconnect={item.id}`
+- CTA (multiple items): `"Ver conexões"` — `text-primary font-semibold underline` — navigates to `/settings/connections`
 - **NOT dismissable** (D-36) — no X button. Persists until `item.status` flips to `UPDATED`.
 - `aria-label="Reconexão necessária"` on the banner `<aside>` element
 - `role="alert"` on the text span (live region — re-auth is urgent)
@@ -449,7 +454,7 @@ interface TransactionListProps {
 | `Transferência` | `--muted` | `--muted-foreground` | `is_transfer=true` |
 | `Pagamento de fatura` | `--muted` | `--muted-foreground` | `is_credit_card_payment=true` |
 
-Chip style: `text-xs px-2 py-0.5 rounded-sm font-medium` (matches Phase 1 `badge` radius-sm).
+Chip style: `text-xs px-2 py-1 rounded-sm font-medium` (4px vertical padding — 8-point grid compliant).
 
 **Date group sticky headers:**
 - `position: sticky; top: {banner+nav+filter height}` — calculate dynamically via CSS custom property `--sticky-offset`
@@ -503,7 +508,8 @@ Full contract described in Layout section above. Additional detail:
 - Tooltip: shadcn `<Tooltip>` + `<TooltipContent>` — add to Phase 2 shadcn component list
 
 **Syncing animation (D-21):**
-- Status `UPDATING`: replace status pill with `<span className="inline-flex items-center gap-1.5 text-xs text-blue-700"><span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" /> Sincronizando...</span>`
+- Status `UPDATING`: replace status pill with `<span className="inline-flex items-center gap-2 text-xs text-blue-700"><span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" /> Sincronizando...</span>`
+- Gap between dot and label: `gap-2` (8px — 8-point grid compliant)
 - CSS `animate-pulse` (Tailwind default, 2s ease-in-out) — not a spinner (per D-21 rationale)
 - Respects `prefers-reduced-motion`: wrap with `motion-safe:animate-pulse`
 
@@ -562,7 +568,7 @@ interface DisconnectConfirmModalProps {
 - Heading: `"Plano gratuito limitado"` (`text-lg font-semibold`)
 - Body: `"Conexões adicionais e sincronização manual estão disponíveis no plano pago. Cancele quando quiser."` (`text-sm text-muted-foreground mt-2`)
 - CTA: `"Ver planos"` → `/settings/billing`, `variant="default"`, `className="mt-6"`
-- Secondary: `"Voltar"` → `/`, `variant="ghost"`, `className="mt-2"`
+- Secondary: `"Voltar para o dashboard"` → `/`, `variant="ghost"`, `className="mt-2"`
 
 ---
 
@@ -588,7 +594,7 @@ Executor runs `npx shadcn@latest add {component}` for each. All not yet installe
 **`<ReAuthBanner>`:**
 - `<aside aria-label="Reconexão necessária">` — landmark
 - `role="alert"` on the message text — urgent live region
-- CTA link has `aria-label="Reconectar {institution_name}"` (never just "Reconectar" — context needed for screen readers)
+- CTA link has `aria-label="Reconectar {institution_name}"` (single-item) or `aria-label="Ver conexões"` (multi-item) — always noun-qualified for screen readers
 
 **`<TransactionList>` rows:**
 - Each row is a `<li>` inside a `<ul>` per date group
@@ -665,7 +671,7 @@ Tone: clear, adult, direct, plain voice. Same as Phase 1. Never patronizing. LGP
 | Collapsible trigger | `"Detalhes legais"` |
 | Consent checkbox | `"Estou ciente e concordo com o tratamento dos meus dados financeiros conforme descrito acima e na [Política de Privacidade]."` |
 | Primary CTA | `"Concordar e conectar"` |
-| Cancel CTA | `"Cancelar"` |
+| Cancel CTA | `"Não conectar agora"` |
 | Reconnect heading | `"Reconectar {Institution Name}"` |
 | Reconnect disclosure | `"Sua conexão com {Institution Name} expirou. Reconecte para retomar a sincronização automática."` |
 | Reconnect CTA | `"Reconectar"` |
@@ -737,7 +743,7 @@ Tone: clear, adult, direct, plain voice. Same as Phase 1. Never patronizing. LGP
 |---------|------|
 | Single item | `"Sua conexão com {institution_name} expirou."` |
 | Multiple items (2+) | `"Suas conexões com {institution_1} e mais {N} precisam de atenção."` |
-| Banner CTA (single item) | `"Reconectar"` |
+| Banner CTA (single item) | `"Reconectar {institution_name}"` (dynamic — noun-qualified with institution name) |
 | Banner CTA (multiple items) | `"Ver conexões"` |
 
 ### Error States & Validation
@@ -765,7 +771,7 @@ Tone: clear, adult, direct, plain voice. Same as Phase 1. Never patronizing. LGP
 | 2nd item block heading | `"Plano gratuito limitado"` |
 | 2nd item block body | `"Conexões adicionais e sincronização manual estão disponíveis no plano pago. Cancele quando quiser."` |
 | 2nd item block CTA | `"Ver planos"` |
-| 2nd item back link | `"Voltar"` |
+| 2nd item back link | `"Voltar para o dashboard"` |
 
 ### Re-auth Email (React Email Template `ReAuthRequired.tsx`)
 
