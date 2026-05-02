@@ -71,6 +71,12 @@ export interface SendEmailParams {
   to: string;
   subject: string;
   template: ReactElement;
+  /**
+   * Optional plaintext alternate body (D-35 + Phase 1 plan 01-05 lockdown).
+   * When provided, sent as the text/plain part of a multipart email alongside
+   * the HTML rendered from `template`. Required for re-auth emails (MIME spec).
+   */
+  plaintext?: string;
 }
 
 export interface SendEmailResult {
@@ -126,7 +132,11 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
     Destination: { ToAddresses: [params.to] },
     Message: {
       Subject: { Data: params.subject, Charset: 'UTF-8' },
-      Body: { Html: { Data: html, Charset: 'UTF-8' } },
+      Body: {
+        Html: { Data: html, Charset: 'UTF-8' },
+        // D-35: include plaintext alternate when provided (required for re-auth emails).
+        ...(params.plaintext ? { Text: { Data: params.plaintext, Charset: 'UTF-8' } } : {}),
+      },
     },
   });
 

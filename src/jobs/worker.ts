@@ -33,6 +33,8 @@ import { sesBounceWorker } from './workers/sesBounceWorker';
 import { pluggySyncWorker } from './workers/pluggySyncWorker';
 import { transferDetectorWorker } from './workers/transferDetectorWorker';
 import { faturaDetectorWorker } from './workers/faturaDetectorWorker';
+import { reAuthNotifierWorker } from './workers/reAuthNotifierWorker';
+import { reconcileStaleItemsWorker } from './workers/reconcileStaleItemsWorker';
 import { logger as log } from '@/lib/logger';
 
 async function main() {
@@ -53,6 +55,18 @@ async function main() {
   // Phase 2 workers (plan 02-05) — post-ingestion detector workers
   await boss.work(QUEUES.PLUGGY_TRANSFER_DETECTOR, { localConcurrency: 2 }, transferDetectorWorker);
   await boss.work(QUEUES.PLUGGY_FATURA_DETECTOR, { localConcurrency: 2 }, faturaDetectorWorker);
+  await boss.work(QUEUES.PLUGGY_REAUTH_NOTIFIER, { localConcurrency: 2 }, reAuthNotifierWorker);
+  await boss.work(QUEUES.PLUGGY_RECONCILE_STALE, { localConcurrency: 1 }, reconcileStaleItemsWorker);
+
+  // D-38: hourly reconciliation cron at :00 BRT.
+  // Enqueues PLUGGY_SYNC for items stale >12h (excluding broken items).
+  // `tz: 'America/Sao_Paulo'` ensures the schedule runs in Brazilian Standard Time.
+  await boss.schedule(
+    QUEUES.PLUGGY_RECONCILE_STALE,
+    '0 * * * *',
+    {},
+    { tz: 'America/Sao_Paulo' },
+  );
 
   log.info({ queues: Object.values(QUEUES) }, 'worker started — registered queues');
 
