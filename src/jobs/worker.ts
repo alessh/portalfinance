@@ -1,5 +1,5 @@
 /**
- * Worker entrypoint — Plan 01-03.
+ * Worker entrypoint — Plan 01-03 (Phase 1) + Plan 02-04 (Phase 2 sync worker).
  *
  * IMPORTANT: `@/lib/env` MUST be the first import. This enforces the
  * OPS-04 boot-time assertion (T-WORKER-BOOT-ENV): if any sandbox
@@ -10,6 +10,12 @@
  *   - dsr.acknowledge  → dsrAcknowledgeWorker
  *   - email.password_reset → passwordResetEmailWorker
  *   - email.account_unlock → accountUnlockEmailWorker
+ *   - ses.bounce → sesBounceWorker
+ *
+ * Phase 2 workers registered (plan 02-04):
+ *   - pluggy.sync → pluggySyncWorker (this plan)
+ * Phase 2 workers registered (plan 02-05 — transferDetector, faturaDetector,
+ *   reAuthNotifier, reconcileStaleItems will be added in plan 02-05):
  *
  * TODO (Phase 6): Replace `tsx src/jobs/worker.ts` with a tsup-bundled
  * production binary (RESEARCH.md Decision 2 — tsup for worker bundle).
@@ -21,6 +27,7 @@ import { dsrAcknowledgeWorker } from './workers/dsrAcknowledgeWorker';
 import { passwordResetEmailWorker } from './workers/passwordResetEmailWorker';
 import { accountUnlockEmailWorker } from './workers/accountUnlockEmailWorker';
 import { sesBounceWorker } from './workers/sesBounceWorker';
+import { pluggySyncWorker } from './workers/pluggySyncWorker';
 import { logger as log } from '@/lib/logger';
 
 async function main() {
@@ -31,6 +38,12 @@ async function main() {
   await boss.work(QUEUES.SEND_PASSWORD_RESET_EMAIL, { localConcurrency: 4 }, passwordResetEmailWorker);
   await boss.work(QUEUES.SEND_UNLOCK_EMAIL, { localConcurrency: 4 }, accountUnlockEmailWorker);
   await boss.work(QUEUES.SES_BOUNCE, { localConcurrency: 2 }, sesBounceWorker);
+
+  // Phase 2 workers (plan 02-04)
+  // localConcurrency: 4 allows up to 4 concurrent syncs per worker instance.
+  // Per-user singletonKey at enqueue (D-41) prevents the same user from having
+  // more than 1 sync in flight at a time — independent of localConcurrency.
+  await boss.work(QUEUES.PLUGGY_SYNC, { localConcurrency: 4 }, pluggySyncWorker);
 
   log.info({ queues: Object.values(QUEUES) }, 'worker started — registered queues');
 

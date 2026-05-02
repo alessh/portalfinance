@@ -124,7 +124,7 @@ async function seedItem(opts?: {
     pluggy_item_id_hash: hash,
     connector_id: '001',
     institution_name: 'Banco Teste SW',
-    status: (opts?.status as 'UPDATED' | 'LOGIN_ERROR' | 'WAITING_USER_INPUT' | 'UPDATING' | 'OUTDATED' | 'CREATED' | 'OUTDATED_USER_AUTH' | 'STALE') ?? 'UPDATED',
+    status: (opts?.status as 'UPDATED' | 'LOGIN_ERROR' | 'WAITING_USER_INPUT' | 'UPDATING' | 'OUTDATED') ?? 'UPDATED',
     last_synced_at: opts?.last_synced_at ?? null,
   }).returning({ id: pluggy_items.id });
 
