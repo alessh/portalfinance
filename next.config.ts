@@ -14,6 +14,12 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   poweredByHeader: false,
   compress: true,
+  // Phase 2: expose PLUGGY_ENV to client bundle so PluggyConnectWidget
+  // can set includeSandbox correctly (D-39, UI-SPEC § 3.3).
+  // Ops: set NEXT_PUBLIC_PLUGGY_ENV=sandbox in staging; =production in prod.
+  env: {
+    NEXT_PUBLIC_PLUGGY_ENV: process.env.NEXT_PUBLIC_PLUGGY_ENV ?? '',
+  },
 };
 
 export default nextConfig;
