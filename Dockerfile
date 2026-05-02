@@ -9,10 +9,10 @@
 # Stages:
 #   deps    -- pnpm install --frozen-lockfile (argon2 needs build-essentials)
 #   builder -- pnpm build + pnpm build:worker (Next standalone + tsup)
-#   runner  -- node:22-alpine + aws-cli + tini + precompiled binaries only
+#   runner  -- node:24-alpine + aws-cli + tini + precompiled binaries only
 
 # ---- deps stage --------------------------------------------------------
-FROM public.ecr.aws/docker/library/node:22-alpine AS deps
+FROM public.ecr.aws/docker/library/node:24-alpine AS deps
 WORKDIR /app
 RUN apk add --no-cache python3 make g++ libc6-compat
 COPY package.json pnpm-lock.yaml ./
@@ -29,7 +29,7 @@ WORKDIR /app
 RUN corepack enable && pnpm prune --prod
 
 # ---- builder stage -----------------------------------------------------
-FROM public.ecr.aws/docker/library/node:22-alpine AS builder
+FROM public.ecr.aws/docker/library/node:24-alpine AS builder
 WORKDIR /app
 RUN apk add --no-cache python3 make g++ libc6-compat
 COPY --from=deps /app/node_modules ./node_modules
@@ -54,7 +54,7 @@ RUN corepack enable \
  && pnpm build:worker
 
 # ---- runner stage ------------------------------------------------------
-FROM public.ecr.aws/docker/library/node:22-alpine AS runner
+FROM public.ecr.aws/docker/library/node:24-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production \
@@ -99,7 +99,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/dist ./dist
 # into the SAME path; full > traced subset, so web continues to resolve
 # everything it needs and worker / migrate gain their externalised deps.
 # Native bindings (argon2, pg) are ABI-compatible because all stages
-# use node:22-alpine with matching libc.
+# use node:24-alpine with matching libc.
 COPY --from=prod-deps --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 # Entrypoint shim
