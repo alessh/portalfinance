@@ -4,8 +4,10 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   // Pin Turbopack workspace root to this package — avoids false detection
   // of stray lockfiles higher up the directory tree (e.g., in $HOME).
+  // Note: root uses POSIX path with forward slashes to avoid Windows path
+  // issues in Turbopack (Windows backslashes cause resolution failures).
   turbopack: {
-    root: path.resolve(__dirname),
+    root: path.resolve(__dirname).replace(/\\/g, '/'),
   },
   // Next.js 16 promoted typedRoutes out of experimental.
   typedRoutes: true,
