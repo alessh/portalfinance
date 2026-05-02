@@ -54,10 +54,20 @@ const EnvSchema = z
     SENTRY_DSN: z.string().url().optional(),
     SENTRY_ENV: z.enum(['development', 'staging', 'production']).optional(),
 
-    // Pluggy / ASAAS / SES — not consumed in Phase 1, but tracked here so
-    // the OPS-04 guard can assert sandbox credentials are absent in
-    // production. Phase 2 / 5 land the real values.
+    // Pluggy / ASAAS / SES — Phase 2 lands the real Pluggy values.
+    // ASAAS env tracked for OPS-04 sandbox-in-prod assertion; Phase 5 adds real keys.
     PLUGGY_ENV: z.enum(['sandbox', 'production']).optional(),
+    PLUGGY_CLIENT_ID: z.string().min(1).optional(),
+    PLUGGY_CLIENT_SECRET: z.string().min(1).optional(),
+    PLUGGY_WEBHOOK_SECRET: z.string().min(32).optional(),
+    PLUGGY_SANDBOX_CLIENT_ID: z.string().optional(),
+    PLUGGY_SANDBOX_CLIENT_SECRET: z.string().optional(),
+    // HMAC pepper for pluggy_items.pluggy_item_id_hash — distinct from
+    // CPF_HASH_PEPPER (defense in depth, RESEARCH.md OQ#6 RESOLVED).
+    PLUGGY_ITEM_ID_HASH_PEPPER: z
+      .string()
+      .min(32, 'PLUGGY_ITEM_ID_HASH_PEPPER must be >=32 chars')
+      .optional(),
     ASAAS_ENV: z.enum(['sandbox', 'production']).optional(),
 
     // AWS SES credentials.
@@ -157,6 +167,27 @@ const EnvSchema = z
     },
     {
       message: 'OPS-04 violation: TURNSTILE_SITE_KEY, TURNSTILE_SECRET_KEY, and NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY are required in production',
+    },
+  )
+  // OPS-04: Phase 2 Pluggy creds required in production for web + worker.
+  // PLUGGY_ITEM_ID_HASH_PEPPER mirrors CPF_HASH_PEPPER shape (min 32 chars,
+  // AWS SSM SecureString in prod). Skip during `next build` phase (NEXT_PHASE).
+  .refine(
+    (e) => {
+      if (e.NODE_ENV !== 'production') return true;
+      if (process.env.NEXT_PHASE === 'phase-production-build') return true;
+      if (e.SERVICE_NAME !== 'web' && e.SERVICE_NAME !== 'worker') return true;
+      return !!(
+        e.PLUGGY_CLIENT_ID &&
+        e.PLUGGY_CLIENT_SECRET &&
+        e.PLUGGY_WEBHOOK_SECRET &&
+        e.PLUGGY_ENV === 'production' &&
+        e.PLUGGY_ITEM_ID_HASH_PEPPER
+      );
+    },
+    {
+      message:
+        'OPS-04 violation: PLUGGY_CLIENT_ID, PLUGGY_CLIENT_SECRET, PLUGGY_WEBHOOK_SECRET, PLUGGY_ENV=production, and PLUGGY_ITEM_ID_HASH_PEPPER are required in production for web/worker',
     },
   );
 

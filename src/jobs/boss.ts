@@ -34,6 +34,12 @@ export const QUEUES = {
   SEND_PASSWORD_RESET_EMAIL: 'email.password_reset',
   SEND_UNLOCK_EMAIL: 'email.account_unlock',
   SES_BOUNCE: 'ses.bounce', // wired in 01-04
+  // Phase 2 additions (D-41 singletonKey applied at enqueue site, NOT here)
+  PLUGGY_SYNC: 'pluggy.sync',
+  PLUGGY_TRANSFER_DETECTOR: 'pluggy.transfer-detector',
+  PLUGGY_FATURA_DETECTOR: 'pluggy.fatura-detector',
+  PLUGGY_REAUTH_NOTIFIER: 'pluggy.re-auth-notifier',
+  PLUGGY_RECONCILE_STALE: 'pluggy.reconcile.stale-items',
 } as const;
 
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];

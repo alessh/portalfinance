@@ -53,7 +53,14 @@ async function main() {
       `NEXTAUTH_SECRET=e2e-secret-at-least-32-chars-long-xxxx\n` +
       `ENCRYPTION_KEY=AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=\n` +
       `CPF_HASH_PEPPER=e2e-pepper-at-least-32-chars-long-xxxxxx\n` +
-      `E2E_TEST=1\n`,
+      `E2E_TEST=1\n` +
+      // Phase 2 additions (D-48) — sandbox stubs; override with real
+      // PLUGGY_SANDBOX_CLIENT_ID/SECRET in CI for integration tests.
+      `PLUGGY_ENV=sandbox\n` +
+      `PLUGGY_CLIENT_ID=${process.env.PLUGGY_SANDBOX_CLIENT_ID ?? 'stub-client-id-for-e2e'}\n` +
+      `PLUGGY_CLIENT_SECRET=${process.env.PLUGGY_SANDBOX_CLIENT_SECRET ?? 'stub-client-secret-for-e2e'}\n` +
+      `PLUGGY_WEBHOOK_SECRET=e2e-pluggy-webhook-secret-at-least-32-chars-long\n` +
+      `PLUGGY_ITEM_ID_HASH_PEPPER=e2e-pluggy-item-id-pepper-at-least-32-chars-long\n`,
     'utf8',
   );
 

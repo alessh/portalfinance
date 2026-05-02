@@ -139,6 +139,10 @@ Created once per environment via `copilot secret init`:
 | `/copilot/portalfinance/prod/secrets/CPF_HASH_PEPPER` | `openssl rand -base64 48` |
 | `/copilot/portalfinance/prod/secrets/SENTRY_DSN` | from Sentry EU project settings |
 | `/copilot/portalfinance/prod/secrets/TURNSTILE_SECRET_KEY` | from Cloudflare Turnstile dashboard |
+| `/copilot/portalfinance/prod/secrets/PLUGGY_WEBHOOK_SECRET` | `openssl rand -base64 48` (Phase 2 webhook receiver auth, distinct from PLUGGY_CLIENT_SECRET) |
+| `/copilot/portalfinance/prod/secrets/PLUGGY_ITEM_ID_HASH_PEPPER` | `openssl rand -base64 48` (Phase 2 HMAC pepper for `pluggy_items.pluggy_item_id_hash`; distinct from `CPF_HASH_PEPPER`, defense in depth, RESEARCH OQ#6 RESOLVED) |
+| `/copilot/portalfinance/prod/secrets/PLUGGY_CLIENT_ID` | from Pluggy Dashboard > Application |
+| `/copilot/portalfinance/prod/secrets/PLUGGY_CLIENT_SECRET` | from Pluggy Dashboard > Application |
 
 ### 3.3 DB-bridge SSM parameters (env-addon outputs forwarded to tasks)
 
