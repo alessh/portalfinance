@@ -16,7 +16,7 @@
  */
 // ConnectIsland (below) renders ConsentScreen for the consent form + CPF field (D-02).
 import { redirect } from 'next/navigation';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { users, pluggy_items, accounts } from '@/db/schema';
 import { requireSession } from '@/lib/session';
@@ -29,39 +29,43 @@ interface ConnectPageProps {
 
 /**
  * Count a user's active items — items that have at least one ACTIVE account.
- * This definition aligns with D-49: "free user with 1 active item is blocked".
- * An item without any accounts (e.g., still syncing) counts as active.
- * Items where ALL accounts are DELETED are considered inactive.
+ *
+ * Definition (D-49 + WR-05 review fix):
+ *   - Item must NOT be in LOGIN_ERROR or WAITING_USER_INPUT (those need
+ *     re-auth and should not count toward the free-tier 1-item limit, or
+ *     the user would be stuck behind the paywall while their item is
+ *     broken).
+ *   - Item is "active" when it has at least one ACTIVE account, OR it has
+ *     no accounts yet (sync still in progress on a fresh connect).
+ *   - Items where ALL accounts are DELETED are considered inactive.
+ *
+ * Implementation (WR-05): single aggregation query instead of 1 + 2N
+ * round-trips. The query counts DISTINCT pluggy_items.id matching the
+ * predicate above.
  */
 async function getActiveItemCount(userId: string): Promise<number> {
-  // Count pluggy_items where there exists at least one ACTIVE account,
-  // OR where no accounts exist yet (sync in progress).
-  const rows = await db
-    .select({ id: pluggy_items.id })
-    .from(pluggy_items)
-    .where(eq(pluggy_items.user_id, userId));
-
-  // Filter: an item is "active" if it has no accounts yet (syncing) OR has at least one ACTIVE account.
-  let count = 0;
-  for (const item of rows) {
-    const activeAccounts = await db
-      .select({ id: accounts.id })
-      .from(accounts)
-      .where(and(eq(accounts.pluggy_item_id, item.id), eq(accounts.status, 'ACTIVE')))
-      .limit(1);
-
-    const allAccounts = await db
-      .select({ id: accounts.id })
-      .from(accounts)
-      .where(eq(accounts.pluggy_item_id, item.id))
-      .limit(1);
-
-    // Item is active if: it has ACTIVE accounts, OR it has no accounts yet (newly connected).
-    if (activeAccounts.length > 0 || allAccounts.length === 0) {
-      count++;
-    }
-  }
-  return count;
+  const result = await db.execute<{ count: number }>(sql`
+    SELECT count(DISTINCT pi.id)::int AS count
+    FROM ${pluggy_items} pi
+    WHERE pi.user_id = ${userId}
+      AND pi.status NOT IN ('LOGIN_ERROR', 'WAITING_USER_INPUT')
+      AND (
+        NOT EXISTS (
+          SELECT 1 FROM ${accounts} a WHERE a.pluggy_item_id = pi.id
+        )
+        OR EXISTS (
+          SELECT 1 FROM ${accounts} a
+          WHERE a.pluggy_item_id = pi.id AND a.status = 'ACTIVE'
+        )
+      )
+  `);
+  // Drizzle execute() return shape differs by driver:
+  //   - postgres-js: result is the rows array directly (result[0].count)
+  //   - node-postgres: result is { rows: [...] } (result.rows[0].count)
+  // The coalesce below tolerates both shapes (mirrors transferDetectorWorker).
+  const rows_arr = result as unknown as Array<{ count: number }>;
+  const rows_obj = result as unknown as { rows?: Array<{ count: number }> };
+  return rows_arr[0]?.count ?? rows_obj.rows?.[0]?.count ?? 0;
 }
 
 export default async function ConnectPage({ searchParams }: ConnectPageProps) {
