@@ -132,7 +132,7 @@ async function createPluggyItemWithAccount(userId: string): Promise<{
       user_id: userId,
       pluggy_item_id: item.id,
       pluggy_account_id: `acc-${Date.now()}`,
-      type: 'BANK',
+      type: 'CHECKING',
       name: 'Conta Corrente',
       currency: 'BRL',
       balance: '1234.56',
@@ -167,7 +167,7 @@ describe('DELETE /api/pluggy/items/:id', () => {
       }),
     }));
 
-    const { POST: _ignored, DELETE: handler } = await import('@/app/api/pluggy/items/[id]/route');
+    const { DELETE: handler } = await import('@/app/api/pluggy/items/[id]/route');
     const db = await importDb();
     const { accounts, user_consents, audit_log, pluggy_items } = await import('@/db/schema');
     const { eq } = await import('drizzle-orm');
