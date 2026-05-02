@@ -85,7 +85,7 @@ Plans:
 6. `pluggy_item_id` is never visible in plaintext in the DB, logs, or any API response; a dev-mode `SELECT` confirms the column stores ciphertext.
 7. Requesting manual sync inside the cooldown window returns a clear "please wait N minutes" response; free-tier users cannot trigger manual sync at all.
 
-**Plans**: 6 plans
+**Plans**: 9 plans (6 base + 3 gap-closure from /gsd-verify-work 2026-05-02)
 
 Plans:
 - [x] 02-01-PLAN.md — Wave 1: Install pluggy-sdk@0.85.2 + react-pluggy-connect@2.12.0 + date-fns; extend env.ts (PLUGGY_*); declare 5 pgEnums; create pluggy_items + accounts + transactions schemas (D-43/D-44/D-45); CPF NOT NULL migration; register 5 Phase 2 pg-boss queues; [BLOCKING] schema push (completed 2026-05-02)
@@ -94,6 +94,9 @@ Plans:
 - [x] 02-04-PLAN.md — Wave 3: POST /api/webhooks/pluggy (constant-time header compare + idempotent webhook_events + event→queue mapping); pluggySyncWorker (cursor pagination + 12mo/7d window + ON CONFLICT DO UPDATE preserving detector flags + skip broken items + Sentry span + sync log catalogue); Cloudflare WAF runbook (completed 2026-05-02)
 - [x] 02-05-PLAN.md — Wave 4: TransferDetector (D-33 deterministic SQL self-join); FaturaDetector (P8 balance match); ReAuthRequired email + plaintext alternate; ReAuthBanner (z-50 persistent) + BannerStack (priority composition); ReAuthNotifier (24h debounce); ReconcileStaleItems hourly cron (TZ America/Sao_Paulo) (completed 2026-05-02)
 - [x] 02-06-PLAN.md — Wave 5: /transactions (date-grouped + chips + month/account filters + paywall older months for free); /settings/connections (per-item ConnectionCard with status pill + balance + cooldown-aware sync button); POST /api/pluggy/items/:id/sync (cooldown + free-tier paywall); DELETE /api/pluggy/items/:id (Pluggy DELETE first + accounts cascade + LGPD revocation row + audit); DisconnectConfirmModal (typed DISCONNECT); AuthenticatedShell wrapper; E2E happy path (completed 2026-05-02)
+- [ ] 02-07-PLAN.md — Wave 6 (gap closure): lock @/lib/env + @/lib/crypto to server-only via the server-only package; split @/lib/cpf into isomorphic + server-only modules; add cpf-client-isolation regression test (closes UAT Test 1 / Gap 1)
+- [ ] 02-08-PLAN.md — Wave 7 (gap closure): add Phase 02 PLUGGY fields to env-assert goodProductionEnv() fixture; refresh .env.example bootstrap comment; create docs/ops/local-dev-setup.md (closes UAT Test 2 env-assert good-path failure / Gap 1+2 cross-ref)
+- [ ] 02-09-PLAN.md — Wave 8 (gap closure): pin vitest integration project to singleFork sequential + globalSetup; refactor tests/fixtures/db.ts into a singleton testcontainer; create docs/ops/integration-tests.md (closes UAT Test 2 testcontainers cascade / Gap 2; unblocks Tests 3-7)
 
 ### Phase 3: Categorization & Learning
 
