@@ -27,6 +27,30 @@ export default defineConfig({
           environment: 'node',
           testTimeout: 60_000,
           hookTimeout: 120_000,
+          // ----------------------------------------------------------------
+          // Plan 02-09 — gap closure (Gap 2).
+          // Pin to ONE forked worker running suites SEQUENTIALLY so the
+          // singleton testcontainer in tests/fixtures/db.ts survives across
+          // every suite. Default Vitest parallelism (~os.cpus().length forked
+          // workers, file-level parallelism) blew past the 180s hookTimeout
+          // on Windows + Docker Desktop / WSL2 (per-container two-stage init
+          // ballooned from ~48s to >120s under contention). The trade is
+          // longer wall time (typically 3-5 minutes for the full integration
+          // suite) for deterministic pass/fail. CI runs see ~3 min; local
+          // Windows + Docker Desktop sees ~5-8 min.
+          // ----------------------------------------------------------------
+          pool: 'forks',
+          poolOptions: { forks: { singleFork: true } },
+          // NOTE: `fileParallelism: false` belongs to vitest's NonProjectOptions
+          // (config.d.ts line 2229) — it is REJECTED at the workspace[]-entry
+          // level in vitest 3.0.5 with TS2769. We therefore rely entirely on
+          // `pool: 'forks'` + `singleFork: true` to serialize files: a single
+          // forked worker can only run one file at a time, so files run
+          // sequentially within this project regardless of the global flag.
+          // globalSetup boots the shared Postgres container once before any
+          // suite runs and stops it after every suite completes. See
+          // tests/fixtures/integration-globals.ts.
+          globalSetup: ['tests/fixtures/integration-globals.ts'],
         },
       },
     ],
