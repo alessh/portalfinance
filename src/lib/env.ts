@@ -18,12 +18,21 @@
  * causing the Next.js server (and the worker) to fail fast on cold start
  * before serving traffic.
  *
- * Imports: ONLY `zod`. This module sits at the bottom of the dependency
- * graph; many other modules import `env`, so anything else in this file
- * risks a circular import at boot.
+ * Imports: `zod` and `@/lib/serverOnly` only. This module sits near the
+ * bottom of the dependency graph; many other modules import `env`, so
+ * anything else in this file risks a circular import at boot.
+ *
+ * SECURITY: `assertServerOnly()` (called below) replaces the previous
+ * `import 'server-only';` (plan 02-07). The package import was moved to
+ * `@/lib/serverOnly.ts` to keep the Next.js compile-time client-bundle
+ * guard while letting plain Node / tsx callers (worker, db:migrate, e2e)
+ * load this module without crashing on the package's CJS-mode throw.
+ * See plan 02-10.
  */
-import 'server-only';
+import { assertServerOnly } from '@/lib/serverOnly';
 import { z } from 'zod';
+
+assertServerOnly();
 
 const EnvSchema = z
   .object({
