@@ -85,7 +85,7 @@ Plans:
 6. `pluggy_item_id` is never visible in plaintext in the DB, logs, or any API response; a dev-mode `SELECT` confirms the column stores ciphertext.
 7. Requesting manual sync inside the cooldown window returns a clear "please wait N minutes" response; free-tier users cannot trigger manual sync at all.
 
-**Plans**: 9/9 plans complete (6 base + 3 gap-closure from /gsd-verify-work 2026-05-02)
+**Plans**: 10/10 plans complete (6 base + 4 gap-closure from /gsd-verify-work 2026-05-02 / 2026-05-03)
 
 Plans:
 - [x] 02-01-PLAN.md — Wave 1: Install pluggy-sdk@0.85.2 + react-pluggy-connect@2.12.0 + date-fns; extend env.ts (PLUGGY_*); declare 5 pgEnums; create pluggy_items + accounts + transactions schemas (D-43/D-44/D-45); CPF NOT NULL migration; register 5 Phase 2 pg-boss queues; [BLOCKING] schema push (completed 2026-05-02)
@@ -97,6 +97,7 @@ Plans:
 - [x] 02-07-PLAN.md — Wave 6 (gap closure): lock @/lib/env + @/lib/crypto to server-only via the server-only package; split @/lib/cpf into isomorphic + server-only modules; add cpf-client-isolation regression test (closes UAT Test 1 / Gap 1) (completed 2026-05-02)
 - [x] 02-08-PLAN.md — Wave 7 (gap closure): add Phase 02 PLUGGY fields to env-assert goodProductionEnv() fixture; refresh .env.example bootstrap comment; create docs/ops/local-dev-setup.md (closes UAT Test 2 env-assert good-path failure / Gap 1+2 cross-ref) (completed 2026-05-03)
 - [x] 02-09-PLAN.md — Wave 8 (gap closure): pin vitest integration project to singleFork sequential + globalSetup; refactor tests/fixtures/db.ts into a globalThis-cached singleton testcontainer (4 Rule-1 deviations: fileParallelism is NonProjectOption, default-export-must-be-function, vi.resetModules defeats module-scope cache, isolate: true defeats singleton); create docs/ops/integration-tests.md (completed 2026-05-03 — wall time 19s, leaked containers 1, cascade markers 0, env-assert good-path PASS; 18 of 22 suites now fail on real assertions exposed by removing the cascade — handed off as follow-up plans)
+- [x] 02-10-PLAN.md — Wave 9 (gap closure): assertServerOnly() helper at @/lib/serverOnly replaces literal `import 'server-only'` in env.ts and crypto.ts so tsx-direct entrypoints (worker, db:migrate, e2e) load without crashing (1 Rule-1 deviation: serverOnly.ts cannot keep top-level package import — server-only/index.js throws unconditionally under Node CJS; defense-in-depth preserved at cpfServer.ts + cpf-client-isolation walker FORBIDDEN_FROM_CLIENT extended to include @/lib/serverOnly); 1 Rule-3 deviation (vi.mock('@/lib/serverOnly') added to tests/setup.ts so 15 env/crypto unit tests pass under happy-dom); drop redundant --env-file-if-exists=.env from start:worker / test:e2e / db:migrate (closes UAT Test 1 worker boot crash / Gap 1) (completed 2026-05-03)
 
 ### Phase 3: Categorization & Learning
 

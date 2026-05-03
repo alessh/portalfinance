@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready_to_plan
-stopped_at: Plan 02-09 complete; Phase 02 9/9 plans complete; UAT Tests 3-7 now re-runnable (cascade gone). Follow-up plans needed for per-suite DB truncation + migration regression triage.
-last_updated: "2026-05-03T01:30:00.000Z"
+status: planning
+stopped_at: Plan 02-10 (gap closure) complete; Phase 02 worker-boot crash on import 'server-only' under tsx is closed; UAT Test 1 unblocked. Tests 3-7 still blocked on per-suite truncation + migration regression triage from plan 02-09 follow-up.
+last_updated: "2026-05-03T13:18:22.469Z"
 last_activity: 2026-05-03
 progress:
   total_phases: 7
   completed_phases: 2
-  total_plans: 26
-  completed_plans: 23
-  percent: 29
+  total_plans: 27
+  completed_plans: 24
+  percent: 89
 ---
 
 # Project State
@@ -30,7 +30,7 @@ Plan: Not started
 Status: Ready to plan
 Last activity: 2026-05-03
 
-Progress: [████████▊░] 88%
+Progress: [█████████░] 89%
 
 ## Performance Metrics
 
@@ -46,7 +46,7 @@ Progress: [████████▊░] 88%
 |-------|-------|--------|----------|
 | 01 | 5 | - | - |
 | 01.1 | 9 | - | - |
-| 02 | 9 | - | - |
+| 02 | 10 | - | - |
 
 **Recent Trend:**
 
@@ -63,6 +63,7 @@ Progress: [████████▊░] 88%
 | Phase 02 P07 | 360 | 3 tasks | 7 files |
 | Phase 02 P08 | 211 | 3 tasks | 4 files |
 | Phase 02 P09 | 1800 | 4 tasks | 4 files |
+| Phase 02 P10 | 840 | 9 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -100,6 +101,9 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - Plan 02-09: vitest's default `isolate: true` re-imports the module graph between test files even inside a single forked worker; `isolate: false` is REQUIRED for module-level (or globalThis) state to be shared across suites
 - Plan 02-09: vi.resetModules() in 12 Pluggy/webhook/idor suites wipes module-scope `let` bindings; cross-suite singletons must live on globalThis (typed key + getCache/setCache accessors) to survive resets
 - Plan 02-09: 18 of 22 integration suites now fail on real assertions exposed by removing the cascade — primarily cross-suite database state bleed (per-suite TRUNCATE missing) and migration regression in db/migrations.test.ts + db/users-schema.test.ts; tracked as Phase 02 follow-up plans, NOT a regression of 02-09
+- Plan 02-10: assertServerOnly() helper at @/lib/serverOnly replaces literal import 'server-only' in env.ts and crypto.ts so tsx-direct entrypoints (worker, db:migrate, e2e) load without crashing. Defense-in-depth preserved at cpfServer.ts (still imports 'server-only') + cpf-client-isolation walker FORBIDDEN_FROM_CLIENT now includes @/lib/serverOnly.
+- Plan 02-10 Rule 1 deviation: serverOnly.ts cannot keep top-level import 'server-only' (server-only/index.js throws unconditionally under Node CJS — the react-server export condition only resolves under Next.js webpack alias or with --conditions=react-server). Compile-time client-bundle guard is preserved at cpfServer.ts + the walker, not at serverOnly.ts.
+- Plan 02-10: tests/setup.ts ROLLBACK PATH applied. vi.mock('server-only') retained for cpfServer.ts; vi.mock('@/lib/serverOnly', () => ({ assertServerOnly: () => {} })) ADDED so env.ts/crypto.ts assertion is a no-op under happy-dom. tests/unit/lib/serverOnly.test.ts uses vi.unmock per file to exercise the real helper.
 
 ### Roadmap Evolution
 
@@ -140,9 +144,9 @@ Phase 02 (Pluggy ingestion) is the next plannable phase.
 
 ## Session Continuity
 
-Last session: 2026-05-03T01:30:00.000Z
-Stopped at: Plan 02-09 complete; Phase 02 9/9 plans complete; UAT Tests 3-7 now re-runnable (cascade gone). Follow-up plans needed for per-suite DB truncation + migration regression triage.
+Last session: 2026-05-03T13:17:10.301Z
+Stopped at: Plan 02-10 (gap closure) complete; Phase 02 worker-boot crash on import 'server-only' under tsx is closed; UAT Test 1 unblocked. Tests 3-7 still blocked on per-suite truncation + migration regression triage from plan 02-09 follow-up.
 Resume file: None
 
-**Planned Phase:** 02 (pluggy-ingestion) — 6 plans — 2026-05-02T02:50:52.166Z
+**Planned Phase:** 02 (pluggy-ingestion) — 10 plans — 2026-05-03T12:57:33.145Z
 **Next Phase:** 02 (Pluggy ingestion) -- ready to plan.
