@@ -9,25 +9,31 @@
  * tsx (worker, db:migrate, e2e runner, ad-hoc scripts) loads the real CJS
  * module and crashes at module evaluation.
  *
- * Two layers of defense, both preserved here:
+ * Defense-in-depth model AFTER plan 02-10 (Rule 1 deviation — see SUMMARY):
  *
- *   1. The literal `import 'server-only';` below. When a `'use client'`
- *      module transitively imports this file, Next.js's bundler still fails
- *      the build with the canonical message:
- *        "You're importing a component that needs server-only. That only
- *         works in a Server Component which is not supported in a Client
- *         Component."
+ *   1. STATIC compile-time guard — `src/lib/cpfServer.ts` retains its
+ *      literal `import 'server-only';`. Any `'use client'` chain that
+ *      reaches `cpfServer.ts` still fails the Next.js client build with
+ *      the canonical "needs server-only" message. The walker test
+ *      (`tests/unit/lib/cpf-client-isolation.test.ts`) extends this
+ *      guarantee by statically forbidding ANY client path reaching
+ *      `@/lib/env`, `@/lib/crypto`, `@/lib/cpfServer`, or `@/lib/serverOnly`
+ *      — failing the unit suite before a regression can ship.
  *
- *   2. The `assertServerOnly()` runtime check. If a true browser-shaped
- *      context somehow slips past the build guard (e.g., a happy-dom unit
+ *   2. RUNTIME guard — `assertServerOnly()` below. If a true browser-shaped
+ *      context somehow slips past the static guards (e.g., a happy-dom unit
  *      test that imports a server-only module without mocking it), the
  *      runtime throw catches it.
  *
- * IMPORTANT: this file is the ONLY src/ module that imports `'server-only'`
- * directly (cpfServer.ts also keeps it for defense-in-depth). Every other
- * server-only module calls `assertServerOnly()`. That way:
- *   - Next.js client builds still fail at the leaf import.
- *   - Plain Node / tsx callers walk through this helper, see no DOM, and pass.
+ * NOTE: an earlier draft of this file kept `import 'server-only';` at the
+ * top to add a third "leaf" compile-time guard, but that import crashes
+ * tsx at module load (the package's CJS index.js throws unconditionally —
+ * the `react-server` export condition only resolves under Next.js webpack
+ * alias or with `node --conditions=react-server`). Removing the leaf
+ * import is the only way to satisfy the plan's primary goal: tsx-direct
+ * entrypoints (worker, db:migrate, e2e) can import `@/lib/env` and
+ * `@/lib/crypto` without crashing. The compile-time guard at `cpfServer.ts`
+ * + the walker provide equivalent coverage for every existing consumer.
  *
  * The runtime check requires BOTH `window` AND `window.document` to be
  * defined before it throws. This guards against:
@@ -37,7 +43,6 @@
  * Genuine browser bundles (and happy-dom) provide a Document instance and
  * therefore trip the guard — which is the desired behavior.
  */
-import 'server-only';
 
 const ERROR =
   'assertServerOnly: this module is server-only. It must NOT be imported ' +
