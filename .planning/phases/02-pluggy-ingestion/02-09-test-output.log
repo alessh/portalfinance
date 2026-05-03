@@ -1,0 +1,1075 @@
+npm warn Unknown project config "node-linker". This will stop working in the next major version of npm.
+
+> portal-finance-web@0.1.0 test:integration
+> vitest run --project integration
+
+
+[1m[7m[36m RUN [39m[27m[22m [36mv3.0.5 [39m[90mC:/Users/aless/git/PortalFinance/web[39m
+
+ [31m❯[39m [7m[32m integration [39m[27m tests/integration/pluggy/sync-worker.test.ts [2m([22m[2m4 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[33m 3631[2mms[22m[39m
+[31m   [31m×[31m pluggySyncWorker[2m > [22msync-1: fetches accounts + 2 cursor pages, inserts 11 transactions, flips status=UPDATED, enqueues detectors[90m 161[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m pluggySyncWorker[2m > [22msync-2: running worker twice does NOT duplicate transactions (TX-01)[90m 26[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m pluggySyncWorker[2m > [22msync-3: PENDING tx transitions to POSTED without touching is_transfer or is_credit_card_payment[90m 29[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m pluggySyncWorker[2m > [22msync-4: LOGIN_ERROR item skips Pluggy API calls and logs sync_failed with reason=item_broken[90m 28[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[90mstdout[2m | tests/integration/pluggy/webhook.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42710'[39m,
+  message: [32m'extension "pgcrypto" already exists, skipping'[39m,
+  file: [32m'extension.c'[39m,
+  line: [32m'1925'[39m,
+  routine: [32m'CreateExtension'[39m
+}
+
+[90mstdout[2m | tests/integration/pluggy/webhook.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P06'[39m,
+  message: [32m'schema "drizzle" already exists, skipping'[39m,
+  file: [32m'schemacmds.c'[39m,
+  line: [32m'132'[39m,
+  routine: [32m'CreateSchemaCommand'[39m
+}
+
+[90mstdout[2m | tests/integration/pluggy/webhook.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P07'[39m,
+  message: [32m'relation "__drizzle_migrations" already exists, skipping'[39m,
+  file: [32m'parse_utilcmd.c'[39m,
+  line: [32m'207'[39m,
+  routine: [32m'transformCreateStmt'[39m
+}
+
+ [31m❯[39m [7m[32m integration [39m[27m tests/integration/pluggy/webhook.test.ts [2m([22m[2m7 tests[22m[2m | [22m[31m7 failed[39m[2m)[22m[90m 257[2mms[22m[39m
+[31m   [31m×[31m Pluggy webhook[2m > [22m(a) rejects invalid X-Pluggy-Signature with 401[90m 109[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m Pluggy webhook[2m > [22m(b) rejects empty X-Pluggy-Signature with 401[90m 29[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m Pluggy webhook[2m > [22m(c) 3x replay of same eventId produces exactly 1 webhook_events row and 1 PLUGGY_SYNC job[90m 26[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m Pluggy webhook[2m > [22m(d) unknown event type inserts row and logs pluggy_webhook_unmapped_event but does NOT enqueue[90m 31[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m Pluggy webhook[2m > [22m(e) item/error → enqueues PLUGGY_REAUTH_NOTIFIER; item/created → enqueues PLUGGY_SYNC; item/deleted → no enqueue[90m 4[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m Pluggy webhook[2m > [22m(f) handler returns within 250ms[90m 25[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m Pluggy webhook[2m > [22m(g) item/login_succeeded enqueues PLUGGY_SYNC with trigger=reconnect and writes audit_log[90m 4[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[90mstdout[2m | tests/integration/services/TransferDetector.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42710'[39m,
+  message: [32m'extension "pgcrypto" already exists, skipping'[39m,
+  file: [32m'extension.c'[39m,
+  line: [32m'1925'[39m,
+  routine: [32m'CreateExtension'[39m
+}
+
+[90mstdout[2m | tests/integration/services/TransferDetector.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P06'[39m,
+  message: [32m'schema "drizzle" already exists, skipping'[39m,
+  file: [32m'schemacmds.c'[39m,
+  line: [32m'132'[39m,
+  routine: [32m'CreateSchemaCommand'[39m
+}
+
+[90mstdout[2m | tests/integration/services/TransferDetector.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P07'[39m,
+  message: [32m'relation "__drizzle_migrations" already exists, skipping'[39m,
+  file: [32m'parse_utilcmd.c'[39m,
+  line: [32m'207'[39m,
+  routine: [32m'transformCreateStmt'[39m
+}
+
+ [31m❯[39m [7m[32m integration [39m[27m tests/integration/services/TransferDetector.test.ts [2m([22m[2m6 tests[22m[2m | [22m[31m6 failed[39m[2m)[22m[90m 181[2mms[22m[39m
+[31m   [31m×[31m transferDetectorWorker[2m > [22mtransfer-1: flags both legs when all D-33 invariants are met[90m 113[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m transferDetectorWorker[2m > [22mtransfer-2: does NOT flag when amounts differ (500.00 vs 499.99)[90m 8[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m transferDetectorWorker[2m > [22mtransfer-3: does NOT flag when both transactions have the same type[90m 8[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m transferDetectorWorker[2m > [22mtransfer-4: does NOT flag when both transactions share the same account_id[90m 5[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m transferDetectorWorker[2m > [22mtransfer-5: does NOT flag when posted_at is more than 3 days apart[90m 6[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m transferDetectorWorker[2m > [22mtransfer-6: idempotent — second run does not re-flag or create duplicate audit rows[90m 5[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[90mstdout[2m | tests/integration/pluggy/connect-init.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42710'[39m,
+  message: [32m'extension "pgcrypto" already exists, skipping'[39m,
+  file: [32m'extension.c'[39m,
+  line: [32m'1925'[39m,
+  routine: [32m'CreateExtension'[39m
+}
+
+[90mstdout[2m | tests/integration/pluggy/connect-init.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P06'[39m,
+  message: [32m'schema "drizzle" already exists, skipping'[39m,
+  file: [32m'schemacmds.c'[39m,
+  line: [32m'132'[39m,
+  routine: [32m'CreateSchemaCommand'[39m
+}
+
+[90mstdout[2m | tests/integration/pluggy/connect-init.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P07'[39m,
+  message: [32m'relation "__drizzle_migrations" already exists, skipping'[39m,
+  file: [32m'parse_utilcmd.c'[39m,
+  line: [32m'207'[39m,
+  routine: [32m'transformCreateStmt'[39m
+}
+
+ [31m❯[39m [7m[32m integration [39m[27m tests/integration/pluggy/connect-init.test.ts [2m([22m[2m5 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[33m 382[2mms[22m[39m
+[31m   [31m×[31m POST /api/pluggy/items[2m > [22mpluggy-items-1: 202, encrypted item row, consent row, PLUGGY_SYNC enqueued, audit[90m 132[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m POST /api/pluggy/items[2m > [22mpluggy-items-2: same pluggy_item_id → 409 Conflict, no second row[90m 46[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m POST /api/pluggy/items[2m > [22mpluggy-items-3: no session → 401[90m 48[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m GET /api/sync-status[2m > [22msync-status-1: item.status=UPDATING and no accounts → phase=loading_accounts, transactions_count=0[90m 75[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m GET /api/sync-status[2m > [22msync-status-2: after 1 transaction inserted → phase=completed, transactions_count >= 1[90m 44[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[90mstdout[2m | tests/integration/services/FaturaDetector.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42710'[39m,
+  message: [32m'extension "pgcrypto" already exists, skipping'[39m,
+  file: [32m'extension.c'[39m,
+  line: [32m'1925'[39m,
+  routine: [32m'CreateExtension'[39m
+}
+
+[90mstdout[2m | tests/integration/services/FaturaDetector.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P06'[39m,
+  message: [32m'schema "drizzle" already exists, skipping'[39m,
+  file: [32m'schemacmds.c'[39m,
+  line: [32m'132'[39m,
+  routine: [32m'CreateSchemaCommand'[39m
+}
+
+[90mstdout[2m | tests/integration/services/FaturaDetector.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P07'[39m,
+  message: [32m'relation "__drizzle_migrations" already exists, skipping'[39m,
+  file: [32m'parse_utilcmd.c'[39m,
+  line: [32m'207'[39m,
+  routine: [32m'transformCreateStmt'[39m
+}
+
+ [31m❯[39m [7m[32m integration [39m[27m tests/integration/services/FaturaDetector.test.ts [2m([22m[2m4 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[90m 91[2mms[22m[39m
+[31m   [31m×[31m faturaDetectorWorker[2m > [22mfatura-1: flags checking DEBIT matching credit-card balance within +/-7-day window[90m 44[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m faturaDetectorWorker[2m > [22mfatura-2: does NOT flag when debit amount does not match credit-card balance[90m 7[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m faturaDetectorWorker[2m > [22mfatura-3: idempotent — second run does not re-flag or create duplicate audit rows[90m 6[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m faturaDetectorWorker[2m > [22mfatura-4: does NOT flag when posted_at is outside +/-7-day proximity window (26 days apart)[90m 6[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[90mstdout[2m | tests/integration/auth/rate-limit.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42710'[39m,
+  message: [32m'extension "pgcrypto" already exists, skipping'[39m,
+  file: [32m'extension.c'[39m,
+  line: [32m'1925'[39m,
+  routine: [32m'CreateExtension'[39m
+}
+
+[90mstdout[2m | tests/integration/auth/rate-limit.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P06'[39m,
+  message: [32m'schema "drizzle" already exists, skipping'[39m,
+  file: [32m'schemacmds.c'[39m,
+  line: [32m'132'[39m,
+  routine: [32m'CreateSchemaCommand'[39m
+}
+
+[90mstdout[2m | tests/integration/auth/rate-limit.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P07'[39m,
+  message: [32m'relation "__drizzle_migrations" already exists, skipping'[39m,
+  file: [32m'parse_utilcmd.c'[39m,
+  line: [32m'207'[39m,
+  routine: [32m'transformCreateStmt'[39m
+}
+
+ [31m❯[39m [7m[32m integration [39m[27m tests/integration/auth/rate-limit.test.ts [2m([22m[2m8 tests[22m[2m | [22m[31m8 failed[39m[2m)[22m[33m 3836[2mms[22m[39m
+[31m   [31m×[31m rate limiter — login (D-05 / D-06)[2m > [22mreturns 401 for the first 5 failures and 429 on the 6th + creates account_lock[33m 331[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m rate limiter — login (D-05 / D-06)[2m > [22msuccessful login resets the failure counter[90m 194[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m rate limiter — password reset (D-08)[2m > [22m3 password-reset requests per email per hour return 200; 4th returns 429[90m 243[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m rate limiter — password reset (D-08)[2m > [22m10 reset requests from the same IP per hour return 200; 11th returns 429[33m 2054[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m rate limiter — password reset (D-08)[2m > [22mreturns identical 200 body for known and unknown emails (anti-enumeration)[90m 257[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m login schema — turnstileToken null tolerance (regression)[2m > [22maccepts turnstileToken: null on the first attempt for a valid user (200)[90m 256[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m login schema — turnstileToken null tolerance (regression)[2m > [22maccepts turnstileToken omitted from the payload for a valid user (200)[90m 258[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m login schema — turnstileToken null tolerance (regression)[2m > [22mstill 401s with turnstileToken: null and a wrong password (schema accepts null, password gate enforces)[90m 212[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[90mstdout[2m | tests/integration/lgpd/dsr.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42710'[39m,
+  message: [32m'extension "pgcrypto" already exists, skipping'[39m,
+  file: [32m'extension.c'[39m,
+  line: [32m'1925'[39m,
+  routine: [32m'CreateExtension'[39m
+}
+
+[90mstdout[2m | tests/integration/lgpd/dsr.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P06'[39m,
+  message: [32m'schema "drizzle" already exists, skipping'[39m,
+  file: [32m'schemacmds.c'[39m,
+  line: [32m'132'[39m,
+  routine: [32m'CreateSchemaCommand'[39m
+}
+
+[90mstdout[2m | tests/integration/lgpd/dsr.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P07'[39m,
+  message: [32m'relation "__drizzle_migrations" already exists, skipping'[39m,
+  file: [32m'parse_utilcmd.c'[39m,
+  line: [32m'207'[39m,
+  routine: [32m'transformCreateStmt'[39m
+}
+
+ [31m❯[39m [7m[32m integration [39m[27m tests/integration/lgpd/dsr.test.ts [2m([22m[2m6 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[33m 1379[2mms[22m[39m
+[31m   [31m×[31m POST /api/privacy/export[2m > [22mcreates a PENDING dsr_requests row[90m 238[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m POST /api/privacy/export[2m > [22mreturns 401 when no session[90m 55[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m POST /api/privacy/delete[2m > [22mreturns 400 when confirm_phrase is not EXCLUIR[90m 217[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+   [32m✓[39m POST /api/privacy/delete[2m > [22mcreates a PENDING dsr_requests row when all gates pass (Turnstile bypassed via mock)
+[31m   [31m×[31m DSR acknowledge worker[2m > [22msends acknowledgment email with protocol ID for EXPORT (15-day wording)[33m 322[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m DSR acknowledge worker[2m > [22msends acknowledgment email with 30-day wording for DELETE[90m 264[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[90mstdout[2m | tests/integration/pluggy/cooldown.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42710'[39m,
+  message: [32m'extension "pgcrypto" already exists, skipping'[39m,
+  file: [32m'extension.c'[39m,
+  line: [32m'1925'[39m,
+  routine: [32m'CreateExtension'[39m
+}
+
+[90mstdout[2m | tests/integration/pluggy/cooldown.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P06'[39m,
+  message: [32m'schema "drizzle" already exists, skipping'[39m,
+  file: [32m'schemacmds.c'[39m,
+  line: [32m'132'[39m,
+  routine: [32m'CreateSchemaCommand'[39m
+}
+
+[90mstdout[2m | tests/integration/pluggy/cooldown.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P07'[39m,
+  message: [32m'relation "__drizzle_migrations" already exists, skipping'[39m,
+  file: [32m'parse_utilcmd.c'[39m,
+  line: [32m'207'[39m,
+  routine: [32m'transformCreateStmt'[39m
+}
+
+ [31m❯[39m [7m[32m integration [39m[27m tests/integration/pluggy/cooldown.test.ts [2m([22m[2m4 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[90m 241[2mms[22m[39m
+[31m   [31m×[31m POST /api/pluggy/items/:id/sync[2m > [22mcooldown-1: paid user within 30-min cooldown → 429 COOLDOWN_ACTIVE[90m 59[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m POST /api/pluggy/items/:id/sync[2m > [22mcooldown-2: paid user past cooldown → 202 + PLUGGY_SYNC enqueued + audit[90m 46[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m POST /api/pluggy/items/:id/sync[2m > [22mcooldown-3: free-tier user → 403 PAYWALL (PLUGGY_SYNC NOT enqueued)[90m 42[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m POST /api/pluggy/items/:id/sync[2m > [22mcooldown-4: IDOR — user A session, user B item → 404 (not 403, P26)[90m 53[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[90mstderr[2m | tests/integration/webhooks/ses-bounce.test.ts
+[22m[39m[MSW] Found a redundant usage of query parameters in the request handler URL for "GET https://sns.sa-east-1.amazonaws.com/subscribe?token=stub-token". Please match against a path instead and access query parameters using "new URL(request.url).searchParams" instead. Learn more: https://mswjs.io/docs/recipes/query-parameters
+
+[90mstdout[2m | tests/integration/webhooks/ses-bounce.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42710'[39m,
+  message: [32m'extension "pgcrypto" already exists, skipping'[39m,
+  file: [32m'extension.c'[39m,
+  line: [32m'1925'[39m,
+  routine: [32m'CreateExtension'[39m
+}
+
+[90mstdout[2m | tests/integration/webhooks/ses-bounce.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P06'[39m,
+  message: [32m'schema "drizzle" already exists, skipping'[39m,
+  file: [32m'schemacmds.c'[39m,
+  line: [32m'132'[39m,
+  routine: [32m'CreateSchemaCommand'[39m
+}
+
+[90mstdout[2m | tests/integration/webhooks/ses-bounce.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P07'[39m,
+  message: [32m'relation "__drizzle_migrations" already exists, skipping'[39m,
+  file: [32m'parse_utilcmd.c'[39m,
+  line: [32m'207'[39m,
+  routine: [32m'transformCreateStmt'[39m
+}
+
+ [31m❯[39m [7m[32m integration [39m[27m tests/integration/webhooks/ses-bounce.test.ts [2m([22m[2m4 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[90m 156[2mms[22m[39m
+[31m   [31m×[31m SES bounce webhook[2m > [22mrejects invalid SNS signature with 401[90m 38[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m SES bounce webhook[2m > [22m3x replay of same MessageId produces 1 webhook_events row + 1 ses_suppressions row[90m 29[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m SES bounce webhook[2m > [22mhandles SubscriptionConfirmation by fetching SubscribeURL[90m 28[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m SES bounce webhook[2m > [22mmailer refuses to send to a suppressed email after bounce is processed[90m 27[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[90mstdout[2m | tests/integration/pluggy/disconnect.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42710'[39m,
+  message: [32m'extension "pgcrypto" already exists, skipping'[39m,
+  file: [32m'extension.c'[39m,
+  line: [32m'1925'[39m,
+  routine: [32m'CreateExtension'[39m
+}
+
+[90mstdout[2m | tests/integration/pluggy/disconnect.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P06'[39m,
+  message: [32m'schema "drizzle" already exists, skipping'[39m,
+  file: [32m'schemacmds.c'[39m,
+  line: [32m'132'[39m,
+  routine: [32m'CreateSchemaCommand'[39m
+}
+
+[90mstdout[2m | tests/integration/pluggy/disconnect.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P07'[39m,
+  message: [32m'relation "__drizzle_migrations" already exists, skipping'[39m,
+  file: [32m'parse_utilcmd.c'[39m,
+  line: [32m'207'[39m,
+  routine: [32m'transformCreateStmt'[39m
+}
+
+ [31m❯[39m [7m[32m integration [39m[27m tests/integration/pluggy/disconnect.test.ts [2m([22m[2m3 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[90m 275[2mms[22m[39m
+[31m   [31m×[31m DELETE /api/pluggy/items/:id[2m > [22mdisconnect-1: happy path — Pluggy delete + accounts cascade + consent revocation + audit[90m 84[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m DELETE /api/pluggy/items/:id[2m > [22mdisconnect-2: Pluggy API failure → 502 PLUGGY_API_ERROR, local state unchanged[90m 74[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m DELETE /api/pluggy/items/:id[2m > [22mdisconnect-3: IDOR — user A session, user B item → 404 (not 403, P26)[90m 76[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[90mstdout[2m | tests/integration/pluggy/connect-token.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42710'[39m,
+  message: [32m'extension "pgcrypto" already exists, skipping'[39m,
+  file: [32m'extension.c'[39m,
+  line: [32m'1925'[39m,
+  routine: [32m'CreateExtension'[39m
+}
+
+[90mstdout[2m | tests/integration/pluggy/connect-token.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P06'[39m,
+  message: [32m'schema "drizzle" already exists, skipping'[39m,
+  file: [32m'schemacmds.c'[39m,
+  line: [32m'132'[39m,
+  routine: [32m'CreateSchemaCommand'[39m
+}
+
+[90mstdout[2m | tests/integration/pluggy/connect-token.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P07'[39m,
+  message: [32m'relation "__drizzle_migrations" already exists, skipping'[39m,
+  file: [32m'parse_utilcmd.c'[39m,
+  line: [32m'207'[39m,
+  routine: [32m'transformCreateStmt'[39m
+}
+
+ [31m❯[39m [7m[32m integration [39m[27m tests/integration/pluggy/connect-token.test.ts [2m([22m[2m4 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[90m 154[2mms[22m[39m
+[31m   [31m×[31m POST /api/connect/init[2m > [22mconnect-init-1: invalid CPF → 400 INVALID_CPF, zero DB writes, zero PluggyService calls[90m 61[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m POST /api/connect/init[2m > [22mconnect-init-2: valid CPF → 200 connect_token + 1 PLUGGY_CONNECT_PENDING consent row[90m 27[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m POST /api/connect/init[2m > [22mconnect-init-3: user already has CPF → 200 without re-encrypting cpf_enc[90m 22[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m POST /api/connect/init[2m > [22mconnect-init-4: no session → 401[90m 22[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[90mstdout[2m | tests/integration/pluggy/reauth-flow.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42710'[39m,
+  message: [32m'extension "pgcrypto" already exists, skipping'[39m,
+  file: [32m'extension.c'[39m,
+  line: [32m'1925'[39m,
+  routine: [32m'CreateExtension'[39m
+}
+
+[90mstdout[2m | tests/integration/pluggy/reauth-flow.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P06'[39m,
+  message: [32m'schema "drizzle" already exists, skipping'[39m,
+  file: [32m'schemacmds.c'[39m,
+  line: [32m'132'[39m,
+  routine: [32m'CreateSchemaCommand'[39m
+}
+
+[90mstdout[2m | tests/integration/pluggy/reauth-flow.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P07'[39m,
+  message: [32m'relation "__drizzle_migrations" already exists, skipping'[39m,
+  file: [32m'parse_utilcmd.c'[39m,
+  line: [32m'207'[39m,
+  routine: [32m'transformCreateStmt'[39m
+}
+
+ [31m❯[39m [7m[32m integration [39m[27m tests/integration/pluggy/reauth-flow.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[90m 100[2mms[22m[39m
+[31m   [31m×[31m reauth flow[2m > [22mreauth-flow-1: item/login_succeeded webhook writes item_reauth_succeeded audit + PLUGGY_SYNC trigger=reconnect[90m 32[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m reauth flow[2m > [22mreauth-flow-2: worker trigger=reconnect inserts cooldown_bypassed=true audit BEFORE fetchTransactions[90m 25[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[90mstdout[2m | tests/integration/pluggy/reauth-notifier.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42710'[39m,
+  message: [32m'extension "pgcrypto" already exists, skipping'[39m,
+  file: [32m'extension.c'[39m,
+  line: [32m'1925'[39m,
+  routine: [32m'CreateExtension'[39m
+}
+
+[90mstdout[2m | tests/integration/pluggy/reauth-notifier.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P06'[39m,
+  message: [32m'schema "drizzle" already exists, skipping'[39m,
+  file: [32m'schemacmds.c'[39m,
+  line: [32m'132'[39m,
+  routine: [32m'CreateSchemaCommand'[39m
+}
+
+[90mstdout[2m | tests/integration/pluggy/reauth-notifier.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P07'[39m,
+  message: [32m'relation "__drizzle_migrations" already exists, skipping'[39m,
+  file: [32m'parse_utilcmd.c'[39m,
+  line: [32m'207'[39m,
+  routine: [32m'transformCreateStmt'[39m
+}
+
+ [31m❯[39m [7m[32m integration [39m[27m tests/integration/pluggy/reauth-notifier.test.ts [2m([22m[2m3 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[90m 268[2mms[22m[39m
+[31m   [31m×[31m reAuthNotifierWorker[2m > [22mreauth-1: sends email when last_reauth_email_at is null (first time)[90m 68[2mms[22m[31m[39m
+[31m     → Failed query: delete from "users"
+params: [39m
+[31m   [31m×[31m reAuthNotifierWorker[2m > [22mreauth-2: skips email when last_reauth_email_at is within 24h (debounce)[90m 104[2mms[22m[31m[39m
+[31m     → Failed query: delete from "users"
+params: [39m
+[31m   [31m×[31m reAuthNotifierWorker[2m > [22mreauth-3: sends email when last_reauth_email_at is 25h ago (debounce expired)[90m 55[2mms[22m[31m[39m
+[31m     → Failed query: delete from "users"
+params: [39m
+[90mstdout[2m | tests/integration/pluggy/reconcile.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42710'[39m,
+  message: [32m'extension "pgcrypto" already exists, skipping'[39m,
+  file: [32m'extension.c'[39m,
+  line: [32m'1925'[39m,
+  routine: [32m'CreateExtension'[39m
+}
+
+[90mstdout[2m | tests/integration/pluggy/reconcile.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P06'[39m,
+  message: [32m'schema "drizzle" already exists, skipping'[39m,
+  file: [32m'schemacmds.c'[39m,
+  line: [32m'132'[39m,
+  routine: [32m'CreateSchemaCommand'[39m
+}
+
+[90mstdout[2m | tests/integration/pluggy/reconcile.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P07'[39m,
+  message: [32m'relation "__drizzle_migrations" already exists, skipping'[39m,
+  file: [32m'parse_utilcmd.c'[39m,
+  line: [32m'207'[39m,
+  routine: [32m'transformCreateStmt'[39m
+}
+
+ [31m❯[39m [7m[32m integration [39m[27m tests/integration/pluggy/reconcile.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[90m 135[2mms[22m[39m
+[31m   [31m×[31m reconcileStaleItemsWorker[2m > [22mreconcile-1: enqueues only stale+healthy items (excludes recent and broken)[90m 48[2mms[22m[31m[39m
+[31m     → Failed query: delete from "users"
+params: [39m
+[31m   [31m×[31m reconcileStaleItemsWorker[2m > [22mreconcile-2: >5 stale items emits pluggy_reconcile_high_stale_count warn log[90m 58[2mms[22m[31m[39m
+[31m     → Failed query: delete from "users"
+params: [39m
+[90mstdout[2m | tests/integration/pluggy/free-tier.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42710'[39m,
+  message: [32m'extension "pgcrypto" already exists, skipping'[39m,
+  file: [32m'extension.c'[39m,
+  line: [32m'1925'[39m,
+  routine: [32m'CreateExtension'[39m
+}
+
+[90mstdout[2m | tests/integration/pluggy/free-tier.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P06'[39m,
+  message: [32m'schema "drizzle" already exists, skipping'[39m,
+  file: [32m'schemacmds.c'[39m,
+  line: [32m'132'[39m,
+  routine: [32m'CreateSchemaCommand'[39m
+}
+
+[90mstdout[2m | tests/integration/pluggy/free-tier.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P07'[39m,
+  message: [32m'relation "__drizzle_migrations" already exists, skipping'[39m,
+  file: [32m'parse_utilcmd.c'[39m,
+  line: [32m'207'[39m,
+  routine: [32m'transformCreateStmt'[39m
+}
+
+ [31m❯[39m [7m[32m integration [39m[27m tests/integration/pluggy/free-tier.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[90m 142[2mms[22m[39m
+[31m   [31m×[31m Free-tier read restrictions (BILL-04 stub)[2m > [22mfree-tier-1: /transactions older month → paywall HTML (no transaction data exposed)[90m 69[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[31m   [31m×[31m Free-tier read restrictions (BILL-04 stub)[2m > [22mfree-tier-2: free-tier user POST /api/pluggy/items/:id/sync → 403 PAYWALL[90m 30[2mms[22m[31m[39m
+[31m     → This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+ [31m❯[39m [7m[32m integration [39m[27m tests/integration/pluggy/encryption.test.ts [2m([22m[2m0 test[22m[2m)[22m
+[90mstdout[2m | tests/integration/security/idor.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42710'[39m,
+  message: [32m'extension "pgcrypto" already exists, skipping'[39m,
+  file: [32m'extension.c'[39m,
+  line: [32m'1925'[39m,
+  routine: [32m'CreateExtension'[39m
+}
+
+[90mstdout[2m | tests/integration/security/idor.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P06'[39m,
+  message: [32m'schema "drizzle" already exists, skipping'[39m,
+  file: [32m'schemacmds.c'[39m,
+  line: [32m'132'[39m,
+  routine: [32m'CreateSchemaCommand'[39m
+}
+
+[90mstdout[2m | tests/integration/security/idor.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P07'[39m,
+  message: [32m'relation "__drizzle_migrations" already exists, skipping'[39m,
+  file: [32m'parse_utilcmd.c'[39m,
+  line: [32m'207'[39m,
+  routine: [32m'transformCreateStmt'[39m
+}
+
+ [31m❯[39m [7m[32m integration [39m[27m tests/integration/security/idor.test.ts [2m([22m[2m3 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[90m 130[2mms[22m[39m
+[31m   [31m×[31m IDOR baseline (SEC-01)[2m > [22mcross-user audit_log read returns null/404 (not the other user’s data)[90m 40[2mms[22m[31m[39m
+[31m     → update or delete on table "users" violates foreign key constraint "dsr_requests_user_id_users_id_fk" on table "dsr_requests"[39m
+[31m   [31m×[31m IDOR baseline (SEC-01)[2m > [22mcross-user user_consents read filtered by user_id returns nothing[90m 30[2mms[22m[31m[39m
+[31m     → update or delete on table "users" violates foreign key constraint "dsr_requests_user_id_users_id_fk" on table "dsr_requests"[39m
+[31m   [31m×[31m IDOR baseline (SEC-01)[2m > [22mrequireSession() throws UnauthorizedError when the session cookie is absent[90m 34[2mms[22m[31m[39m
+[31m     → update or delete on table "users" violates foreign key constraint "dsr_requests_user_id_users_id_fk" on table "dsr_requests"[39m
+ [32m✓[39m [7m[32m integration [39m[27m tests/integration/observability/env-assert.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 1157[2mms[22m[39m
+   [33m[2m✓[22m[39m OPS-04 boot assertion (subprocess)[2m > [22mexits non-zero and writes OPS-04 violation to stderr when NODE_ENV=production with PLUGGY_ENV=sandbox [33m366[2mms[22m[39m
+   [33m[2m✓[22m[39m OPS-04 boot assertion (subprocess)[2m > [22mexits non-zero and writes OPS-04 violation when NODE_ENV=production with SENTRY_ENV=staging [33m384[2mms[22m[39m
+   [33m[2m✓[22m[39m OPS-04 boot assertion (subprocess)[2m > [22mexits 0 for a valid production env (good path) [33m407[2mms[22m[39m
+[90mstdout[2m | tests/integration/lgpd/consent.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42710'[39m,
+  message: [32m'extension "pgcrypto" already exists, skipping'[39m,
+  file: [32m'extension.c'[39m,
+  line: [32m'1925'[39m,
+  routine: [32m'CreateExtension'[39m
+}
+
+[90mstdout[2m | tests/integration/lgpd/consent.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P06'[39m,
+  message: [32m'schema "drizzle" already exists, skipping'[39m,
+  file: [32m'schemacmds.c'[39m,
+  line: [32m'132'[39m,
+  routine: [32m'CreateSchemaCommand'[39m
+}
+
+[90mstdout[2m | tests/integration/lgpd/consent.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P07'[39m,
+  message: [32m'relation "__drizzle_migrations" already exists, skipping'[39m,
+  file: [32m'parse_utilcmd.c'[39m,
+  line: [32m'207'[39m,
+  routine: [32m'transformCreateStmt'[39m
+}
+
+ [31m❯[39m [7m[32m integration [39m[27m tests/integration/lgpd/consent.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[90m 107[2mms[22m[39m
+[31m   [31m×[31m LGPD consent at signup[2m > [22mwrites a user_consents row with correct fields[90m 47[2mms[22m[31m[39m
+[31m     → update or delete on table "users" violates foreign key constraint "dsr_requests_user_id_users_id_fk" on table "dsr_requests"[39m
+[31m   [31m×[31m LGPD consent at signup[2m > [22maudit_log has a signup row with scrubbed metadata (no raw email)[90m 28[2mms[22m[31m[39m
+[31m     → update or delete on table "users" violates foreign key constraint "dsr_requests_user_id_users_id_fk" on table "dsr_requests"[39m
+[90mstdout[2m | tests/integration/db/migrations.test.ts[2m > [22m[2mdrizzle migrations[2m > [22m[2mmigrate twice produces identical schema state
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42710'[39m,
+  message: [32m'extension "pgcrypto" already exists, skipping'[39m,
+  file: [32m'extension.c'[39m,
+  line: [32m'1925'[39m,
+  routine: [32m'CreateExtension'[39m
+}
+
+[90mstdout[2m | tests/integration/db/migrations.test.ts[2m > [22m[2mdrizzle migrations[2m > [22m[2mmigrate twice produces identical schema state
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P06'[39m,
+  message: [32m'schema "drizzle" already exists, skipping'[39m,
+  file: [32m'schemacmds.c'[39m,
+  line: [32m'132'[39m,
+  routine: [32m'CreateSchemaCommand'[39m
+}
+
+[90mstdout[2m | tests/integration/db/migrations.test.ts[2m > [22m[2mdrizzle migrations[2m > [22m[2mmigrate twice produces identical schema state
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P07'[39m,
+  message: [32m'relation "__drizzle_migrations" already exists, skipping'[39m,
+  file: [32m'parse_utilcmd.c'[39m,
+  line: [32m'207'[39m,
+  routine: [32m'transformCreateStmt'[39m
+}
+
+[90mstdout[2m | tests/integration/db/migrations.test.ts[2m > [22m[2mdrizzle migrations[2m > [22m[2mmigrate twice produces identical schema state
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42710'[39m,
+  message: [32m'extension "pgcrypto" already exists, skipping'[39m,
+  file: [32m'extension.c'[39m,
+  line: [32m'1925'[39m,
+  routine: [32m'CreateExtension'[39m
+}
+
+[90mstdout[2m | tests/integration/db/migrations.test.ts[2m > [22m[2mdrizzle migrations[2m > [22m[2mmigrate twice produces identical schema state
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P06'[39m,
+  message: [32m'schema "drizzle" already exists, skipping'[39m,
+  file: [32m'schemacmds.c'[39m,
+  line: [32m'132'[39m,
+  routine: [32m'CreateSchemaCommand'[39m
+}
+
+[90mstdout[2m | tests/integration/db/migrations.test.ts[2m > [22m[2mdrizzle migrations[2m > [22m[2mmigrate twice produces identical schema state
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P07'[39m,
+  message: [32m'relation "__drizzle_migrations" already exists, skipping'[39m,
+  file: [32m'parse_utilcmd.c'[39m,
+  line: [32m'207'[39m,
+  routine: [32m'transformCreateStmt'[39m
+}
+
+ [31m❯[39m [7m[32m integration [39m[27m tests/integration/db/migrations.test.ts [2m([22m[2m5 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[90m 238[2mms[22m[39m
+   [32m✓[39m drizzle migrations[2m > [22mmigrate twice produces identical schema state
+   [32m✓[39m drizzle migrations[2m > [22mcreates pgcrypto extension
+   [32m✓[39m drizzle migrations[2m > [22mcreates all 14 phase 1 tables
+[31m   [31m×[31m drizzle migrations[2m > [22mrenames Auth.js accounts table to accounts_oauth (no `accounts` table)[90m 32[2mms[22m[31m[39m
+[31m     → expected [ { table_name: 'accounts' } ] to have a length of +0 but got 1[39m
+   [32m✓[39m drizzle migrations[2m > [22mdeclares UNIQUE(source, event_id) on webhook_events
+[90mstdout[2m | tests/integration/db/users-schema.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42710'[39m,
+  message: [32m'extension "pgcrypto" already exists, skipping'[39m,
+  file: [32m'extension.c'[39m,
+  line: [32m'1925'[39m,
+  routine: [32m'CreateExtension'[39m
+}
+
+[90mstdout[2m | tests/integration/db/users-schema.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P06'[39m,
+  message: [32m'schema "drizzle" already exists, skipping'[39m,
+  file: [32m'schemacmds.c'[39m,
+  line: [32m'132'[39m,
+  routine: [32m'CreateSchemaCommand'[39m
+}
+
+[90mstdout[2m | tests/integration/db/users-schema.test.ts
+[22m[39m{
+  severity_local: [32m'NOTICE'[39m,
+  severity: [32m'NOTICE'[39m,
+  code: [32m'42P07'[39m,
+  message: [32m'relation "__drizzle_migrations" already exists, skipping'[39m,
+  file: [32m'parse_utilcmd.c'[39m,
+  line: [32m'207'[39m,
+  routine: [32m'transformCreateStmt'[39m
+}
+
+ [31m❯[39m [7m[32m integration [39m[27m tests/integration/db/users-schema.test.ts [2m([22m[2m4 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[90m 112[2mms[22m[39m
+[31m   [31m×[31m users schema[2m > [22minserts a user without CPF and subscription_tier defaults to paid[90m 26[2mms[22m[31m[39m
+[31m     → null value in column "cpf_hash" of relation "users" violates not-null constraint[39m
+[31m   [31m×[31m users schema[2m > [22menforces email UNIQUE[90m 23[2mms[22m[31m[39m
+[31m     → null value in column "cpf_hash" of relation "users" violates not-null constraint[39m
+[31m   [31m×[31m users schema[2m > [22mallows multiple users with NULL cpf_hash (partial unique index)[90m 22[2mms[22m[31m[39m
+[31m     → null value in column "cpf_hash" of relation "users" violates not-null constraint[39m
+[31m   [31m×[31m users schema[2m > [22mrejects duplicate non-null cpf_hash via partial unique index[90m 16[2mms[22m[31m[39m
+[31m     → null value in column "cpf_enc" of relation "users" violates not-null constraint[39m
+ [32m✓[39m [7m[32m integration [39m[27m tests/integration/_scaffold.test.ts [2m([22m[2m1 test[22m[2m)[22m[90m 0[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯[1m[7m Failed Suites 1 [27m[22m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/encryption.test.ts[2m [ tests/integration/pluggy/encryption.test.ts ][22m
+[31m[1mError[22m: This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[90m [2m❯[22m Object.<anonymous> node_modules/server-only/index.js:[2m1:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/74]⎯[22m[39m
+
+
+[31m⎯⎯⎯⎯⎯⎯[1m[7m Failed Tests 73 [27m[22m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/auth/rate-limit.test.ts[2m > [22mrate limiter — login (D-05 / D-06)[2m > [22mreturns 401 for the first 5 failures and 429 on the 6th + creates account_lock
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/auth/rate-limit.test.ts[2m > [22mrate limiter — login (D-05 / D-06)[2m > [22msuccessful login resets the failure counter
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/auth/rate-limit.test.ts[2m > [22mrate limiter — password reset (D-08)[2m > [22m3 password-reset requests per email per hour return 200; 4th returns 429
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/auth/rate-limit.test.ts[2m > [22mrate limiter — password reset (D-08)[2m > [22m10 reset requests from the same IP per hour return 200; 11th returns 429
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/auth/rate-limit.test.ts[2m > [22mrate limiter — password reset (D-08)[2m > [22mreturns identical 200 body for known and unknown emails (anti-enumeration)
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/auth/rate-limit.test.ts[2m > [22mlogin schema — turnstileToken null tolerance (regression)[2m > [22maccepts turnstileToken: null on the first attempt for a valid user (200)
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/auth/rate-limit.test.ts[2m > [22mlogin schema — turnstileToken null tolerance (regression)[2m > [22maccepts turnstileToken omitted from the payload for a valid user (200)
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/auth/rate-limit.test.ts[2m > [22mlogin schema — turnstileToken null tolerance (regression)[2m > [22mstill 401s with turnstileToken: null and a wrong password (schema accepts null, password gate enforces)
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/lgpd/dsr.test.ts[2m > [22mPOST /api/privacy/export[2m > [22mcreates a PENDING dsr_requests row
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/lgpd/dsr.test.ts[2m > [22mPOST /api/privacy/export[2m > [22mreturns 401 when no session
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/lgpd/dsr.test.ts[2m > [22mPOST /api/privacy/delete[2m > [22mreturns 400 when confirm_phrase is not EXCLUIR
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/lgpd/dsr.test.ts[2m > [22mDSR acknowledge worker[2m > [22msends acknowledgment email with protocol ID for EXPORT (15-day wording)
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/lgpd/dsr.test.ts[2m > [22mDSR acknowledge worker[2m > [22msends acknowledgment email with 30-day wording for DELETE
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/connect-init.test.ts[2m > [22mPOST /api/pluggy/items[2m > [22mpluggy-items-1: 202, encrypted item row, consent row, PLUGGY_SYNC enqueued, audit
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/connect-init.test.ts[2m > [22mPOST /api/pluggy/items[2m > [22mpluggy-items-2: same pluggy_item_id → 409 Conflict, no second row
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/connect-init.test.ts[2m > [22mPOST /api/pluggy/items[2m > [22mpluggy-items-3: no session → 401
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/connect-init.test.ts[2m > [22mGET /api/sync-status[2m > [22msync-status-1: item.status=UPDATING and no accounts → phase=loading_accounts, transactions_count=0
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/connect-init.test.ts[2m > [22mGET /api/sync-status[2m > [22msync-status-2: after 1 transaction inserted → phase=completed, transactions_count >= 1
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/connect-token.test.ts[2m > [22mPOST /api/connect/init[2m > [22mconnect-init-1: invalid CPF → 400 INVALID_CPF, zero DB writes, zero PluggyService calls
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/connect-token.test.ts[2m > [22mPOST /api/connect/init[2m > [22mconnect-init-2: valid CPF → 200 connect_token + 1 PLUGGY_CONNECT_PENDING consent row
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/connect-token.test.ts[2m > [22mPOST /api/connect/init[2m > [22mconnect-init-3: user already has CPF → 200 without re-encrypting cpf_enc
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/connect-token.test.ts[2m > [22mPOST /api/connect/init[2m > [22mconnect-init-4: no session → 401
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/cooldown.test.ts[2m > [22mPOST /api/pluggy/items/:id/sync[2m > [22mcooldown-1: paid user within 30-min cooldown → 429 COOLDOWN_ACTIVE
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/cooldown.test.ts[2m > [22mPOST /api/pluggy/items/:id/sync[2m > [22mcooldown-2: paid user past cooldown → 202 + PLUGGY_SYNC enqueued + audit
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/cooldown.test.ts[2m > [22mPOST /api/pluggy/items/:id/sync[2m > [22mcooldown-3: free-tier user → 403 PAYWALL (PLUGGY_SYNC NOT enqueued)
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/cooldown.test.ts[2m > [22mPOST /api/pluggy/items/:id/sync[2m > [22mcooldown-4: IDOR — user A session, user B item → 404 (not 403, P26)
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/disconnect.test.ts[2m > [22mDELETE /api/pluggy/items/:id[2m > [22mdisconnect-1: happy path — Pluggy delete + accounts cascade + consent revocation + audit
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/disconnect.test.ts[2m > [22mDELETE /api/pluggy/items/:id[2m > [22mdisconnect-2: Pluggy API failure → 502 PLUGGY_API_ERROR, local state unchanged
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/disconnect.test.ts[2m > [22mDELETE /api/pluggy/items/:id[2m > [22mdisconnect-3: IDOR — user A session, user B item → 404 (not 403, P26)
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/free-tier.test.ts[2m > [22mFree-tier read restrictions (BILL-04 stub)[2m > [22mfree-tier-1: /transactions older month → paywall HTML (no transaction data exposed)
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/free-tier.test.ts[2m > [22mFree-tier read restrictions (BILL-04 stub)[2m > [22mfree-tier-2: free-tier user POST /api/pluggy/items/:id/sync → 403 PAYWALL
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/reauth-flow.test.ts[2m > [22mreauth flow[2m > [22mreauth-flow-1: item/login_succeeded webhook writes item_reauth_succeeded audit + PLUGGY_SYNC trigger=reconnect
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/reauth-flow.test.ts[2m > [22mreauth flow[2m > [22mreauth-flow-2: worker trigger=reconnect inserts cooldown_bypassed=true audit BEFORE fetchTransactions
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/sync-worker.test.ts[2m > [22mpluggySyncWorker[2m > [22msync-1: fetches accounts + 2 cursor pages, inserts 11 transactions, flips status=UPDATED, enqueues detectors
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/sync-worker.test.ts[2m > [22mpluggySyncWorker[2m > [22msync-2: running worker twice does NOT duplicate transactions (TX-01)
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/sync-worker.test.ts[2m > [22mpluggySyncWorker[2m > [22msync-3: PENDING tx transitions to POSTED without touching is_transfer or is_credit_card_payment
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/sync-worker.test.ts[2m > [22mpluggySyncWorker[2m > [22msync-4: LOGIN_ERROR item skips Pluggy API calls and logs sync_failed with reason=item_broken
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/webhook.test.ts[2m > [22mPluggy webhook[2m > [22m(a) rejects invalid X-Pluggy-Signature with 401
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/webhook.test.ts[2m > [22mPluggy webhook[2m > [22m(b) rejects empty X-Pluggy-Signature with 401
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/webhook.test.ts[2m > [22mPluggy webhook[2m > [22m(c) 3x replay of same eventId produces exactly 1 webhook_events row and 1 PLUGGY_SYNC job
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/webhook.test.ts[2m > [22mPluggy webhook[2m > [22m(d) unknown event type inserts row and logs pluggy_webhook_unmapped_event but does NOT enqueue
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/webhook.test.ts[2m > [22mPluggy webhook[2m > [22m(e) item/error → enqueues PLUGGY_REAUTH_NOTIFIER; item/created → enqueues PLUGGY_SYNC; item/deleted → no enqueue
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/webhook.test.ts[2m > [22mPluggy webhook[2m > [22m(f) handler returns within 250ms
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/webhook.test.ts[2m > [22mPluggy webhook[2m > [22m(g) item/login_succeeded enqueues PLUGGY_SYNC with trigger=reconnect and writes audit_log
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/webhooks/ses-bounce.test.ts[2m > [22mSES bounce webhook[2m > [22mrejects invalid SNS signature with 401
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/webhooks/ses-bounce.test.ts[2m > [22mSES bounce webhook[2m > [22m3x replay of same MessageId produces 1 webhook_events row + 1 ses_suppressions row
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/webhooks/ses-bounce.test.ts[2m > [22mSES bounce webhook[2m > [22mhandles SubscriptionConfirmation by fetching SubscribeURL
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/webhooks/ses-bounce.test.ts[2m > [22mSES bounce webhook[2m > [22mmailer refuses to send to a suppressed email after bounce is processed
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/services/FaturaDetector.test.ts[2m > [22mfaturaDetectorWorker[2m > [22mfatura-1: flags checking DEBIT matching credit-card balance within +/-7-day window
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/services/FaturaDetector.test.ts[2m > [22mfaturaDetectorWorker[2m > [22mfatura-2: does NOT flag when debit amount does not match credit-card balance
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/services/FaturaDetector.test.ts[2m > [22mfaturaDetectorWorker[2m > [22mfatura-3: idempotent — second run does not re-flag or create duplicate audit rows
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/services/FaturaDetector.test.ts[2m > [22mfaturaDetectorWorker[2m > [22mfatura-4: does NOT flag when posted_at is outside +/-7-day proximity window (26 days apart)
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/services/TransferDetector.test.ts[2m > [22mtransferDetectorWorker[2m > [22mtransfer-1: flags both legs when all D-33 invariants are met
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/services/TransferDetector.test.ts[2m > [22mtransferDetectorWorker[2m > [22mtransfer-2: does NOT flag when amounts differ (500.00 vs 499.99)
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/services/TransferDetector.test.ts[2m > [22mtransferDetectorWorker[2m > [22mtransfer-3: does NOT flag when both transactions have the same type
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/services/TransferDetector.test.ts[2m > [22mtransferDetectorWorker[2m > [22mtransfer-4: does NOT flag when both transactions share the same account_id
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/services/TransferDetector.test.ts[2m > [22mtransferDetectorWorker[2m > [22mtransfer-5: does NOT flag when posted_at is more than 3 days apart
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/services/TransferDetector.test.ts[2m > [22mtransferDetectorWorker[2m > [22mtransfer-6: idempotent — second run does not re-flag or create duplicate audit rows
+[31m[1mError[22m: This module cannot be imported from a Client Component module. It should only be used from a Server Component.[39m
+[90m [2m❯[22m Object.<anonymous> node_modules/server-only/index.js:[2m1:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/74]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/db/migrations.test.ts[2m > [22mdrizzle migrations[2m > [22mrenames Auth.js accounts table to accounts_oauth (no `accounts` table)
+[31m[1mAssertionError[22m: expected [ { table_name: 'accounts' } ] to have a length of +0 but got 1[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 0[39m
+[31m+ 1[39m
+
+[36m [2m❯[22m tests/integration/db/migrations.test.ts:[2m113:20[22m[39m
+    [90m111| [39m        WHERE table_schema = 'public' AND table_name = 'accounts'
+    [90m112| [39m      `[39m[33m;[39m
+    [90m113| [39m      [34mexpect[39m(rows)[33m.[39m[34mtoHaveLength[39m([34m0[39m)[33m;[39m
+    [90m   | [39m                   [31m^[39m
+    [90m114| [39m    } [35mfinally[39m {
+    [90m115| [39m      [35mawait[39m client[33m.[39m[34mend[39m()[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/74]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/db/users-schema.test.ts[2m > [22musers schema[2m > [22minserts a user without CPF and subscription_tier defaults to paid
+[31m[1mPostgresError[22m: null value in column "cpf_hash" of relation "users" violates not-null constraint[39m
+[90m [2m❯[22m ErrorResponse node_modules/postgres/src/connection.js:[2m815:30[22m[39m
+[90m [2m❯[22m handle node_modules/postgres/src/connection.js:[2m489:6[22m[39m
+[90m [2m❯[22m Socket.data node_modules/postgres/src/connection.js:[2m324:9[22m[39m
+[90m [2m❯[22m cachedError node_modules/postgres/src/query.js:[2m170:23[22m[39m
+[90m [2m❯[22m new Query node_modules/postgres/src/query.js:[2m36:24[22m[39m
+[90m [2m❯[22m sql node_modules/postgres/src/index.js:[2m112:11[22m[39m
+[36m [2m❯[22m tests/integration/db/users-schema.test.ts:[2m30:26[22m[39m
+    [90m 28| [39m    [35mconst[39m client [33m=[39m [34mpostgres[39m(td[33m.[39murl[33m,[39m { max[33m:[39m [34m1[39m })[33m;[39m
+    [90m 29| [39m    [35mtry[39m {
+    [90m 30| [39m      [35mconst[39m rows [33m=[39m [35mawait[39m client[33m<[39m
+    [90m   | [39m                         [31m^[39m
+    [90m 31| [39m        {
+    [90m 32| [39m          id[33m:[39m string[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/74]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/db/users-schema.test.ts[2m > [22musers schema[2m > [22menforces email UNIQUE
+[31m[1mPostgresError[22m: null value in column "cpf_hash" of relation "users" violates not-null constraint[39m
+[90m [2m❯[22m ErrorResponse node_modules/postgres/src/connection.js:[2m815:30[22m[39m
+[90m [2m❯[22m handle node_modules/postgres/src/connection.js:[2m489:6[22m[39m
+[90m [2m❯[22m Socket.data node_modules/postgres/src/connection.js:[2m324:9[22m[39m
+[90m [2m❯[22m cachedError node_modules/postgres/src/query.js:[2m170:23[22m[39m
+[90m [2m❯[22m new Query node_modules/postgres/src/query.js:[2m36:24[22m[39m
+[90m [2m❯[22m sql node_modules/postgres/src/index.js:[2m112:11[22m[39m
+[36m [2m❯[22m tests/integration/db/users-schema.test.ts:[2m56:13[22m[39m
+    [90m 54| [39m    [35mconst[39m client [33m=[39m [34mpostgres[39m(td[33m.[39murl[33m,[39m { max[33m:[39m [34m1[39m })[33m;[39m
+    [90m 55| [39m    [35mtry[39m {
+    [90m 56| [39m      await client`INSERT INTO users (email, password_hash) VALUES ('u…
+    [90m   | [39m            [31m^[39m
+    [90m 57| [39m      [35mawait[39m [34mexpect[39m(
+    [90m 58| [39m        client`INSERT INTO users (email, password_hash) VALUES ('uniq@…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/74]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/db/users-schema.test.ts[2m > [22musers schema[2m > [22mallows multiple users with NULL cpf_hash (partial unique index)
+[31m[1mPostgresError[22m: null value in column "cpf_hash" of relation "users" violates not-null constraint[39m
+[90m [2m❯[22m ErrorResponse node_modules/postgres/src/connection.js:[2m815:30[22m[39m
+[90m [2m❯[22m handle node_modules/postgres/src/connection.js:[2m489:6[22m[39m
+[90m [2m❯[22m Socket.data node_modules/postgres/src/connection.js:[2m324:9[22m[39m
+[90m [2m❯[22m cachedError node_modules/postgres/src/query.js:[2m170:23[22m[39m
+[90m [2m❯[22m new Query node_modules/postgres/src/query.js:[2m36:24[22m[39m
+[90m [2m❯[22m sql node_modules/postgres/src/index.js:[2m112:11[22m[39m
+[36m [2m❯[22m tests/integration/db/users-schema.test.ts:[2m68:13[22m[39m
+    [90m 66| [39m    [35mconst[39m client [33m=[39m [34mpostgres[39m(td[33m.[39murl[33m,[39m { max[33m:[39m [34m1[39m })[33m;[39m
+    [90m 67| [39m    [35mtry[39m {
+    [90m 68| [39m      await client`INSERT INTO users (email, password_hash) VALUES ('n…
+    [90m   | [39m            [31m^[39m
+    [90m 69| [39m      await client`INSERT INTO users (email, password_hash) VALUES ('n…
+    [90m 70| [39m      [35mconst[39m rows [33m=[39m [35mawait[39m client[33m<[39m{ id[33m:[39m string }[][33m>[39m[32m`
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/74]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/db/users-schema.test.ts[2m > [22musers schema[2m > [22mrejects duplicate non-null cpf_hash via partial unique index
+[31m[1mPostgresError[22m: null value in column "cpf_enc" of relation "users" violates not-null constraint[39m
+[90m [2m❯[22m ErrorResponse node_modules/postgres/src/connection.js:[2m815:30[22m[39m
+[90m [2m❯[22m handle node_modules/postgres/src/connection.js:[2m489:6[22m[39m
+[90m [2m❯[22m Socket.data node_modules/postgres/src/connection.js:[2m324:9[22m[39m
+[90m [2m❯[22m cachedError node_modules/postgres/src/query.js:[2m170:23[22m[39m
+[90m [2m❯[22m new Query node_modules/postgres/src/query.js:[2m36:24[22m[39m
+[90m [2m❯[22m sql node_modules/postgres/src/index.js:[2m112:11[22m[39m
+[36m [2m❯[22m tests/integration/db/users-schema.test.ts:[2m83:13[22m[39m
+    [90m 81| [39m    [35mtry[39m {
+    [90m 82| [39m      const cpf_hash = Buffer.from('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',…
+    [90m 83| [39m      [35mawait[39m client[32m`
+    [90m   | [39m            [31m^[39m
+    [90m 84| [39m        INSERT INTO users (email, password_hash, cpf_hash)
+    [90m 85| [39m        VALUES ('cpf-a@example.com', 'x', [39m[36m${[39mcpf_hash[36m}[39m[32m)
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/74]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/lgpd/consent.test.ts[2m > [22mLGPD consent at signup[2m > [22mwrites a user_consents row with correct fields
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/lgpd/consent.test.ts[2m > [22mLGPD consent at signup[2m > [22maudit_log has a signup row with scrubbed metadata (no raw email)
+[31m[1mPostgresError[22m: update or delete on table "users" violates foreign key constraint "dsr_requests_user_id_users_id_fk" on table "dsr_requests"[39m
+[90m [2m❯[22m ErrorResponse node_modules/postgres/src/connection.js:[2m815:30[22m[39m
+[90m [2m❯[22m handle node_modules/postgres/src/connection.js:[2m489:6[22m[39m
+[90m [2m❯[22m Socket.data node_modules/postgres/src/connection.js:[2m324:9[22m[39m
+[90m [2m❯[22m cachedError node_modules/postgres/src/query.js:[2m170:23[22m[39m
+[90m [2m❯[22m new Query node_modules/postgres/src/query.js:[2m36:24[22m[39m
+[90m [2m❯[22m sql node_modules/postgres/src/index.js:[2m112:11[22m[39m
+[36m [2m❯[22m tests/integration/lgpd/consent.test.ts:[2m50:11[22m[39m
+    [90m 48| [39m    [35mawait[39m client[32m`DELETE FROM user_consents`[39m[33m;[39m
+    [90m 49| [39m    [35mawait[39m client[32m`DELETE FROM sessions`[39m[33m;[39m
+    [90m 50| [39m    [35mawait[39m client[32m`DELETE FROM users`[39m[33m;[39m
+    [90m   | [39m          [31m^[39m
+    [90m 51| [39m  } [35mfinally[39m {
+    [90m 52| [39m    [35mawait[39m client[33m.[39m[34mend[39m()[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/74]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/reauth-notifier.test.ts[2m > [22mreAuthNotifierWorker[2m > [22mreauth-1: sends email when last_reauth_email_at is null (first time)
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/reauth-notifier.test.ts[2m > [22mreAuthNotifierWorker[2m > [22mreauth-2: skips email when last_reauth_email_at is within 24h (debounce)
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/reauth-notifier.test.ts[2m > [22mreAuthNotifierWorker[2m > [22mreauth-3: sends email when last_reauth_email_at is 25h ago (debounce expired)
+[31m[1mError[22m: Failed query: delete from "users"
+params: [39m
+[90m [2m❯[22m PostgresJsPreparedQuery.queryWithCache node_modules/src/pg-core/session.ts:[2m73:11[22m[39m
+[36m [2m❯[22m tests/integration/pluggy/reauth-notifier.test.ts:[2m145:5[22m[39m
+    [90m143| [39m    [35mawait[39m db[33m.[39m[35mdelete[39m(audit_log)[33m;[39m
+    [90m144| [39m    [35mawait[39m db[33m.[39m[35mdelete[39m(pluggy_items)[33m;[39m
+    [90m145| [39m    [35mawait[39m db[33m.[39m[35mdelete[39m(users)[33m;[39m
+    [90m   | [39m    [31m^[39m
+    [90m146| [39m  })[33m;[39m
+    [90m147| [39m
+
+[31m[1mCaused by: PostgresError[22m: update or delete on table "users" violates foreign key constraint "user_consents_user_id_users_id_fk" on table "user_consents"[39m
+[90m [2m❯[22m ErrorResponse node_modules/postgres/src/connection.js:[2m815:30[22m[39m
+[90m [2m❯[22m handle node_modules/postgres/src/connection.js:[2m489:6[22m[39m
+[90m [2m❯[22m Socket.data node_modules/postgres/src/connection.js:[2m324:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22m[39m
+[31m[1mSerialized Error:[22m[39m [90m{ severity_local: 'ERROR', severity: 'ERROR', code: '23503', detail: 'Key (id)=(965231cb-2373-467a-b32e-2f19628ce03b) is still referenced from table "user_consents".', schema_name: 'public', table_name: 'user_consents', constraint_name: 'user_consents_user_id_users_id_fk', file: 'ri_triggers.c', line: '2621', routine: 'ri_ReportViolation', query: 'delete from "users"', parameters: [], args: [], types: [] }[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/74]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/reconcile.test.ts[2m > [22mreconcileStaleItemsWorker[2m > [22mreconcile-1: enqueues only stale+healthy items (excludes recent and broken)
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/pluggy/reconcile.test.ts[2m > [22mreconcileStaleItemsWorker[2m > [22mreconcile-2: >5 stale items emits pluggy_reconcile_high_stale_count warn log
+[31m[1mError[22m: Failed query: delete from "users"
+params: [39m
+[90m [2m❯[22m PostgresJsPreparedQuery.queryWithCache node_modules/src/pg-core/session.ts:[2m73:11[22m[39m
+[36m [2m❯[22m tests/integration/pluggy/reconcile.test.ts:[2m134:5[22m[39m
+    [90m132| [39m    [35mconst[39m { pluggy_items[33m,[39m users } [33m=[39m [35mawait[39m [35mimport[39m([32m'@/db/schema'[39m)[33m;[39m
+    [90m133| [39m    [35mawait[39m db[33m.[39m[35mdelete[39m(pluggy_items)[33m;[39m
+    [90m134| [39m    [35mawait[39m db[33m.[39m[35mdelete[39m(users)[33m;[39m
+    [90m   | [39m    [31m^[39m
+    [90m135| [39m  })[33m;[39m
+    [90m136| [39m
+
+[31m[1mCaused by: PostgresError[22m: update or delete on table "users" violates foreign key constraint "user_consents_user_id_users_id_fk" on table "user_consents"[39m
+[90m [2m❯[22m ErrorResponse node_modules/postgres/src/connection.js:[2m815:30[22m[39m
+[90m [2m❯[22m handle node_modules/postgres/src/connection.js:[2m489:6[22m[39m
+[90m [2m❯[22m Socket.data node_modules/postgres/src/connection.js:[2m324:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22m[39m
+[31m[1mSerialized Error:[22m[39m [90m{ severity_local: 'ERROR', severity: 'ERROR', code: '23503', detail: 'Key (id)=(965231cb-2373-467a-b32e-2f19628ce03b) is still referenced from table "user_consents".', schema_name: 'public', table_name: 'user_consents', constraint_name: 'user_consents_user_id_users_id_fk', file: 'ri_triggers.c', line: '2621', routine: 'ri_ReportViolation', query: 'delete from "users"', parameters: [], args: [], types: [] }[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/74]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/security/idor.test.ts[2m > [22mIDOR baseline (SEC-01)[2m > [22mcross-user audit_log read returns null/404 (not the other user’s data)
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/security/idor.test.ts[2m > [22mIDOR baseline (SEC-01)[2m > [22mcross-user user_consents read filtered by user_id returns nothing
+[31m[1m[7m FAIL [27m[22m[39m [7m[32m integration [39m[27m tests/integration/security/idor.test.ts[2m > [22mIDOR baseline (SEC-01)[2m > [22mrequireSession() throws UnauthorizedError when the session cookie is absent
+[31m[1mPostgresError[22m: update or delete on table "users" violates foreign key constraint "dsr_requests_user_id_users_id_fk" on table "dsr_requests"[39m
+[90m [2m❯[22m ErrorResponse node_modules/postgres/src/connection.js:[2m815:30[22m[39m
+[90m [2m❯[22m handle node_modules/postgres/src/connection.js:[2m489:6[22m[39m
+[90m [2m❯[22m Socket.data node_modules/postgres/src/connection.js:[2m324:9[22m[39m
+[90m [2m❯[22m cachedError node_modules/postgres/src/query.js:[2m170:23[22m[39m
+[90m [2m❯[22m new Query node_modules/postgres/src/query.js:[2m36:24[22m[39m
+[90m [2m❯[22m sql node_modules/postgres/src/index.js:[2m112:11[22m[39m
+[36m [2m❯[22m tests/integration/security/idor.test.ts:[2m38:11[22m[39m
+    [90m 36| [39m    [35mawait[39m client[32m`DELETE FROM audit_log`[39m[33m;[39m
+    [90m 37| [39m    [35mawait[39m client[32m`DELETE FROM user_consents`[39m[33m;[39m
+    [90m 38| [39m    [35mawait[39m client[32m`DELETE FROM users`[39m[33m;[39m
+    [90m   | [39m          [31m^[39m
+    [90m 39| [39m  } [35mfinally[39m {
+    [90m 40| [39m    [35mawait[39m client[33m.[39m[34mend[39m()[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/74]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m20 failed[39m[22m[2m | [22m[1m[32m2 passed[39m[22m[90m (22)[39m
+[2m      Tests [22m [1m[31m73 failed[39m[22m[2m | [22m[1m[32m9 passed[39m[22m[90m (82)[39m
+[2m   Start at [22m 22:09:44
+[2m   Duration [22m 18.95s[2m (transform 609ms, setup 199ms, collect 1.53s, tests 12.97s, environment 0ms, prepare 140ms)[22m
+

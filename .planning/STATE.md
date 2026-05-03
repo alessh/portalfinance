@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Plan 02-08 complete; 02-09 still required to unblock UAT Tests 3-7 (testcontainers cascade)
-last_updated: "2026-05-03T00:58:25.000Z"
+stopped_at: Plan 02-09 complete; Phase 02 9/9 plans complete; UAT Tests 3-7 now re-runnable (cascade gone). Follow-up plans needed for per-suite DB truncation + migration regression triage.
+last_updated: "2026-05-03T01:30:00.000Z"
 last_activity: 2026-05-03
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 26
-  completed_plans: 22
-  percent: 85
+  completed_plans: 23
+  percent: 88
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 
 ## Current Position
 
-Phase: 02 (pluggy-ingestion) — EXECUTING
-Plan: 9 of 9 (next: 02-09 testcontainers cascade)
-Status: Ready to execute
+Phase: 02 (pluggy-ingestion) — COMPLETE (9/9 plans)
+Plan: All Phase 02 plans complete
+Status: Phase 02 done; UAT re-runnable; ready for Phase 03 planning (with optional follow-up plans for per-suite DB truncation + migration regression triage)
 Last activity: 2026-05-03
 
-Progress: [████████▌░] 85%
+Progress: [████████▊░] 88%
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ Progress: [████████▌░] 85%
 | Phase 01-foundation-identity P04 | 180 | 3 tasks | 24 files |
 | Phase 02 P07 | 360 | 3 tasks | 7 files |
 | Phase 02 P08 | 211 | 3 tasks | 4 files |
+| Phase 02 P09 | 1800 | 4 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,11 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - Plan 02-07: split @/lib/cpf into isomorphic CPFSchema/formatCPF (cpf.ts) vs server-only encryptAndHashCPF (cpfServer.ts) to prevent client-bundle leaks of the env loader
 - Plan 02-08: env-runner.ts pre-stubs `server-only` in Module._cache before importing @/lib/env; the package's `react-server` export condition only fires under React Server Components or ESM + `--conditions=react-server`, and tsx loads via CJS, so the test fixture would otherwise crash on the import before reaching the OPS-04 refine
 - Plan 02-08: goodProductionEnv() sets SERVICE_NAME='web' explicitly (despite the schema default) to defeat parent-env leakage; the spread `...process.env` could otherwise let a developer's local SERVICE_NAME='migrate' silently bypass the third .refine() block
+- Plan 02-09: vitest 3.0.5 fileParallelism is in NonProjectOptions and is rejected at workspace[]-entry level with TS2769; pool: 'forks' + singleFork: true alone serialises file execution within the project (one fork = one file at a time)
+- Plan 02-09: vitest 3.0.5 globalSetup files reject default-exported `{ setup, teardown }` objects with `invalid export in globalSetup file: default must be a function`; only named setup/teardown OR a default-exported single function are supported
+- Plan 02-09: vitest's default `isolate: true` re-imports the module graph between test files even inside a single forked worker; `isolate: false` is REQUIRED for module-level (or globalThis) state to be shared across suites
+- Plan 02-09: vi.resetModules() in 12 Pluggy/webhook/idor suites wipes module-scope `let` bindings; cross-suite singletons must live on globalThis (typed key + getCache/setCache accessors) to survive resets
+- Plan 02-09: 18 of 22 integration suites now fail on real assertions exposed by removing the cascade — primarily cross-suite database state bleed (per-suite TRUNCATE missing) and migration regression in db/migrations.test.ts + db/users-schema.test.ts; tracked as Phase 02 follow-up plans, NOT a regression of 02-09
 
 ### Roadmap Evolution
 
@@ -133,8 +139,8 @@ Phase 02 (Pluggy ingestion) is the next plannable phase.
 
 ## Session Continuity
 
-Last session: 2026-05-03T00:58:25.000Z
-Stopped at: Plan 02-08 complete; 02-09 still required to unblock UAT Tests 3-7 (testcontainers cascade)
+Last session: 2026-05-03T01:30:00.000Z
+Stopped at: Plan 02-09 complete; Phase 02 9/9 plans complete; UAT Tests 3-7 now re-runnable (cascade gone). Follow-up plans needed for per-suite DB truncation + migration regression triage.
 Resume file: None
 
 **Planned Phase:** 02 (pluggy-ingestion) — 6 plans — 2026-05-02T02:50:52.166Z
