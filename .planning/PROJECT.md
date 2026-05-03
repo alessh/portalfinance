@@ -102,4 +102,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-23 — Phase 01 (Foundation & Identity) complete; auth + LGPD scaffolding + observability code-side done; SES/Sentry console setup deferred to ops; first Active requirement (signup with email + CPF + password) gated on human UAT after Railway deploy.*
+*Last updated: 2026-05-03 — Phase 02 (Pluggy Ingestion) complete; Open Finance connect flow + webhook ingestion + transfer/fatura detection + re-auth UX + transactions/connections pages all code-verified across 9 plans (6 build + 3 gap-closure for server-only client/server boundary, env-assert good-path fixture, and testcontainer single-fork singleton). 7 UAT items pending user re-run (status: partial in 02-HUMAN-UAT.md). Phase 01 still gated on the same post-Railway/Copilot manual UAT.*
