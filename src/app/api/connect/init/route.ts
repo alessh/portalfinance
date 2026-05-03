@@ -10,8 +10,10 @@ export const runtime = 'nodejs';
  *   3. If user does not have a real CPF on file: require cpf, validate (CPFSchema), encrypt + hash,
  *      UPDATE users. On invalid CPF: return 400 INVALID_CPF with ZERO DB writes, ZERO PluggyService
  *      calls (D-06).
- *   4. INSERT user_consents row with scope='PLUGGY_CONNECT_PENDING' (pre-widget, D-08 step 1).
- *   5. If reconnect_item_id provided: load pluggy_items row + IDOR check (P26); 404 not 403 on miss.
+ *   4. If reconnect_item_id provided: load pluggy_items row + IDOR check (P26); 404 not 403 on miss.
+ *      MUST run BEFORE step 5 so a 404 does not leave an orphan PLUGGY_CONNECT_PENDING consent row
+ *      polluting the LGPD audit trail (review WR-01).
+ *   5. INSERT user_consents row with scope='PLUGGY_CONNECT_PENDING' (pre-widget, D-08 step 1).
  *   6. Call PluggyService.createConnectToken → return { connect_token }.
  *
  * CPF detection note:
@@ -83,17 +85,9 @@ export async function POST(req: Request): Promise<Response> {
     await db.update(users).set({ cpf_hash, cpf_enc }).where(eq(users.id, session.userId));
   }
 
-  // 4. Pre-widget consent row (D-08 step 1): scope='PLUGGY_CONNECT_PENDING'.
-  await db.insert(user_consents).values({
-    user_id: session.userId,
-    scope: 'PLUGGY_CONNECT_PENDING',
-    action: 'GRANTED',
-    consent_version: getPluggyConsentVersionHash(),
-    ip_address: req.headers.get('x-forwarded-for') ?? null,
-    user_agent: req.headers.get('user-agent') ?? null,
-  });
-
-  // 5. Reconnect path: load + IDOR-check the item (D-12, P26).
+  // 4. Reconnect path: load + IDOR-check the item (D-12, P26).
+  //    Runs BEFORE the consent insert (review WR-01): a 404 here must not leave
+  //    an orphan PLUGGY_CONNECT_PENDING consent row in the LGPD audit trail.
   let reconnect_item_id_enc: Buffer | undefined;
   if (body.reconnect_item_id) {
     const itemRows = await db
@@ -108,6 +102,16 @@ export async function POST(req: Request): Promise<Response> {
     }
     reconnect_item_id_enc = itemRows[0].pluggy_item_id_enc as Buffer;
   }
+
+  // 5. Pre-widget consent row (D-08 step 1): scope='PLUGGY_CONNECT_PENDING'.
+  await db.insert(user_consents).values({
+    user_id: session.userId,
+    scope: 'PLUGGY_CONNECT_PENDING',
+    action: 'GRANTED',
+    consent_version: getPluggyConsentVersionHash(),
+    ip_address: req.headers.get('x-forwarded-for') ?? null,
+    user_agent: req.headers.get('user-agent') ?? null,
+  });
 
   // 6. Issue Pluggy connect token — SDK call, no plaintext item ID outside PluggyService (P4).
   const { connect_token } = await getPluggyService().createConnectToken({
