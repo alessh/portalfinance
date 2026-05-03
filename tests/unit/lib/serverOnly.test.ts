@@ -10,7 +10,13 @@
  * Each test below saves and restores `globalThis.window` so the cases are
  * independent regardless of vitest's environment default.
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
+// `tests/setup.ts` mocks `@/lib/serverOnly` to a no-op so other unit tests
+// (env.test.ts, crypto.test.ts, etc.) running under happy-dom don't trip the
+// runtime guard. THIS file is the one that needs the REAL helper — unmock it.
+vi.unmock('@/lib/serverOnly');
+
 import { assertServerOnly } from '@/lib/serverOnly';
 
 describe('assertServerOnly', () => {

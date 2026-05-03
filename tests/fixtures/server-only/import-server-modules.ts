@@ -13,6 +13,8 @@
  * Invoked from
  * tests/integration/observability/server-only-tsx-subprocess.test.ts.
  */
+export {}; // mark as a module so `main` is file-scoped (avoids global merge with env-runner.ts)
+
 async function main(): Promise<void> {
   try {
     // Use relative paths so tsx's bundler-mode path-alias resolution does

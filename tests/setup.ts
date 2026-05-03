@@ -3,14 +3,45 @@ import { loadEnvConfig } from '@next/env';
 import { vi } from 'vitest';
 
 // Plan 02-07 added `import 'server-only'` to src/lib/env.ts and src/lib/crypto.ts.
-// The `server-only` package throws unconditionally in any non-React-Server-Component
-// context — including vitest, which loads modules through Node's CJS resolver where
-// the `react-server` export condition does not fire. Mirroring the test-fixture
-// stub pattern used by tests/fixtures/env-runner/env-runner.ts, replace the module
-// with an empty no-op so test files can import server-side modules. Production
-// behavior is unchanged: Next.js still applies its webpack alias and any client
-// bundle that imports a server-only module fails the build.
+// Plan 02-10 moved the package import to src/lib/serverOnly.ts then later
+// REMOVED it from serverOnly.ts entirely (Rule 1 deviation — see SUMMARY) so
+// tsx-direct entrypoints (worker, db:migrate, e2e) could load env.ts/crypto.ts
+// without crashing. The remaining direct importer of `'server-only'` is
+// src/lib/cpfServer.ts (defense-in-depth at the cpf chain leaf).
+//
+// Plan 02-10 Task 8 ROLLBACK PATH — applied: keep BOTH mocks below.
+//
+// 1) `vi.mock('server-only', () => ({}))` — covers cpfServer.ts's direct
+//    package import. Without it, any unit test that imports cpfServer.ts
+//    (or anything reaching it) crashes when Node CJS loads the throwing
+//    server-only/index.js.
+//
+// 2) `vi.mock('@/lib/serverOnly', () => ({ assertServerOnly: () => {} }))`
+//    — covers env.ts and crypto.ts which now call `assertServerOnly()` at
+//    module load. Under happy-dom (the unit project default), window AND
+//    window.document are defined, so the runtime check would throw. The
+//    no-op mock keeps existing env.test.ts / crypto.test.ts / etc. passing
+//    without forcing every test file to mutate globalThis.window.
+//
+// `tests/unit/lib/serverOnly.test.ts` exercises the REAL helper by calling
+// `vi.unmock('@/lib/serverOnly')` in its hoisted block, so the mock here
+// does not affect the helper's own coverage.
+//
+// Production behavior is unchanged: Next.js still applies its webpack alias
+// and any client bundle that imports a server-only module fails the build
+// (currently enforced at cpfServer.ts and via the cpf-client-isolation walker
+// extending FORBIDDEN_FROM_CLIENT to include @/lib/serverOnly).
+//
+// To remove these mocks cleanly, every consumer test that loads
+// env.ts/crypto.ts/cpfServer.ts under happy-dom would need to either delete
+// globalThis.window before importing or apply a per-file mock. Tracked as a
+// follow-up; out of scope for plan 02-10.
 vi.mock('server-only', () => ({}));
+vi.mock('@/lib/serverOnly', () => ({
+  assertServerOnly: () => {
+    /* no-op for happy-dom unit tests */
+  },
+}));
 
 loadEnvConfig(process.cwd());
 
