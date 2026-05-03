@@ -14,8 +14,16 @@
  * All three functions ONLY accept already-validated CPFs (caller must
  * have run them through `CPFSchema` first). Never log the inputs or
  * outputs of these functions.
+ *
+ * SECURITY: `assertServerOnly()` (called below) replaces the previous
+ * `import 'server-only';` (plan 02-07). The package import moved to
+ * `@/lib/serverOnly.ts` so plain Node / tsx callers (worker boot,
+ * db:migrate, e2e runner) can load this module without the package's
+ * CJS-mode throw firing. The compile-time client-bundle guard is still
+ * preserved at the leaf via `serverOnly.ts`'s own `import 'server-only';`.
+ * See plan 02-10.
  */
-import 'server-only';
+import { assertServerOnly } from '@/lib/serverOnly';
 
 import {
   createCipheriv,
@@ -24,6 +32,8 @@ import {
   randomBytes,
 } from 'node:crypto';
 import { env } from '@/lib/env';
+
+assertServerOnly();
 
 const KEY = Buffer.from(env.ENCRYPTION_KEY, 'base64');
 const IV_BYTES = 12;
