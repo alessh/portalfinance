@@ -20,7 +20,8 @@ Requirements for the initial release. Each maps to a roadmap phase.
 
 - [x] **LGPD-01
 **: Before a Pluggy Connect widget opens, user sees an explicit consent screen listing exactly what data will be collected (transactions, balances, account details) and clicks to grant consent. A `user_consents` row is written (user_id, data_source_type, scope, IP, user_agent, timestamp).
-- [ ] **LGPD-02**: User can revoke consent per connection from account settings; revocation writes a new `user_consents` row (append-only audit trail).
+- [x] **LGPD-02
+**: User can revoke consent per connection from account settings; revocation writes a new `user_consents` row (append-only audit trail).
 - [ ] **LGPD-03**: User can export all personal data (transactions, accounts, categories, corrections) as machine-readable JSON via a DSR request; system responds within the statutory 15-day window.
 - [ ] **LGPD-04**: User can request account deletion; deletion is a multi-step workflow that (a) calls Pluggy `DELETE /items/:id` to revoke bank access, (b) removes the user from email lists, (c) anonymizes user identifiers in application logs, (d) soft-deletes DB rows, (e) hard-deletes after a 30-day legal hold. Every step is logged in an immutable `deletion_audit_log`.
 - [x] **LGPD-05
@@ -30,7 +31,8 @@ Requirements for the initial release. Each maps to a roadmap phase.
 
 ### Open Finance Connection (Pluggy)
 
-- [ ] **CONN-01**: User can open the Pluggy Connect widget after consent and link a bank or credit card account. The connect token is short-lived (30 min) and issued server-side.
+- [x] **CONN-01
+**: User can open the Pluggy Connect widget after consent and link a bank or credit card account. The connect token is short-lived (30 min) and issued server-side.
 - [ ] **CONN-02**: The `item/created` webhook is received, its auth header verified, its `eventId` deduplicated, and an initial-sync job is enqueued — all within 5 seconds (webhook handler returns 200 in < 200 ms after idempotent insert).
 - [ ] **CONN-03**: User sees each linked item in "Accounts" with institution name, account name, last-sync timestamp, and a clear health badge (healthy / syncing / needs re-auth / error).
 - [ ] **CONN-04**: When an item enters `LOGIN_ERROR` or `WAITING_USER_INPUT`, the UI surfaces a dedicated per-item banner with a "Reconnect" button that re-opens Pluggy Connect for that item; the system does not trigger new syncs on broken items.
@@ -75,7 +77,8 @@ Requirements for the initial release. Each maps to a roadmap phase.
 
 ### Security & Authorization
 
-- [ ] **SEC-01**: Every API endpoint and server-rendered page that reads user data filters by the session user's `user_id`. Accessing another user's transaction, account, or connection returns 404. Integration tests verify that user B cannot retrieve user A's data via any endpoint.
+- [x] **SEC-01
+**: Every API endpoint and server-rendered page that reads user data filters by the session user's `user_id`. Accessing another user's transaction, account, or connection returns 404. Integration tests verify that user B cannot retrieve user A's data via any endpoint.
 - [x] **SEC-02**: Session cookies are `HttpOnly`, `Secure`, `SameSite=Lax` (or `Strict` where possible); session tokens are rotated on privilege changes.
 - [ ] **SEC-03**: Admin or support access to user data is gated behind an elevated session (re-authentication required) and every access is written to an immutable `admin_access_log`; admin views show summaries, not raw transaction descriptions.
 
