@@ -1,8 +1,9 @@
 ---
-status: diagnosed
+status: resolved
 trigger: "22 integration test files fail with `Cannot read properties of undefined (reading 'stop')` / `(reading 'end')` in afterAll. idor.test.ts beforeAll Hook timed out 180000ms. env-assert good-path returns exit 1."
 created: 2026-05-02T00:00:00Z
-updated: 2026-05-02T00:00:00Z
+updated: 2026-05-02T22:30:00Z
+resolved_by: [02-08-PLAN.md, 02-09-PLAN.md]
 ---
 
 ## Current Focus

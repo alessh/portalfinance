@@ -1,8 +1,9 @@
 ---
-status: diagnosed
+status: resolved
 trigger: "/connect renders ZodError at module evaluation; same ZodError surfaces in browser console; OPS-04 env-assert good-path subprocess exits 1 instead of 0"
 created: 2026-05-02T00:00:00Z
-updated: 2026-05-02T00:00:00Z
+updated: 2026-05-02T22:30:00Z
+resolved_by: [02-07-PLAN.md, 02-08-PLAN.md]
 ---
 
 ## Current Focus
