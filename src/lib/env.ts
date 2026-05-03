@@ -38,9 +38,21 @@ const EnvSchema = z
     NEXTAUTH_URL: z.string().url().default('http://localhost:3000'),
 
     // Base64-encoded 32-byte AES-256-GCM master key.
+    //
+    // Review WR-03 -- the regex must match STANDARD base64 only. The
+    // URL-safe alphabet (`-` and `_`) is silently treated as garbage by
+    // `Buffer.from(s, 'base64')`, but the byte-length refine can still
+    // pass for a URL-safe input, leaving a key that is silently distinct
+    // from the operator-supplied secret. That makes every CPF encrypted
+    // with the corrupted key unrecoverable on a future key rotation.
+    // Matches the runbook's `openssl rand -base64 32` instruction shape:
+    // 43 base64 characters + a single `=` pad.
     ENCRYPTION_KEY: z
       .string()
-      .regex(/^[A-Za-z0-9+/=_-]+$/, 'ENCRYPTION_KEY must be base64-encoded')
+      .regex(
+        /^[A-Za-z0-9+/]+={0,2}$/,
+        'ENCRYPTION_KEY must be standard base64 (no URL-safe alphabet)',
+      )
       .refine(
         (s) => Buffer.from(s, 'base64').length === 32,
         { message: 'ENCRYPTION_KEY must decode to exactly 32 bytes' },

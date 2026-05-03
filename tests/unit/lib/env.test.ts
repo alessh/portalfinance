@@ -40,6 +40,39 @@ describe('lib/env (Zod schema + OPS-04 guard)', () => {
     await expect(import('@/lib/env')).rejects.toThrow();
   });
 
+  // Review WR-03 regression guard: URL-safe base64 (`-`, `_`) must be
+  // rejected at the regex boundary because `Buffer.from(s, 'base64')` would
+  // silently produce a different 32-byte key than the operator intended.
+  it('throws when ENCRYPTION_KEY uses URL-safe base64 alphabet (- or _)', async () => {
+    // Pick raw bytes that encode to base64 sextets containing both `+` (62)
+    // and `/` (63): the fully-saturated 32 * 0xFF buffer encodes to
+    // `///////////////////////////////////////////=` and the fully-saturated
+    // 32 * 0xFB buffer contains `+`. We mix both to guarantee at least one
+    // `+` and one `/`. This test validates both URL-safe substitutions.
+    const stdHigh = Buffer.alloc(32, 0xff).toString('base64'); // contains `/`
+    const stdMid = Buffer.alloc(32, 0xfb).toString('base64');  // contains `+`
+    expect(stdHigh).toMatch(/\//);
+    expect(stdMid).toMatch(/\+/);
+
+    // Build URL-safe variants of each and assert both fail validation.
+    for (const std of [stdHigh, stdMid]) {
+      const urlSafe = std.replace(/\+/g, '-').replace(/\//g, '_');
+      expect(urlSafe).not.toBe(std);
+
+      const { vi } = await import('vitest');
+      vi.resetModules();
+      resetEnv();
+
+      process.env.ENCRYPTION_KEY = urlSafe;
+      process.env.CPF_HASH_PEPPER = 'test-pepper-at-least-32-chars-long-xyz';
+      process.env.NEXTAUTH_SECRET = 'test-secret-at-least-32-chars-long-xxx';
+      process.env.DATABASE_URL = 'postgres://x:y@localhost:5432/db';
+      (process.env as Record<string, string>).NODE_ENV = 'test';
+
+      await expect(import('@/lib/env')).rejects.toThrow(/standard base64/);
+    }
+  });
+
   it('throws an OPS-04 violation when NODE_ENV=production with sandbox PLUGGY_ENV', async () => {
     process.env.ENCRYPTION_KEY = Buffer.alloc(32, 1).toString('base64');
     process.env.CPF_HASH_PEPPER = 'production-pepper-at-least-32-chars-xx';
