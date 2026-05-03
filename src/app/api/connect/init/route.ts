@@ -31,7 +31,8 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { users, user_consents, pluggy_items } from '@/db/schema';
 import { requireSession } from '@/lib/session';
-import { CPFSchema, encryptAndHashCPF } from '@/lib/cpf';
+import { CPFSchema } from '@/lib/cpf';
+import { encryptAndHashCPF } from '@/lib/cpfServer';
 import { getPluggyConsentVersionHash } from '@/lib/consentVersions';
 import { getPluggyService } from '@/services/PluggyService';
 

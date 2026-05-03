@@ -1,24 +1,24 @@
 /**
- * CPF schema + formatter using `@brazilian-utils/brazilian-utils`.
+ * Isomorphic CPF schema + formatter using `@brazilian-utils/brazilian-utils`.
  *
  * RESEARCH.md § Plan slice 01-02 item 5 / Pitfall 2 — the canonical
  * package is `@brazilian-utils/brazilian-utils`, NOT
  * `@brazilian-utils/br-validations` (which does not exist on npm).
  *
- * Phase 1 ships the schema and formatter so Phase 2 imports them
- * unchanged when CPF is actually collected at the first bank-connect
- * gate (D-04). CPF is NOT collected at signup in Phase 1.
+ * **CLIENT-SAFE.** This module deliberately avoids any import of
+ * `@/lib/crypto` or `@/lib/env` so it can be used from `'use client'`
+ * components (e.g., ConsentScreen) without dragging the server-only
+ * env loader into the browser bundle.
  *
- * Phase 2 adds `encryptAndHashCPF` — convenience wrapper used in
- * /api/connect/init to atomically encrypt + hash the CPF before writing
- * to `users.cpf_enc` + `users.cpf_hash` (D-02, P28).
+ * The encryption wrapper that was previously co-located here lives in
+ * `@/lib/cpfServer` (server-only), imported separately by API routes
+ * that need to write to `users.cpf_enc` / `users.cpf_hash`.
  */
 import {
   isValidCPF,
   formatCPF as formatBrazilianCPF,
 } from '@brazilian-utils/brazilian-utils';
 import { z } from 'zod';
-import { encryptCPF, hashCPF } from '@/lib/crypto';
 
 export const CPFSchema = z
   .string()
@@ -30,21 +30,4 @@ export const CPFSchema = z
 
 export function formatCPF(cpf: string): string {
   return formatBrazilianCPF(cpf);
-}
-
-/**
- * Encrypt and hash a validated CPF string.
- *
- * Caller MUST pass an already-validated CPF (digits-only, 11 chars, check-digit OK).
- * Returns both fields needed for `users` UPDATE at first connect (D-02, P28):
- *   - `cpf_enc`  → AES-256-GCM ciphertext (iv || tag || ciphertext)
- *   - `cpf_hash` → HMAC-SHA-256 with CPF_HASH_PEPPER for uniqueness lookup
- *
- * NEVER call this before CPFSchema validation passes.
- */
-export function encryptAndHashCPF(cpf: string): { cpf_enc: Buffer; cpf_hash: Buffer } {
-  return {
-    cpf_enc: encryptCPF(cpf),
-    cpf_hash: hashCPF(cpf),
-  };
 }
