@@ -11,6 +11,13 @@
  * server-only modules that triggered the ZodError when bundled to the client).
  *
  * NOT a runtime test — module-graph regression, not behavioral regression.
+ *
+ * Plan 02-10 update: FORBIDDEN_FROM_CLIENT now includes `@/lib/serverOnly`.
+ * Plan 02-07's literal `import 'server-only';` in env.ts/crypto.ts was
+ * replaced with a call to `assertServerOnly()` from `@/lib/serverOnly`,
+ * which itself keeps the package import. The walker now flags any client
+ * path reaching `@/lib/serverOnly` for the same reason it flagged
+ * `@/lib/env`/`@/lib/crypto` before — defense-in-depth at the leaf.
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -23,6 +30,12 @@ const FORBIDDEN_FROM_CLIENT = new Set([
   '@/lib/env',
   '@/lib/crypto',
   '@/lib/cpfServer',
+  // Plan 02-10 — `serverOnly.ts` itself does `import 'server-only';`, so any
+  // client-bundle path that reaches it would also fail the Next build. Add
+  // it here so the walker keeps reporting the violation at the same node it
+  // would have flagged before plan 02-10 (when env.ts/crypto.ts contained
+  // the literal package import directly).
+  '@/lib/serverOnly',
 ]);
 
 const IMPORT_RE = /^\s*import\s+(?:[^'"]+from\s+)?['"]([^'"]+)['"]/gm;
