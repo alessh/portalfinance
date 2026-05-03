@@ -35,6 +35,14 @@ function goodProductionEnv(): Record<string, string> {
     TURNSTILE_SITE_KEY: 'prod-site-key',
     TURNSTILE_SECRET_KEY: 'prod-secret-key',
     NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY: 'prod-public-key',
+    // --- Phase 02 (commit 65c88fc) — required by the third .refine() block in src/lib/env.ts (lines 175-192).
+    // SERVICE_NAME defaults to 'web'; we set it explicitly so a parent-env leak cannot drift the test silently.
+    SERVICE_NAME: 'web',
+    PLUGGY_ENV: 'production',
+    PLUGGY_CLIENT_ID: 'production-pluggy-client-id-fake-fixture',
+    PLUGGY_CLIENT_SECRET: 'production-pluggy-client-secret-fake-fixture-32-chars-min',
+    PLUGGY_WEBHOOK_SECRET: 'production-pluggy-webhook-secret-fake-fixture-32-chars',
+    PLUGGY_ITEM_ID_HASH_PEPPER: 'production-pluggy-item-id-pepper-fake-fixture-32',
   };
 }
 
