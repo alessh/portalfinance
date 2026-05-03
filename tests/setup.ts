@@ -1,5 +1,16 @@
 import '@testing-library/jest-dom/vitest';
 import { loadEnvConfig } from '@next/env';
+import { vi } from 'vitest';
+
+// Plan 02-07 added `import 'server-only'` to src/lib/env.ts and src/lib/crypto.ts.
+// The `server-only` package throws unconditionally in any non-React-Server-Component
+// context — including vitest, which loads modules through Node's CJS resolver where
+// the `react-server` export condition does not fire. Mirroring the test-fixture
+// stub pattern used by tests/fixtures/env-runner/env-runner.ts, replace the module
+// with an empty no-op so test files can import server-side modules. Production
+// behavior is unchanged: Next.js still applies its webpack alias and any client
+// bundle that imports a server-only module fails the build.
+vi.mock('server-only', () => ({}));
 
 loadEnvConfig(process.cwd());
 
