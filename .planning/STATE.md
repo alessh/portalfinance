@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Plan 02-07 complete; 02-08 + 02-09 still required for full UAT Test 1 unblock
-last_updated: "2026-05-03T00:53:29.753Z"
+stopped_at: Plan 02-08 complete; 02-09 still required to unblock UAT Tests 3-7 (testcontainers cascade)
+last_updated: "2026-05-03T00:58:25.000Z"
 last_activity: 2026-05-03
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 26
-  completed_plans: 21
-  percent: 81
+  completed_plans: 22
+  percent: 85
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 ## Current Position
 
 Phase: 02 (pluggy-ingestion) — EXECUTING
-Plan: 2 of 9
+Plan: 9 of 9 (next: 02-09 testcontainers cascade)
 Status: Ready to execute
 Last activity: 2026-05-03
 
-Progress: [████████░░] 81%
+Progress: [████████▌░] 85%
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Progress: [████████░░] 81%
 | Phase 01 P03 | 5700 | 2 tasks | 33 files |
 | Phase 01-foundation-identity P04 | 180 | 3 tasks | 24 files |
 | Phase 02 P07 | 360 | 3 tasks | 7 files |
+| Phase 02 P08 | 211 | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -90,6 +91,8 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - Single sentry.ts with edge-safe hash gate: edge drops user object entirely rather than hashing
 - Plan 02-07: server-only package not present transitively from next 16.2.4 in this workspace; installed explicitly via pnpm add server-only
 - Plan 02-07: split @/lib/cpf into isomorphic CPFSchema/formatCPF (cpf.ts) vs server-only encryptAndHashCPF (cpfServer.ts) to prevent client-bundle leaks of the env loader
+- Plan 02-08: env-runner.ts pre-stubs `server-only` in Module._cache before importing @/lib/env; the package's `react-server` export condition only fires under React Server Components or ESM + `--conditions=react-server`, and tsx loads via CJS, so the test fixture would otherwise crash on the import before reaching the OPS-04 refine
+- Plan 02-08: goodProductionEnv() sets SERVICE_NAME='web' explicitly (despite the schema default) to defeat parent-env leakage; the spread `...process.env` could otherwise let a developer's local SERVICE_NAME='migrate' silently bypass the third .refine() block
 
 ### Roadmap Evolution
 
@@ -130,8 +133,8 @@ Phase 02 (Pluggy ingestion) is the next plannable phase.
 
 ## Session Continuity
 
-Last session: 2026-05-03T00:53:29.737Z
-Stopped at: Plan 02-07 complete; 02-08 + 02-09 still required for full UAT Test 1 unblock
+Last session: 2026-05-03T00:58:25.000Z
+Stopped at: Plan 02-08 complete; 02-09 still required to unblock UAT Tests 3-7 (testcontainers cascade)
 Resume file: None
 
 **Planned Phase:** 02 (pluggy-ingestion) — 6 plans — 2026-05-02T02:50:52.166Z
