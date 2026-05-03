@@ -31,3 +31,23 @@ export const CPFSchema = z
 export function formatCPF(cpf: string): string {
   return formatBrazilianCPF(cpf);
 }
+
+/**
+ * CPF storage byte-length contract (review WR-02).
+ *
+ * `users.cpf_enc` is a `bytea` column whose length encodes whether the user
+ * has set a real CPF or is still carrying the signup placeholder:
+ *
+ *   - {@link CPF_PLACEHOLDER_BYTES} (44 bytes): random placeholder written by
+ *     `signupCore` (Plan 02-01). User has NOT yet set a real CPF.
+ *   - {@link CPF_ENCRYPTED_BYTES} (39 bytes): real AES-256-GCM payload —
+ *     12 (iv) + 16 (tag) + 11 (CPF digits) = 39. User has set a real CPF.
+ *
+ * `/api/connect/init` (Plan 02-03 D-08) compares against
+ * {@link CPF_ENCRYPTED_BYTES} to decide whether to demand a CPF on the
+ * connect screen. If `signupCore` ever changes the placeholder shape, BOTH
+ * constants must move in lockstep AND the unit tests in
+ * `tests/unit/lib/cpf.test.ts` will fail loudly.
+ */
+export const CPF_PLACEHOLDER_BYTES = 44;
+export const CPF_ENCRYPTED_BYTES = 39;

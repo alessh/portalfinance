@@ -33,7 +33,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { users, user_consents, pluggy_items } from '@/db/schema';
 import { requireSession } from '@/lib/session';
-import { CPFSchema } from '@/lib/cpf';
+import { CPFSchema, CPF_ENCRYPTED_BYTES } from '@/lib/cpf';
 import { encryptAndHashCPF } from '@/lib/cpfServer';
 import { getPluggyConsentVersionHash } from '@/lib/consentVersions';
 import { getPluggyService } from '@/services/PluggyService';
@@ -69,7 +69,11 @@ export async function POST(req: Request): Promise<Response> {
     return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 });
   }
 
-  const has_cpf = user.cpf_enc && (user.cpf_enc as Buffer).byteLength !== 44;
+  // Treat the user as having a real CPF only when cpf_enc matches the AES-GCM
+  // payload length EXACTLY (review WR-02). The previous `!== CPF_PLACEHOLDER_BYTES`
+  // check silently flipped open if signupCore ever changed placeholder shape;
+  // the explicit `=== CPF_ENCRYPTED_BYTES` assertion fails closed instead.
+  const has_cpf = !!user.cpf_enc && (user.cpf_enc as Buffer).byteLength === CPF_ENCRYPTED_BYTES;
 
   if (!has_cpf) {
     if (!body.cpf) {

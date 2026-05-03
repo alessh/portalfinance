@@ -15,6 +15,7 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '@/db';
 import { users, user_consents, audit_log } from '@/db/schema';
 import { SignupSchema } from '@/lib/validation';
+import { CPF_PLACEHOLDER_BYTES } from '@/lib/cpf';
 import { hashPassword } from '@/lib/password';
 import { versions } from '@/lib/consentVersions';
 
@@ -69,7 +70,9 @@ export async function signup(
     // via UPDATE once the user provides their CPF. The random cpf_hash ensures
     // the UNIQUE constraint allows multiple signups until real CPF is set.
     const cpf_hash_placeholder = randomBytes(32);
-    const cpf_enc_placeholder = randomBytes(44); // iv(12) + tag(16) + ciphertext padding
+    // Length intentionally distinct from CPF_ENCRYPTED_BYTES so /api/connect/init
+    // (review WR-02) can detect the placeholder by exact byte count.
+    const cpf_enc_placeholder = randomBytes(CPF_PLACEHOLDER_BYTES);
     const [created] = await tx
       .insert(users)
       .values({

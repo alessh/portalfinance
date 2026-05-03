@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { CPFSchema, formatCPF } from '@/lib/cpf';
+import {
+  CPFSchema,
+  formatCPF,
+  CPF_PLACEHOLDER_BYTES,
+  CPF_ENCRYPTED_BYTES,
+} from '@/lib/cpf';
 
 /**
  * CPF schema tests — RESEARCH.md § Plan slice 01-02 item 5.
@@ -44,5 +49,25 @@ describe('CPFSchema', () => {
 describe('formatCPF', () => {
   it('formats a raw CPF into the canonical Brazilian shape', () => {
     expect(formatCPF('52998224725')).toBe('529.982.247-25');
+  });
+});
+
+/**
+ * Pin the cpf_enc byte-length contract used by /api/connect/init (review
+ * WR-02). If signupCore ever changes the placeholder shape OR encryptCPF
+ * changes the AES-GCM payload shape, these tests fail loudly so the
+ * connect-init `has_cpf` detection cannot silently flip open.
+ */
+describe('CPF storage byte-length contract', () => {
+  it('pins the signup placeholder length to 44 bytes', () => {
+    expect(CPF_PLACEHOLDER_BYTES).toBe(44);
+  });
+
+  it('pins the AES-256-GCM CPF payload length to 39 bytes (12 iv + 16 tag + 11 cpf)', () => {
+    expect(CPF_ENCRYPTED_BYTES).toBe(39);
+  });
+
+  it('keeps placeholder and encrypted lengths distinct so connect-init can disambiguate', () => {
+    expect(CPF_PLACEHOLDER_BYTES).not.toBe(CPF_ENCRYPTED_BYTES);
   });
 });
