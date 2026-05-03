@@ -6,21 +6,46 @@ import {
 export interface TestDb {
   url: string;
   container: StartedPostgreSqlContainer;
+  /**
+   * Per-suite `afterAll` hooks call this. With the singleton + globalSetup
+   * model (plan 02-09), individual suite teardown is a no-op — the shared
+   * container survives until vitest globalSetup teardown runs.
+   */
   stop: () => Promise<void>;
 }
 
 /**
- * Boot a disposable Postgres 16 container for an integration test.
+ * Module-level cached promise — singleton container handle.
+ *
+ * Resolves to the started TestDb the first time `startTestDb()` is called
+ * within a process; every subsequent call returns the same promise (so all
+ * 22 integration suites share ONE Postgres container under
+ * `singleFork: true`).
+ *
+ * If the first start rejects, the rejection is cached too — every suite
+ * sees the same clear error rather than 22 independent timeout failures.
+ */
+let _started: Promise<TestDb> | null = null;
+
+/**
+ * Boot a disposable Postgres 16 container for integration tests.
  *
  * Pre-requisites:
- *   - Docker Desktop running with the WSL2 backend on Windows hosts
- *     (RESEARCH.md Pitfall 9). On macOS/Linux any Docker daemon works.
+ *   - Docker Desktop with the WSL2 backend on Windows (RESEARCH.md Pitfall 9).
  *   - Network access to pull `postgres:16-alpine` on first run.
  *
- * Plan 01-01 will add a Drizzle migration runner. Until then, this fixture
- * boots an empty cluster and leaves schema setup to the caller.
+ * Plan 02-09: this is now a process-level singleton. The first call within
+ * a vitest process boots the container; every subsequent call returns the
+ * same handle. Suite-level `afterAll(() => td.stop())` is a no-op — the
+ * shared container survives until vitest globalSetup teardown.
  */
-export async function startTestDb(): Promise<TestDb> {
+export function startTestDb(): Promise<TestDb> {
+  if (_started) return _started;
+  _started = bootContainer();
+  return _started;
+}
+
+async function bootContainer(): Promise<TestDb> {
   let container: StartedPostgreSqlContainer;
   try {
     container = await new PostgreSqlContainer('postgres:16-alpine')
@@ -32,6 +57,8 @@ export async function startTestDb(): Promise<TestDb> {
     throw new Error(
       `[startTestDb] Failed to start Postgres testcontainer. Is Docker running?\n` +
         `On Windows, Docker Desktop with the WSL2 backend is required.\n` +
+        `If a previous run leaked containers, clean up with:\n` +
+        `  docker ps --filter "ancestor=postgres:16-alpine" -q | xargs -r docker rm -f\n` +
         `Underlying error: ${(err as Error).message}`,
     );
   }
@@ -40,8 +67,28 @@ export async function startTestDb(): Promise<TestDb> {
   return {
     url,
     container,
+    // No-op: lifecycle is owned by the globalSetup teardown.
     stop: async () => {
-      await container.stop();
+      /* shared container — see tests/fixtures/integration-globals.ts */
     },
   };
+}
+
+/**
+ * Vitest globalSetup teardown helper. NEVER call from a test file.
+ *
+ * Stops the shared container (if it was started) and clears the singleton
+ * so a re-run within the same Node process (rare — vitest spawns a fresh
+ * process per CLI invocation) starts cleanly.
+ */
+export async function stopSharedTestDb(): Promise<void> {
+  if (!_started) return;
+  try {
+    const td = await _started;
+    await td.container.stop();
+  } catch {
+    // Swallow on teardown — testcontainer Ryuk reaper will clean up regardless.
+  } finally {
+    _started = null;
+  }
 }
