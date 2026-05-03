@@ -15,17 +15,37 @@ export interface TestDb {
 }
 
 /**
- * Module-level cached promise — singleton container handle.
+ * Process-level cached promise — singleton container handle.
  *
  * Resolves to the started TestDb the first time `startTestDb()` is called
  * within a process; every subsequent call returns the same promise (so all
  * 22 integration suites share ONE Postgres container under
  * `singleFork: true`).
  *
+ * Stored on `globalThis` (not module scope) because several Pluggy
+ * integration suites call `vi.resetModules()` in `beforeEach` to make
+ * `vi.doMock('@/services/PluggyService', ...)` re-apply per test. A
+ * module-scope `let _started` would be cleared on every reset, so each
+ * post-reset suite would boot a fresh container (observed: 13 leaked
+ * containers per run pre-fix). globalThis survives `vi.resetModules`,
+ * so the singleton remains intact.
+ *
  * If the first start rejects, the rejection is cached too — every suite
  * sees the same clear error rather than 22 independent timeout failures.
  */
-let _started: Promise<TestDb> | null = null;
+const SINGLETON_KEY = '__portalFinanceTestDb_v1';
+
+interface TestDbGlobalCache {
+  [SINGLETON_KEY]?: Promise<TestDb> | null;
+}
+
+function getCache(): Promise<TestDb> | null {
+  return (globalThis as unknown as TestDbGlobalCache)[SINGLETON_KEY] ?? null;
+}
+
+function setCache(value: Promise<TestDb> | null): void {
+  (globalThis as unknown as TestDbGlobalCache)[SINGLETON_KEY] = value;
+}
 
 /**
  * Boot a disposable Postgres 16 container for integration tests.
@@ -40,9 +60,11 @@ let _started: Promise<TestDb> | null = null;
  * shared container survives until vitest globalSetup teardown.
  */
 export function startTestDb(): Promise<TestDb> {
-  if (_started) return _started;
-  _started = bootContainer();
-  return _started;
+  const cached = getCache();
+  if (cached) return cached;
+  const fresh = bootContainer();
+  setCache(fresh);
+  return fresh;
 }
 
 async function bootContainer(): Promise<TestDb> {
@@ -82,13 +104,14 @@ async function bootContainer(): Promise<TestDb> {
  * process per CLI invocation) starts cleanly.
  */
 export async function stopSharedTestDb(): Promise<void> {
-  if (!_started) return;
+  const cached = getCache();
+  if (!cached) return;
   try {
-    const td = await _started;
+    const td = await cached;
     await td.container.stop();
   } catch {
     // Swallow on teardown — testcontainer Ryuk reaper will clean up regardless.
   } finally {
-    _started = null;
+    setCache(null);
   }
 }

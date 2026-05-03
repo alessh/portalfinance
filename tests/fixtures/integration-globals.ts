@@ -41,7 +41,10 @@ export async function teardown(): Promise<void> {
   delete process.env.TEST_DATABASE_URL;
 }
 
-// Vitest 3.0.5 globalSetup accepts either named exports OR a default-exported
-// object with { setup, teardown }. Provide both to be permissive against any
-// future rename / typedef tightening.
-export default { setup, teardown };
+// Vitest 3.0.5 quirk: if a globalSetup file has a `default` export, vitest
+// REQUIRES it to be a function (single-function form: setup() returns
+// teardown). It REJECTS a default-exported `{ setup, teardown }` object with
+// "invalid export in globalSetup file: default must be a function". The
+// supported shape is ONLY named `setup` + `teardown` exports — see
+// node_modules/vitest/dist/chunks/cli-api.az_rB_xZ.js loadGlobalSetupFile.
+// We therefore omit the default export entirely.
