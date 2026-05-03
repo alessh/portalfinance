@@ -108,12 +108,29 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   // 5. Pre-widget consent row (D-08 step 1): scope='PLUGGY_CONNECT_PENDING'.
+  //
+  // TODO(SEC, review WR-04): only trust X-Forwarded-For when behind a known
+  // proxy. The Phase 2 deployment plan puts this route behind the Copilot ALB
+  // which always overwrites XFF, so the value is trustworthy in production.
+  // However, for local dev / direct connections / a future deployment that
+  // changes the trust boundary, this header is attacker-controllable.
+  // A follow-up should introduce a `getClientIp(req)` helper that consults a
+  // `TRUSTED_PROXY` env flag and falls back to a Node-level remote address;
+  // until that helper exists, we at least take the LEFTMOST entry of the
+  // comma-separated list (closest-to-client per RFC 7239) and trim whitespace
+  // so a forged XFF cannot smuggle a downstream proxy address into the
+  // LGPD audit row.
+  const xff_header = req.headers.get('x-forwarded-for');
+  const client_ip = xff_header
+    ? (xff_header.split(',')[0]?.trim() || null)
+    : null;
+
   await db.insert(user_consents).values({
     user_id: session.userId,
     scope: 'PLUGGY_CONNECT_PENDING',
     action: 'GRANTED',
     consent_version: getPluggyConsentVersionHash(),
-    ip_address: req.headers.get('x-forwarded-for') ?? null,
+    ip_address: client_ip,
     user_agent: req.headers.get('user-agent') ?? null,
   });
 
