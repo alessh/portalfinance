@@ -15,6 +15,8 @@
  * have run them through `CPFSchema` first). Never log the inputs or
  * outputs of these functions.
  */
+import 'server-only';
+
 import {
   createCipheriv,
   createDecipheriv,

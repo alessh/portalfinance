@@ -22,6 +22,7 @@
  * graph; many other modules import `env`, so anything else in this file
  * risks a circular import at boot.
  */
+import 'server-only';
 import { z } from 'zod';
 
 const EnvSchema = z
