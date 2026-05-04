@@ -20,7 +20,9 @@ import { DisconnectConfirmModal } from '@/components/connections/DisconnectConfi
 import { PaywallStubCard } from '@/components/billing/PaywallStubCard';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
-type ItemStatus = 'UPDATING' | 'LOGIN_ERROR' | 'OUTDATED' | 'WAITING_USER_INPUT' | 'UPDATED';
+// Plan 02-15 / Concern #7 — DISCONNECTED is filtered out server-side in
+// page.tsx; kept in the union so any stray render path remains type-safe.
+type ItemStatus = 'UPDATING' | 'LOGIN_ERROR' | 'OUTDATED' | 'WAITING_USER_INPUT' | 'UPDATED' | 'DISCONNECTED';
 
 interface ItemData {
   id: string;

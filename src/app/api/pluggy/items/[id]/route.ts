@@ -73,18 +73,28 @@ export async function DELETE(
     );
   }
 
-  // 4-5. Atomically soft-delete accounts + insert consent revocation.
-  //      WR-01 (review fix): previously these two writes ran as separate
+  // 4-6. Atomically transition the item to DISCONNECTED, soft-delete its
+  //      accounts, and insert consent revocation.
+  //      WR-01 (review fix): previously these writes ran as separate
   //      statements. A crash between them would leave accounts ACTIVE while
   //      Pluggy already considers the item deleted, or — for concurrent
   //      DELETE requests — interleave the writes inconsistently. Wrapping
   //      in a tx ensures the local state mutation is all-or-nothing.
+  //      Concern #7 (plan 02-15) — set pluggy_items.status='DISCONNECTED'
+  //      INSIDE the same transaction so a late-arriving Pluggy webhook
+  //      (queued before our DELETE) and the hourly reconcile cron both see
+  //      the terminal state and refuse to resurrect the item.
   //      Soft-delete: mark all ACTIVE accounts under this item as DELETED.
   //      Transactions remain readable (history preserved per D-04).
   //      Consent revocation is append-only (LGPD-02 + D-04); the
   //      scope='PLUGGY_CONNECTOR:{connector_id}' mirrors the GRANTED row
   //      written at connect time.
   await db.transaction(async (tx) => {
+    await tx
+      .update(pluggy_items)
+      .set({ status: 'DISCONNECTED', updated_at: new Date() })
+      .where(eq(pluggy_items.id, it.id));
+
     await tx
       .update(accounts)
       .set({ status: 'DELETED', updated_at: new Date() })

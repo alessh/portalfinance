@@ -34,7 +34,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-type ItemStatus = 'UPDATING' | 'LOGIN_ERROR' | 'OUTDATED' | 'WAITING_USER_INPUT' | 'UPDATED';
+// Plan 02-15 / Concern #7 — DISCONNECTED is terminal; page.tsx filters these
+// out server-side, but the union must include it so the render path stays
+// exhaustively typed.
+type ItemStatus = 'UPDATING' | 'LOGIN_ERROR' | 'OUTDATED' | 'WAITING_USER_INPUT' | 'UPDATED' | 'DISCONNECTED';
 
 export interface SubAccount {
   id: string;
@@ -75,6 +78,10 @@ function statusPillClasses(status: ItemStatus): string {
     case 'OUTDATED':
     case 'WAITING_USER_INPUT':
       return 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200';
+    case 'DISCONNECTED':
+      // Concern #7 — terminal state; page.tsx hides DISCONNECTED items, but
+      // a future archive view may render them with a neutral grey pill.
+      return 'bg-muted text-muted-foreground';
   }
 }
 
@@ -90,6 +97,8 @@ function statusLabel(status: ItemStatus): string {
       return 'Desatualizado';
     case 'WAITING_USER_INPUT':
       return 'Aguardando ação';
+    case 'DISCONNECTED':
+      return 'Desconectado';
   }
 }
 

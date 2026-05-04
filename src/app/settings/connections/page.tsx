@@ -13,7 +13,7 @@
 export const runtime = 'nodejs';
 
 import { redirect } from 'next/navigation';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, ne } from 'drizzle-orm';
 import Link from 'next/link';
 import { db } from '@/db';
 import { accounts, pluggy_items, users } from '@/db/schema';
@@ -73,7 +73,15 @@ export default async function ConnectionsPage() {
         eq(accounts.status, 'ACTIVE'),
       ),
     )
-    .where(eq(pluggy_items.user_id, session.userId))
+    .where(
+      and(
+        eq(pluggy_items.user_id, session.userId),
+        // Concern #7 (plan 02-15) — DISCONNECTED items are terminal; do not
+        // surface in the active list. A future Phase 6 archive view may
+        // expose them.
+        ne(pluggy_items.status, 'DISCONNECTED'),
+      ),
+    )
     .orderBy(pluggy_items.created_at);
 
   // Group accounts by item
@@ -83,7 +91,7 @@ export default async function ConnectionsPage() {
       id: string;
       institution_name: string;
       institution_logo_url: string | null;
-      status: 'UPDATING' | 'LOGIN_ERROR' | 'OUTDATED' | 'WAITING_USER_INPUT' | 'UPDATED';
+      status: 'UPDATING' | 'LOGIN_ERROR' | 'OUTDATED' | 'WAITING_USER_INPUT' | 'UPDATED' | 'DISCONNECTED';
       last_synced_at: Date | null;
       accounts: Array<{
         id: string;

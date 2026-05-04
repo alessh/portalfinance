@@ -35,6 +35,10 @@ import { accounts, pluggy_items, transactions } from '@/db/schema';
 import { enqueue, QUEUES } from '@/jobs/boss';
 import { logger } from '@/lib/logger';
 import { hashUserIdForSentry as hashId } from '@/lib/sentry';
+import {
+  isSyncableItemStatus,
+  syncSkipReason,
+} from '@/lib/pluggyItemStatus';
 import { getPluggyService } from '@/services/PluggyService';
 
 // ---------------------------------------------------------------------------
@@ -147,23 +151,23 @@ export async function pluggySyncWorker(jobs: Job<SyncJobPayload>[]): Promise<voi
       }
 
       // -----------------------------------------------------------------------
-      // 2. Skip broken items (Pitfall P2)
-      //    LOGIN_ERROR / WAITING_USER_INPUT items are not healthy for sync.
-      //    Worker returns early and emits sync_failed log.
+      // 2. Skip non-syncable items (Pitfall P2 + Concerns #6 + #7)
+      //    Centralized policy via @/lib/pluggyItemStatus. Covers:
+      //      - LOGIN_ERROR / WAITING_USER_INPUT (need re-auth)
+      //      - DISCONNECTED (terminal user revocation; never sync)
+      //      - UPDATING (sync already in flight; pg-boss singleton also dedups)
+      //    Worker returns early and emits sync_failed with the canonical reason.
       // -----------------------------------------------------------------------
-      if (
-        item_row.status === 'LOGIN_ERROR' ||
-        item_row.status === 'WAITING_USER_INPUT'
-      ) {
+      if (!isSyncableItemStatus(item_row.status)) {
         logger.warn(
           {
             event: 'sync_failed',
-            reason: 'item_broken',
+            reason: syncSkipReason(item_row.status),
             status: item_row.status,
             user_id_hashed: hashId(item_row.user_id),
             item_id_hashed: hashId(item_row.id),
           },
-          'sync skipped — item is not in a healthy state',
+          'sync skipped — item is not syncable',
         );
         continue;
       }

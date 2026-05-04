@@ -35,12 +35,16 @@ import { logger } from '@/lib/logger';
 export async function reconcileStaleItemsWorker(jobs: Job<unknown>[]): Promise<void> {
   for (const job of jobs) {
     try {
-      // D-38: fetch items stale for >12h, excluding broken (unrecoverable) items.
+      // D-38: fetch items stale for >12h, excluding non-syncable statuses.
+      // Concerns #6 + #7 (plan 02-15) — DISCONNECTED is terminal user
+      // revocation, must never be resurrected by the cron. UPDATING is
+      // already in-flight; pg-boss singletonKey would dedup the enqueue
+      // anyway but the SQL filter avoids the wasted INSERT.
       const stale = await db.execute<{ id: string; user_id: string }>(sql`
         SELECT id, user_id
         FROM ${pluggy_items}
         WHERE (last_synced_at IS NULL OR last_synced_at < now() - interval '12 hours')
-          AND status NOT IN ('LOGIN_ERROR', 'WAITING_USER_INPUT')
+          AND status NOT IN ('LOGIN_ERROR', 'WAITING_USER_INPUT', 'DISCONNECTED', 'UPDATING')
       `);
 
       // Drizzle execute() return shape differs by driver (see transferDetectorWorker.ts note).
