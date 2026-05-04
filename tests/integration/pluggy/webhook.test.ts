@@ -248,11 +248,10 @@ describe('Pluggy webhook', () => {
 
     // No job enqueued for unmapped event
     const queued = boss.peekQueue();
-    // Filter for any job linked to this specific webhook event — none expected
-    expect(queued.filter(j =>
-      j.payload?.event_id === event_id ||
-      (j.payload?.item_id_pluggy === 'item-unknown-test' && j.name !== 'pluggy.sync')
-    )).toHaveLength(0);
+    // Concern #1: webhook receiver no longer enqueues plaintext item identifiers.
+    // The new payload shape carries `item_id_hash_hex` for known events; for
+    // unmapped events nothing should be enqueued at all.
+    expect(queued.filter(j => j.payload?.event_id === event_id)).toHaveLength(0);
     // Specifically: no pluggy.sync and no pluggy.re-auth-notifier for this event
     const sync_jobs = queued.filter(j => j.name === 'pluggy.sync');
     expect(sync_jobs).toHaveLength(0);
@@ -364,11 +363,15 @@ describe('Pluggy webhook', () => {
     expect(sync_job).toBeDefined();
     expect(sync_job?.payload?.trigger).toBe('reconnect');
 
+    // Concern #1: pg-boss row carries item_id_hash_hex (not plaintext itemId)
+    const { hashPluggyItemId } = await import('@/lib/crypto');
+    const expected_hash = hashPluggyItemId(rawPluggyId).toString('hex');
+    expect(sync_job?.payload?.item_id_hash_hex).toBe(expected_hash);
+    expect(sync_job?.payload?.item_id_pluggy).toBeUndefined();
+
     // audit_log row with action='item_reauth_succeeded'
     const db = await importDb();
     const { audit_log } = await import('@/db/schema');
-    const { hashPluggyItemId } = await import('@/lib/crypto');
-    const expected_hash = hashPluggyItemId(rawPluggyId).toString('hex');
 
     const audit_rows = await db
       .select()

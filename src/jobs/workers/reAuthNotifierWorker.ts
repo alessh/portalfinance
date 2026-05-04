@@ -20,7 +20,8 @@
  * PII contract (P4 / D-35):
  *   - `reconnect_url` uses internal UUID only — not raw Pluggy item ID.
  *   - Log lines emit only hashed item/user IDs (P13 / Pattern S7).
- *   - HMAC lookup for item_id_pluggy uses PLUGGY_ITEM_ID_HASH_PEPPER (OQ#6 resolved).
+ *   - Webhook-driven jobs carry item_id_hash_hex (lower-hex of the receiver's
+ *     HMAC over PLUGGY_ITEM_ID_HASH_PEPPER) — never plaintext (Concern #1).
  */
 import type { Job } from 'pg-boss';
 import { eq } from 'drizzle-orm';
@@ -47,8 +48,8 @@ const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
 
 interface Payload {
   webhook_event_id?: string;
-  item_id_pluggy?: string; // raw Pluggy item ID from webhook (UNTRUSTED — hash lookup only)
-  item_id?: string;        // internal pluggy_items UUID (direct path)
+  item_id_hash_hex?: string; // lower-hex of hashPluggyItemId(plaintext) — set by webhook receiver (Concern #1)
+  item_id?: string;          // internal pluggy_items UUID (direct path)
 }
 
 // ---------------------------------------------------------------------------
@@ -61,7 +62,8 @@ export async function reAuthNotifierWorker(jobs: Job<Payload>[]): Promise<void> 
       // -----------------------------------------------------------------------
       // 1. Resolve internal pluggy_items row
       //    - Direct path: job.data.item_id is the internal UUID.
-      //    - Webhook path: job.data.item_id_pluggy is hashed for lookup (P4).
+      //    - Webhook path: job.data.item_id_hash_hex is the receiver-computed
+      //      HMAC hex; decode and look up by pluggy_item_id_hash (Concern #1).
       // -----------------------------------------------------------------------
       let item: typeof pluggy_items.$inferSelect | undefined;
 
@@ -69,13 +71,13 @@ export async function reAuthNotifierWorker(jobs: Job<Payload>[]): Promise<void> 
         item = await db.query.pluggy_items.findFirst({
           where: eq(pluggy_items.id, job.data.item_id),
         });
-      } else if (job.data.item_id_pluggy) {
-        // Import hashPluggyItemId lazily — avoids circular imports at module load time.
-        // OQ#6 RESOLVED: uses HMAC-SHA256 with PLUGGY_ITEM_ID_HASH_PEPPER (NOT bare SHA-256).
-        const { hashPluggyItemId } = await import('@/lib/crypto');
-        const hash = hashPluggyItemId(job.data.item_id_pluggy);
+      } else if (job.data.item_id_hash_hex) {
+        // Concern #1: pg-boss row carries the HMAC hex, never the plaintext
+        // pluggy_item_id. OQ#6 RESOLVED: receiver used HMAC-SHA256 with
+        // PLUGGY_ITEM_ID_HASH_PEPPER (NOT bare SHA-256).
+        const hash_buf = Buffer.from(job.data.item_id_hash_hex, 'hex');
         item = await db.query.pluggy_items.findFirst({
-          where: eq(pluggy_items.pluggy_item_id_hash, hash),
+          where: eq(pluggy_items.pluggy_item_id_hash, hash_buf),
         });
       }
 

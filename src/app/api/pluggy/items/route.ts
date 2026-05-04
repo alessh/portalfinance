@@ -91,6 +91,9 @@ export async function POST(req: Request): Promise<Response> {
   // 6. Enqueue pluggy.sync with per-user singleton key (D-41).
   //    singletonKey deduplicates in-flight jobs for the same user.
   //    pg-boss v12 uses singletonKey only (singletonHours removed in v12).
+  //    Concern #1: enqueue carries the internal pluggy_items.id UUID, never the
+  //    Pluggy plaintext itemId — pg-boss job rows are DB state and must not
+  //    leak the plaintext identifier (criterion #6).
   await enqueue(
     QUEUES.PLUGGY_SYNC,
     { user_id: session.userId, item_id: inserted_id, trigger: 'first_connect' },

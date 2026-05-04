@@ -9,12 +9,15 @@
  *   Direct enqueue (from /api/pluggy/items):
  *     { user_id, item_id (internal UUID), trigger }
  *   Webhook-driven enqueue (from webhook receiver):
- *     { webhook_event_id, item_id_pluggy (raw Pluggy id, untrusted), trigger }
+ *     { webhook_event_id, item_id_hash_hex (lower-hex of HMAC), trigger }
  *
  * Design notes:
- *   - item_id_pluggy from webhook is hashed via hashPluggyItemId() to look up
- *     the internal pluggy_items row. Workers NEVER trust webhook payload data
- *     directly — they always re-fetch via PluggyService.
+ *   - item_id_hash_hex is the HMAC the receiver already computed via
+ *     hashPluggyItemId(plaintext). The worker hex-decodes it and looks up the
+ *     internal pluggy_items row by pluggy_item_id_hash. Concern #1 forbids
+ *     plaintext pluggy_item_id from appearing in pg-boss job rows. Workers
+ *     NEVER trust webhook payload data directly — they always re-fetch via
+ *     PluggyService.
  *   - pluggy_item_id_enc is the encrypted bytea passed to PluggyService methods.
  *     PluggyService is the ONLY decrypt boundary (P4).
  *   - ON CONFLICT DO UPDATE preserves is_transfer / is_credit_card_payment /
@@ -42,7 +45,7 @@ interface SyncJobPayload {
   user_id?: string;          // direct enqueue path (from /api/pluggy/items)
   item_id?: string;          // internal pluggy_items UUID (direct path)
   webhook_event_id?: string; // webhook-driven path
-  item_id_pluggy?: string;   // raw Pluggy item ID from webhook (UNTRUSTED — used only for hash lookup)
+  item_id_hash_hex?: string; // lower-hex of hashPluggyItemId(plaintext) — set by webhook receiver (Concern #1)
   trigger?: 'first_connect' | 'webhook' | 'manual' | 'reconcile' | 'reconnect';
 }
 
@@ -99,28 +102,29 @@ export async function pluggySyncWorker(jobs: Job<SyncJobPayload>[]): Promise<voi
       // -----------------------------------------------------------------------
       // 1. Resolve internal pluggy_items row
       //    - Direct path: item_id is the internal UUID
-      //    - Webhook path: item_id_pluggy is the raw Pluggy ID → hash lookup
+      //    - Webhook path: item_id_hash_hex is the receiver-computed HMAC hex →
+      //      decode and look up by pluggy_item_id_hash (Concern #1).
       // -----------------------------------------------------------------------
       if (job.data.item_id) {
         item_row = await db.query.pluggy_items.findFirst({
           where: eq(pluggy_items.id, job.data.item_id),
         });
-      } else if (job.data.item_id_pluggy) {
-        // Import hashPluggyItemId lazily to avoid circular imports at module load time
-        const { hashPluggyItemId } = await import('@/lib/crypto');
-        const hash = hashPluggyItemId(job.data.item_id_pluggy);
+      } else if (job.data.item_id_hash_hex) {
+        // Concern #1: payload arrived WITHOUT plaintext pluggy_item_id; the
+        // receiver already produced the HMAC. Hex-decode and look up directly.
+        const hash_buf = Buffer.from(job.data.item_id_hash_hex, 'hex');
         item_row = await db.query.pluggy_items.findFirst({
-          where: eq(pluggy_items.pluggy_item_id_hash, hash),
+          where: eq(pluggy_items.pluggy_item_id_hash, hash_buf),
         });
       } else if (job.data.user_id) {
         // Fallback: caller passed user_id but not item_id — not standard but defensively handled
         logger.warn(
           { event: 'sync_skipped', reason: 'missing_item_id', job_id: job.id },
-          'sync job missing item_id and item_id_pluggy',
+          'sync job missing item_id and item_id_hash_hex',
         );
         continue;
       } else {
-        // WR-02 (review fix): payload contained none of item_id, item_id_pluggy,
+        // WR-02 (review fix): payload contained none of item_id, item_id_hash_hex,
         // or user_id. Previously item_row stayed undefined and the next guard
         // silently swallowed the job with reason='item_not_found', masking a
         // miscoded enqueue call. Log explicitly at error level — the job is
@@ -129,7 +133,7 @@ export async function pluggySyncWorker(jobs: Job<SyncJobPayload>[]): Promise<voi
         // exhausted), but the log is loud enough for ops to notice.
         logger.error(
           { event: 'sync_skipped', reason: 'empty_payload', job_id: job.id },
-          'sync job has no item_id, item_id_pluggy, or user_id — cannot resolve item',
+          'sync job has no item_id, item_id_hash_hex, or user_id — cannot resolve item',
         );
         continue;
       }

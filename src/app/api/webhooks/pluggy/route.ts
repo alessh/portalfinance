@@ -27,6 +27,8 @@ import { webhook_events } from '@/db/schema';
 import { enqueue, QUEUES } from '@/jobs/boss';
 import { env } from '@/lib/env';
 import { logger } from '@/lib/logger';
+import { redactPluggyPayload } from '@/lib/pluggyRedaction';
+import { hashPluggyItemId } from '@/lib/crypto';
 
 // ---------------------------------------------------------------------------
 // Pluggy webhook payload shape (Pluggy docs § Webhooks)
@@ -128,16 +130,25 @@ export async function POST(req: Request): Promise<Response> {
     return new Response('bad payload', { status: 400 });
   }
 
-  // --- 3. Idempotent INSERT into webhook_events (T-02-B) ---
-  // UNIQUE(source, event_id) ensures replays are no-ops. RETURNING id lets us
-  // know whether this is a new event (non-empty) or a duplicate (empty).
+  // --- 3. Redact + idempotent INSERT into webhook_events (T-02-B + Concern #1) ---
+  // Concern #1: webhook_events.payload MUST NOT contain plaintext pluggy_item_id.
+  // Replace body.itemId with body.itemIdHash hex BEFORE the INSERT (and reuse the
+  // hash buffer for the inline audit lookup below). UNIQUE(source, event_id)
+  // ensures replays are no-ops; RETURNING id distinguishes new vs duplicate.
+  const item_id_hash_buf =
+    typeof body.itemId === 'string' && body.itemId.length > 0
+      ? hashPluggyItemId(body.itemId)
+      : undefined;
+  const item_id_hash_hex = item_id_hash_buf?.toString('hex');
+  const redacted = redactPluggyPayload(body);
+
   const inserted = await db
     .insert(webhook_events)
     .values({
       source: 'PLUGGY',
       event_type: body.event,
       event_id: body.eventId,
-      payload: body as Record<string, unknown>,
+      payload: redacted as Record<string, unknown>,
     })
     .onConflictDoNothing()
     .returning({ id: webhook_events.id });
@@ -154,26 +165,26 @@ export async function POST(req: Request): Promise<Response> {
       // 12-month sync window (full re-fetch, not 7-day incremental).
       // Other events use the default trigger='webhook'.
       const trigger = body.event === 'item/login_succeeded' ? 'reconnect' : 'webhook';
+      // Concern #1: pg-boss row MUST NOT carry plaintext pluggy_item_id. Pass the
+      // hash hex; workers decode and look up via pluggy_item_id_hash bytea.
       await enqueue(queue, {
         webhook_event_id: inserted[0].id,
-        item_id_pluggy: body.itemId,
+        item_id_hash_hex,
         trigger,
       });
 
       // D-13 + D-30: emit item_reauth_succeeded audit inline on item/login_succeeded.
       // The audit MUST be timestamped at webhook receipt (not at worker dequeue),
       // so we record it here before returning 200.
-      // PII guard (P13): only the HMAC of the Pluggy itemId is stored in metadata
-      // (via hashPluggyItemId) — NEVER the plaintext itemId.
-      if (body.event === 'item/login_succeeded' && body.itemId) {
+      // PII guard (P13): only the HMAC of the Pluggy itemId is stored in metadata —
+      // NEVER the plaintext itemId. We reuse item_id_hash_buf computed above.
+      if (body.event === 'item/login_succeeded' && item_id_hash_buf) {
         try {
           const { recordAudit } = await import('@/lib/auditLog');
-          const { hashPluggyItemId } = await import('@/lib/crypto');
           const { pluggy_items } = await import('@/db/schema');
           const { eq } = await import('drizzle-orm');
-          const item_hash = hashPluggyItemId(body.itemId);
           const item = await db.query.pluggy_items.findFirst({
-            where: eq(pluggy_items.pluggy_item_id_hash, item_hash),
+            where: eq(pluggy_items.pluggy_item_id_hash, item_id_hash_buf),
             columns: { id: true, user_id: true },
           });
           if (item) {
@@ -181,7 +192,7 @@ export async function POST(req: Request): Promise<Response> {
               user_id: item.user_id,
               action: 'item_reauth_succeeded',
               // Only the HMAC hash is stored — plaintext itemId NEVER in metadata (P13, P4)
-              metadata: { item_id_hashed: item_hash.toString('hex') },
+              metadata: { item_id_hashed: item_id_hash_buf.toString('hex') },
             });
           }
         } catch (audit_err) {
