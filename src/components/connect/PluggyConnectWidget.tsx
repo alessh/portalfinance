@@ -12,8 +12,28 @@
  *   NEXT_PUBLIC_PLUGGY_ENV=sandbox (development/staging) or =production.
  * - peerDependency warning for `pluggy-js` is benign — do NOT install `pluggy-js` (Pitfall 2).
  */
+import dynamic from 'next/dynamic';
 import { Loader2 } from 'lucide-react';
-import { PluggyConnect } from 'react-pluggy-connect';
+
+// react-pluggy-connect references `window` at module-eval time, so importing it
+// during SSR throws. Dynamic import with `ssr: false` defers loading to the
+// browser; the loading spinner mirrors the empty-token state below for visual
+// continuity. Allowed here because this file is a client component.
+const PluggyConnect = dynamic(
+  () => import('react-pluggy-connect').then((m) => m.PluggyConnect),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        aria-label="Carregando widget de conexão bancária"
+        role="status"
+        className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex items-center justify-center"
+      >
+        <Loader2 className="animate-spin h-8 w-8 text-primary" />
+      </div>
+    ),
+  },
+);
 
 export interface PluggyConnectWidgetProps {
   connectToken: string;
