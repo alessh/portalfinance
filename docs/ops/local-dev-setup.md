@@ -10,7 +10,15 @@ dev server?"
 - Docker Desktop with the WSL2 backend (Windows) — required for integration
   tests that boot a Postgres testcontainer. NOT required to run `pnpm dev`.
 - A local Postgres 16 instance OR a Docker container exposing 5432 — required
-  for `pnpm dev` and `pnpm start:worker`. Quick path:
+  for `pnpm dev` and `pnpm start:worker`. Easiest path is the bundled compose
+  service, which matches the user / password / DB baked into the default
+  `.env.local`:
+  ```
+  pnpm db:up      # docker compose up -d postgres (named volume: portal_pg_data)
+  pnpm db:logs    # tail Postgres logs
+  pnpm db:down    # stop the container (data persists in the volume)
+  ```
+  Equivalent one-shot if you prefer ad-hoc:
   ```
   docker run --rm -d --name portal-pg -p 5432:5432 \
     -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres \
@@ -51,8 +59,14 @@ but Pluggy Connect will fail at token-issue time.
 
 ```
 pnpm install
+pnpm db:up          # boot local Postgres 16 via docker compose (one-time per session)
 pnpm db:migrate     # apply Drizzle migrations to your local Postgres
 pnpm dev            # Next.js 16 with Turbopack; reads .env.local automatically
+```
+
+To inspect the database in a browser:
+```
+pnpm db:studio      # drizzle-kit studio; loads .env.local via Node's --env-file-if-exists
 ```
 
 In a second terminal, start the worker:

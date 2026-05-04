@@ -19,10 +19,13 @@
     "test:e2e": "tsx --env-file-if-exists=.env.local scripts/run-e2e.ts",
     "test:all": "pnpm test:unit && pnpm test:integration && pnpm test:e2e",
     "test:watch": "vitest",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f postgres",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file-if-exists=.env.local src/db/migrate.ts",
     "db:migrate:prod": "node dist/db/migrate.js",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "node --env-file-if-exists=.env.local node_modules/drizzle-kit/bin.cjs studio"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "1.11.2",

@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: portal-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: portal_finance_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - portal_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d portal_finance_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  portal_pg_data:
