@@ -27,15 +27,19 @@ import { scrubString, scrubObject } from '@/lib/piiScrubber';
  * Falls back to undefined on edge (no node:crypto available).
  */
 export function hashUserIdForSentry(user_id: string): string | undefined {
-  // Guard: node:crypto is not available in the edge runtime.
-  if (typeof process === 'undefined' || !process.versions?.node) {
+  // Dereference `process` via `globalThis` so Next.js's edge-runtime static
+  // analyzer does not flag this Node API as imported into edge bundles. The
+  // runtime guard still short-circuits on edge (where `process.versions.node`
+  // is absent), keeping the require below unreachable there.
+  const proc = (globalThis as { process?: NodeJS.Process }).process;
+  if (!proc?.versions?.node) {
     return undefined;
   }
   try {
-    // Lazy import to avoid bundling node:crypto in the browser.
+    // Lazy CJS require keeps node:crypto out of edge bundles.
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { createHash } = require('node:crypto');
-    const secret = process.env.NEXTAUTH_SECRET ?? '';
+    const secret = proc.env.NEXTAUTH_SECRET ?? '';
     return createHash('sha256')
       .update(secret)
       .update(user_id)
