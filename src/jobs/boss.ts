@@ -40,6 +40,10 @@ export const QUEUES = {
   PLUGGY_FATURA_DETECTOR: 'pluggy.fatura-detector',
   PLUGGY_REAUTH_NOTIFIER: 'pluggy.re-auth-notifier',
   PLUGGY_RECONCILE_STALE: 'pluggy.reconcile.stale-items',
+  // Plan 02-12 (Concern #3): off-the-hot-path audit writer for
+  // item/login_succeeded webhooks. Receiver enqueues; worker writes the
+  // audit_log row asynchronously, idempotent on webhook_event_id.
+  PLUGGY_REAUTH_AUDIT: 'pluggy.re-auth-audit',
 } as const;
 
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];

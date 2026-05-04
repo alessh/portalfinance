@@ -100,6 +100,27 @@ const PII_KEYS = new Set([
   'refresh_token',
 ]);
 
+/**
+ * Object keys whose values are forensically required to round-trip verbatim
+ * because they are non-PII identifiers used for idempotency / correlation.
+ *
+ * These keys carry server-generated UUIDs or HMAC digests that would otherwise
+ * be redacted to `[TOKEN]` by `TOKEN_LIKE_REGEX` (24+ alphanumeric chars). The
+ * scrubber MUST preserve them so:
+ *   - audit dedup queries (`metadata->>'webhook_event_id' = $1`) find prior rows.
+ *   - forensic correlation between webhook_events.id and audit_log can succeed.
+ *
+ * Plan 02-12 added `webhook_event_id` here so `itemReauthSucceededAuditWorker`'s
+ * idempotency check works after metadata round-trips through `recordAudit`.
+ *
+ * SAFETY: only add identifiers here that are GUARANTEED non-PII — server-side
+ * UUIDs, HMAC digests with peppers, and event IDs from upstream non-PII payloads.
+ * NEVER add raw user-supplied IDs (Pluggy itemId, CPF, email, phone).
+ */
+const PRESERVE_KEYS = new Set([
+  'webhook_event_id',
+]);
+
 // ---------------------------------------------------------------------------
 // scrubObject
 // ---------------------------------------------------------------------------
@@ -140,8 +161,13 @@ export function scrubObject<T>(obj: T, _seen: WeakSet<object> = new WeakSet()): 
 
     const result: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
-      if (PII_KEYS.has(key.toLowerCase())) {
+      const k = key.toLowerCase();
+      if (PII_KEYS.has(k)) {
         result[key] = '[REDACTED]';
+      } else if (PRESERVE_KEYS.has(k)) {
+        // Non-PII forensic identifiers (UUIDs, HMAC digests) — round-trip
+        // verbatim so audit dedup queries and webhook→audit correlation work.
+        result[key] = value;
       } else {
         result[key] = scrubObject(value, _seen);
       }

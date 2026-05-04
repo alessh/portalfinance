@@ -169,7 +169,24 @@ describe('reauth flow', () => {
     expect(sync_job).toBeDefined();
     expect(sync_job?.payload?.trigger).toBe('reconnect');
 
-    // audit_log row with action='item_reauth_succeeded' (D-13)
+    // Concern #3 (plan 02-12): the audit write moved off the receiver hot
+    // path. Drain the new PLUGGY_REAUTH_AUDIT job and invoke the worker.
+    const audit_job = queued.find(j => j.name === 'pluggy.re-auth-audit');
+    expect(audit_job, 'PLUGGY_REAUTH_AUDIT job enqueued').toBeDefined();
+
+    const { itemReauthSucceededAuditWorker } = await import(
+      '@/jobs/workers/itemReauthSucceededAuditWorker'
+    );
+    await itemReauthSucceededAuditWorker([
+      {
+        id: 'job-rf1-audit',
+        name: 'pluggy.re-auth-audit',
+        data: audit_job!.payload as { item_id_hash_hex: string; webhook_event_id: string },
+      } as never,
+    ]);
+
+    // audit_log row with action='item_reauth_succeeded' (D-13) — content
+    // byte-equivalent to pre-02-12 except for the new webhook_event_id key.
     const db = await importDb();
     const { audit_log } = await import('@/db/schema');
     const { hashPluggyItemId } = await import('@/lib/crypto');

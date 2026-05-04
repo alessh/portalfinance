@@ -369,7 +369,26 @@ describe('Pluggy webhook', () => {
     expect(sync_job?.payload?.item_id_hash_hex).toBe(expected_hash);
     expect(sync_job?.payload?.item_id_pluggy).toBeUndefined();
 
-    // audit_log row with action='item_reauth_succeeded'
+    // Concern #3 (plan 02-12): the audit write was moved off the receiver hot
+    // path into PLUGGY_REAUTH_AUDIT. The receiver now ALSO enqueues an audit
+    // job. Drain that job and run the worker to materialise the audit row.
+    const audit_job = queued.find(j => j.name === 'pluggy.re-auth-audit');
+    expect(audit_job, 'PLUGGY_REAUTH_AUDIT job enqueued for item/login_succeeded').toBeDefined();
+    expect(audit_job?.payload?.item_id_hash_hex).toBe(expected_hash);
+    expect(audit_job?.payload?.webhook_event_id).toBeDefined();
+
+    const { itemReauthSucceededAuditWorker } = await import(
+      '@/jobs/workers/itemReauthSucceededAuditWorker'
+    );
+    await itemReauthSucceededAuditWorker([
+      {
+        id: 'job-webhook-g',
+        name: 'pluggy.re-auth-audit',
+        data: audit_job!.payload as { item_id_hash_hex: string; webhook_event_id: string },
+      } as never,
+    ]);
+
+    // audit_log row content unchanged from auditor perspective (truth #5).
     const db = await importDb();
     const { audit_log } = await import('@/db/schema');
 
@@ -383,5 +402,7 @@ describe('Pluggy webhook', () => {
     // metadata.item_id_hashed must be the HMAC of the Pluggy itemId (P4 — no plaintext)
     const metadata = reauth_audit?.metadata as Record<string, unknown>;
     expect(metadata?.item_id_hashed).toBe(expected_hash);
+    // Plan 02-12: webhook_event_id is now also recorded for idempotency forensics.
+    expect(metadata?.webhook_event_id).toBe(audit_job?.payload?.webhook_event_id);
   });
 });

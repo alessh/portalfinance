@@ -35,6 +35,7 @@ import { transferDetectorWorker } from './workers/transferDetectorWorker';
 import { faturaDetectorWorker } from './workers/faturaDetectorWorker';
 import { reAuthNotifierWorker } from './workers/reAuthNotifierWorker';
 import { reconcileStaleItemsWorker } from './workers/reconcileStaleItemsWorker';
+import { itemReauthSucceededAuditWorker } from './workers/itemReauthSucceededAuditWorker';
 import { logger as log } from '@/lib/logger';
 
 async function main() {
@@ -57,6 +58,10 @@ async function main() {
   await boss.work(QUEUES.PLUGGY_FATURA_DETECTOR, { localConcurrency: 2 }, faturaDetectorWorker);
   await boss.work(QUEUES.PLUGGY_REAUTH_NOTIFIER, { localConcurrency: 2 }, reAuthNotifierWorker);
   await boss.work(QUEUES.PLUGGY_RECONCILE_STALE, { localConcurrency: 1 }, reconcileStaleItemsWorker);
+
+  // Phase 2 worker (plan 02-12 — Concern #3): off-the-hot-path audit writer
+  // for item/login_succeeded webhooks. Receiver enqueues, this worker writes.
+  await boss.work(QUEUES.PLUGGY_REAUTH_AUDIT, { localConcurrency: 2 }, itemReauthSucceededAuditWorker);
 
   // D-38: hourly reconciliation cron at :00 BRT.
   // Enqueues PLUGGY_SYNC for items stale >12h (excluding broken items).

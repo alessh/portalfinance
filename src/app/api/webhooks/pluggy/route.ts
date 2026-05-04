@@ -27,8 +27,7 @@ import { webhook_events } from '@/db/schema';
 import { enqueue, QUEUES } from '@/jobs/boss';
 import { env } from '@/lib/env';
 import { logger } from '@/lib/logger';
-import { redactPluggyPayload } from '@/lib/pluggyRedaction';
-import { hashPluggyItemId } from '@/lib/crypto';
+import { redactPluggyPayload, REDACTED_ITEM_ID_KEY } from '@/lib/pluggyRedaction';
 
 // ---------------------------------------------------------------------------
 // Pluggy webhook payload shape (Pluggy docs § Webhooks)
@@ -132,15 +131,17 @@ export async function POST(req: Request): Promise<Response> {
 
   // --- 3. Redact + idempotent INSERT into webhook_events (T-02-B + Concern #1) ---
   // Concern #1: webhook_events.payload MUST NOT contain plaintext pluggy_item_id.
-  // Replace body.itemId with body.itemIdHash hex BEFORE the INSERT (and reuse the
-  // hash buffer for the inline audit lookup below). UNIQUE(source, event_id)
-  // ensures replays are no-ops; RETURNING id distinguishes new vs duplicate.
-  const item_id_hash_buf =
-    typeof body.itemId === 'string' && body.itemId.length > 0
-      ? hashPluggyItemId(body.itemId)
-      : undefined;
-  const item_id_hash_hex = item_id_hash_buf?.toString('hex');
+  // redactPluggyPayload removes body.itemId AND adds itemIdHash hex BEFORE the
+  // INSERT. We pull item_id_hash_hex back out of the redacted payload to use as
+  // the worker enqueue key — this keeps the hashing concern in one place
+  // (`@/lib/pluggyRedaction`) and removes hashing logic from the receiver.
+  // UNIQUE(source, event_id) ensures replays are no-ops; RETURNING id
+  // distinguishes new vs duplicate.
   const redacted = redactPluggyPayload(body);
+  const item_id_hash_hex =
+    typeof redacted[REDACTED_ITEM_ID_KEY] === 'string'
+      ? (redacted[REDACTED_ITEM_ID_KEY] as string)
+      : undefined;
 
   const inserted = await db
     .insert(webhook_events)
@@ -173,36 +174,17 @@ export async function POST(req: Request): Promise<Response> {
         trigger,
       });
 
-      // D-13 + D-30: emit item_reauth_succeeded audit inline on item/login_succeeded.
-      // The audit MUST be timestamped at webhook receipt (not at worker dequeue),
-      // so we record it here before returning 200.
-      // PII guard (P13): only the HMAC of the Pluggy itemId is stored in metadata —
-      // NEVER the plaintext itemId. We reuse item_id_hash_buf computed above.
-      if (body.event === 'item/login_succeeded' && item_id_hash_buf) {
-        try {
-          const { recordAudit } = await import('@/lib/auditLog');
-          const { pluggy_items } = await import('@/db/schema');
-          const { eq } = await import('drizzle-orm');
-          const item = await db.query.pluggy_items.findFirst({
-            where: eq(pluggy_items.pluggy_item_id_hash, item_id_hash_buf),
-            columns: { id: true, user_id: true },
-          });
-          if (item) {
-            await recordAudit({
-              user_id: item.user_id,
-              action: 'item_reauth_succeeded',
-              // Only the HMAC hash is stored — plaintext itemId NEVER in metadata (P13, P4)
-              metadata: { item_id_hashed: item_id_hash_buf.toString('hex') },
-            });
-          }
-        } catch (audit_err) {
-          // Audit failure must NOT block the 200 response — log and continue.
-          // pg-boss has already received the PLUGGY_SYNC enqueue above.
-          logger.warn(
-            { event: 'pluggy_reauth_audit_failed', error: String(audit_err) },
-            'failed to write item_reauth_succeeded audit — non-fatal',
-          );
-        }
+      // Concern #3 (02-REVIEWS.md / plan 02-12): the inline audit lookup +
+      // insert was moved out of the receiver hot path into the
+      // PLUGGY_REAUTH_AUDIT queue. The receiver now only enqueues the audit
+      // job — the worker performs the lookup + insert idempotently keyed on
+      // webhook_event_id. The 200 response no longer waits on a DB SELECT +
+      // INSERT for item/login_succeeded events.
+      if (body.event === 'item/login_succeeded' && item_id_hash_hex) {
+        await enqueue(QUEUES.PLUGGY_REAUTH_AUDIT, {
+          webhook_event_id: inserted[0].id,
+          item_id_hash_hex,
+        });
       }
     } else {
       // Unknown or explicit no-op event type (P10) — row already inserted above.
