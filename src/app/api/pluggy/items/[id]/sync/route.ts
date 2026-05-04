@@ -3,16 +3,27 @@ export const runtime = 'nodejs';
 /**
  * POST /api/pluggy/items/:id/sync — manual sync trigger with cooldown enforcement.
  *
- * Plan 02-06 / CONTEXT.md D-26, D-28, D-29, D-30, CONN-06.
+ * Plan 02-06 / CONTEXT.md D-26, D-28, D-29, D-30, CONN-06; revised by plan 02-18.
  *
  * Sequence:
  *   1. requireSession — 401 on failure.
  *   2. Load pluggy_items row filtered by id + user_id (IDOR, P26).
  *   3. Free-tier hard block → 403 PAYWALL (D-29).
- *   4. Cooldown check: last_synced_at < 30 min ago → 429 COOLDOWN_ACTIVE with Retry-After header (D-28).
+ *   4. Cooldown check: last_manual_sync_at < 30 min ago → 429 COOLDOWN_ACTIVE
+ *      with Retry-After header (D-28; Concern #12).
  *   5. Enqueue PLUGGY_SYNC with trigger='manual', singletonKey=user_id (D-41).
  *   6. Write audit_log action='manual_sync_triggered' with cooldown_bypassed=false (D-13).
  *   7. Return 202 Accepted.
+ *
+ * Concern #12 deliberate semantics — the cooldown is anchored on
+ * `last_manual_sync_at`, NOT `last_synced_at`. This means:
+ *   - A failed manual sync attempt does NOT cool down (the worker writes
+ *     last_manual_sync_at only after PluggyService calls succeed). The user
+ *     can retry; the connector-level Pluggy rate limit (PATCH /items 20/min)
+ *     catches genuine abuse.
+ *   - A recent automatic sync (webhook, reconcile, first-connect, reconnect)
+ *     does NOT block a subsequent manual sync. If the user just made a
+ *     purchase and wants to refresh now, a webhook 5 minutes ago is irrelevant.
  *
  * SECURITY:
  *   - IDOR enforced by innerJoin on user_id = session.userId (P26); 404 on miss.
@@ -48,7 +59,7 @@ export async function POST(
   const row = await db
     .select({
       item_id: pluggy_items.id,
-      last_synced_at: pluggy_items.last_synced_at,
+      last_manual_sync_at: pluggy_items.last_manual_sync_at,
       tier: users.subscription_tier,
       status: pluggy_items.status,
     })
@@ -69,10 +80,13 @@ export async function POST(
     );
   }
 
-  // 4. Cooldown enforcement (D-28, T-02-B)
-  const last_synced_ms = it.last_synced_at?.getTime() ?? 0;
-  const elapsed_ms = Date.now() - last_synced_ms;
-  if (last_synced_ms > 0 && elapsed_ms < COOLDOWN_MS) {
+  // 4. Cooldown enforcement (D-28, T-02-B; Concern #12 — anchor on
+  //    last_manual_sync_at, NOT last_synced_at). See file header for
+  //    deliberate semantics around failed manual attempts and recent
+  //    webhook/reconcile syncs.
+  const last_manual_ms = it.last_manual_sync_at?.getTime() ?? 0;
+  const elapsed_ms = Date.now() - last_manual_ms;
+  if (last_manual_ms > 0 && elapsed_ms < COOLDOWN_MS) {
     const retry_after_seconds = Math.ceil((COOLDOWN_MS - elapsed_ms) / 1000);
     return NextResponse.json(
       { error: 'COOLDOWN_ACTIVE', retry_after_seconds },

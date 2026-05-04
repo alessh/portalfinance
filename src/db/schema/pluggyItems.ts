@@ -34,6 +34,11 @@ export const pluggy_items = pgTable(
     last_synced_at: timestamp('last_synced_at', { withTimezone: true }),
     last_error_at: timestamp('last_error_at', { withTimezone: true }),
     last_reauth_email_at: timestamp('last_reauth_email_at', { withTimezone: true }),
+    // Concern #12 (plan 02-18) — distinct anchor for the manual-sync cooldown.
+    // Updated by the pluggy-sync worker ONLY on successful trigger='manual' runs.
+    // NOT updated by webhook, reconcile, first_connect, or reconnect triggers.
+    // Failed manual syncs leave this NULL — user can retry without waiting.
+    last_manual_sync_at: timestamp('last_manual_sync_at', { withTimezone: true }),
     created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

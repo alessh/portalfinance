@@ -113,7 +113,7 @@ async function createUserAndSession(tier: 'free' | 'paid' = 'paid'): Promise<{
 
 async function createPluggyItem(
   userId: string,
-  opts: { last_synced_at?: Date | null } = {},
+  opts: { last_synced_at?: Date | null; last_manual_sync_at?: Date | null } = {},
 ): Promise<string> {
   const db = await importDb();
   const { pluggy_items } = await import('@/db/schema');
@@ -133,6 +133,7 @@ async function createPluggyItem(
       institution_name: 'Itaú',
       status: 'UPDATED',
       last_synced_at: opts.last_synced_at ?? null,
+      last_manual_sync_at: opts.last_manual_sync_at ?? null,
     })
     .returning({ id: pluggy_items.id });
 
@@ -155,13 +156,14 @@ function makeSyncRequest(itemId: string, sessionToken?: string): Request {
 // ---------------------------------------------------------------------------
 
 describe('POST /api/pluggy/items/:id/sync', () => {
-  it('cooldown-1: paid user within 30-min cooldown → 429 COOLDOWN_ACTIVE', async () => {
+  it('cooldown-1: paid user within 30-min cooldown (last_manual_sync_at 5 min ago) → 429 COOLDOWN_ACTIVE', async () => {
     const handler = await importSyncRouteHandler();
     const { userId, sessionToken } = await createUserAndSession('paid');
 
-    // last_synced_at = 5 minutes ago (within 30-min cooldown)
+    // Concern #12 (plan 02-18): cooldown anchor migrated from
+    // last_synced_at to last_manual_sync_at.
     const five_min_ago = new Date(Date.now() - 5 * 60 * 1000);
-    const itemId = await createPluggyItem(userId, { last_synced_at: five_min_ago });
+    const itemId = await createPluggyItem(userId, { last_manual_sync_at: five_min_ago });
 
     const req = makeSyncRequest(itemId, sessionToken);
     const res = await handler(req, { params: Promise.resolve({ id: itemId }) });
@@ -187,9 +189,9 @@ describe('POST /api/pluggy/items/:id/sync', () => {
 
     const { userId, sessionToken } = await createUserAndSession('paid');
 
-    // last_synced_at = 35 minutes ago (past cooldown)
+    // Past cooldown — last_manual_sync_at 35 min ago (Concern #12 anchor).
     const thirty_five_min_ago = new Date(Date.now() - 35 * 60 * 1000);
-    const itemId = await createPluggyItem(userId, { last_synced_at: thirty_five_min_ago });
+    const itemId = await createPluggyItem(userId, { last_manual_sync_at: thirty_five_min_ago });
 
     const req = makeSyncRequest(itemId, sessionToken);
     const res = await handler(req, { params: Promise.resolve({ id: itemId }) });
@@ -259,5 +261,190 @@ describe('POST /api/pluggy/items/:id/sync', () => {
 
     // Silence unused variable warning
     void userA_id;
+  });
+
+  // ---------------------------------------------------------------------------
+  // Plan 02-18 — Concern #12: cooldown anchor migrated to last_manual_sync_at.
+  // ---------------------------------------------------------------------------
+
+  it('cooldown-B: failed manual sync (last_manual_sync_at NULL) does NOT cool down', async () => {
+    const handler = await importSyncRouteHandler();
+    const { userId, sessionToken } = await createUserAndSession('paid');
+
+    // Failed prior manual sync — last_manual_sync_at stays NULL because the
+    // worker only writes it inside the success path. Recent unrelated webhook
+    // sync also exists (last_synced_at recent) but must NOT block the retry.
+    const five_min_ago = new Date(Date.now() - 5 * 60 * 1000);
+    const itemId = await createPluggyItem(userId, {
+      last_synced_at: five_min_ago,
+      last_manual_sync_at: null,
+    });
+
+    const req = makeSyncRequest(itemId, sessionToken);
+    const res = await handler(req, { params: Promise.resolve({ id: itemId }) });
+
+    expect(res.status).toBe(202);
+    const body = await res.json() as { accepted: boolean };
+    expect(body.accepted).toBe(true);
+  });
+
+  it('cooldown-C: recent webhook sync does NOT block subsequent manual sync', async () => {
+    const handler = await importSyncRouteHandler();
+    const { drainQueue } = await importBoss();
+    drainQueue();
+
+    const { userId, sessionToken } = await createUserAndSession('paid');
+
+    // Webhook synced 5 min ago (last_synced_at is recent), no prior manual
+    // sync (last_manual_sync_at NULL). Manual sync MUST proceed.
+    const five_min_ago = new Date(Date.now() - 5 * 60 * 1000);
+    const itemId = await createPluggyItem(userId, {
+      last_synced_at: five_min_ago,
+      last_manual_sync_at: null,
+    });
+
+    const req = makeSyncRequest(itemId, sessionToken);
+    const res = await handler(req, { params: Promise.resolve({ id: itemId }) });
+
+    expect(res.status).toBe(202);
+    const queued = drainQueue();
+    expect(queued.filter((j) => j.name === 'pluggy.sync')).toHaveLength(1);
+  });
+
+  it('worker-A: trigger="manual" success path writes last_manual_sync_at', async () => {
+    const db = await importDb();
+    const { users, pluggy_items } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+    const { encryptCPF, hashPluggyItemId } = await import('@/lib/crypto');
+
+    const userId = crypto.randomUUID();
+    await db.insert(users).values({
+      id: userId,
+      email: `worker-A-${Date.now()}-${Math.random()}@example.com`,
+      password_hash: 'argon2id-placeholder',
+      cpf_hash: randomBytes(32),
+      cpf_enc: randomBytes(39),
+      subscription_tier: 'paid',
+    });
+
+    const plaintext = `item-worker-A-${Date.now()}`;
+    const [item] = await db.insert(pluggy_items).values({
+      user_id: userId,
+      pluggy_item_id_enc: encryptCPF(plaintext),
+      pluggy_item_id_hash: hashPluggyItemId(plaintext),
+      connector_id: '001',
+      institution_name: 'Banco Worker A',
+      status: 'UPDATED',
+    }).returning({ id: pluggy_items.id });
+
+    const mockSvc = {
+      fetchAccounts: vi.fn().mockResolvedValue({ results: [] }),
+      fetchTransactions: vi.fn().mockResolvedValue({ results: [], next: null }),
+    };
+    vi.doMock('@/services/PluggyService', () => ({ getPluggyService: () => mockSvc }));
+
+    const { pluggySyncWorker } = await import('@/jobs/workers/pluggySyncWorker');
+    const before = Date.now();
+    await pluggySyncWorker([
+      { id: 'job-w-A', name: 'pluggy.sync', data: { item_id: item.id, trigger: 'manual' } } as never,
+    ]);
+
+    const [row] = await db
+      .select({ last_manual_sync_at: pluggy_items.last_manual_sync_at })
+      .from(pluggy_items)
+      .where(eq(pluggy_items.id, item.id));
+    expect(row.last_manual_sync_at).toBeTruthy();
+    expect(row.last_manual_sync_at!.getTime()).toBeGreaterThanOrEqual(before - 1000);
+  });
+
+  it('worker-B: trigger="webhook" does NOT write last_manual_sync_at', async () => {
+    const db = await importDb();
+    const { users, pluggy_items } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+    const { encryptCPF, hashPluggyItemId } = await import('@/lib/crypto');
+
+    const userId = crypto.randomUUID();
+    await db.insert(users).values({
+      id: userId,
+      email: `worker-B-${Date.now()}-${Math.random()}@example.com`,
+      password_hash: 'argon2id-placeholder',
+      cpf_hash: randomBytes(32),
+      cpf_enc: randomBytes(39),
+      subscription_tier: 'paid',
+    });
+
+    const plaintext = `item-worker-B-${Date.now()}`;
+    const [item] = await db.insert(pluggy_items).values({
+      user_id: userId,
+      pluggy_item_id_enc: encryptCPF(plaintext),
+      pluggy_item_id_hash: hashPluggyItemId(plaintext),
+      connector_id: '001',
+      institution_name: 'Banco Worker B',
+      status: 'UPDATED',
+    }).returning({ id: pluggy_items.id });
+
+    const mockSvc = {
+      fetchAccounts: vi.fn().mockResolvedValue({ results: [] }),
+      fetchTransactions: vi.fn().mockResolvedValue({ results: [], next: null }),
+    };
+    vi.doMock('@/services/PluggyService', () => ({ getPluggyService: () => mockSvc }));
+
+    const { pluggySyncWorker } = await import('@/jobs/workers/pluggySyncWorker');
+    await pluggySyncWorker([
+      { id: 'job-w-B', name: 'pluggy.sync', data: { item_id: item.id, trigger: 'webhook' } } as never,
+    ]);
+
+    const [row] = await db
+      .select({ last_manual_sync_at: pluggy_items.last_manual_sync_at, last_synced_at: pluggy_items.last_synced_at })
+      .from(pluggy_items)
+      .where(eq(pluggy_items.id, item.id));
+    expect(row.last_manual_sync_at).toBeNull();
+    // last_synced_at IS still updated for all triggers — invariant preserved.
+    expect(row.last_synced_at).toBeTruthy();
+  });
+
+  it('worker-C: trigger="manual" failure does NOT write last_manual_sync_at', async () => {
+    const db = await importDb();
+    const { users, pluggy_items } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+    const { encryptCPF, hashPluggyItemId } = await import('@/lib/crypto');
+
+    const userId = crypto.randomUUID();
+    await db.insert(users).values({
+      id: userId,
+      email: `worker-C-${Date.now()}-${Math.random()}@example.com`,
+      password_hash: 'argon2id-placeholder',
+      cpf_hash: randomBytes(32),
+      cpf_enc: randomBytes(39),
+      subscription_tier: 'paid',
+    });
+
+    const plaintext = `item-worker-C-${Date.now()}`;
+    const [item] = await db.insert(pluggy_items).values({
+      user_id: userId,
+      pluggy_item_id_enc: encryptCPF(plaintext),
+      pluggy_item_id_hash: hashPluggyItemId(plaintext),
+      connector_id: '001',
+      institution_name: 'Banco Worker C',
+      status: 'UPDATED',
+    }).returning({ id: pluggy_items.id });
+
+    const mockSvc = {
+      fetchAccounts: vi.fn().mockRejectedValue(new Error('pluggy down')),
+      fetchTransactions: vi.fn(),
+    };
+    vi.doMock('@/services/PluggyService', () => ({ getPluggyService: () => mockSvc }));
+
+    const { pluggySyncWorker } = await import('@/jobs/workers/pluggySyncWorker');
+    // Worker re-throws on failure (pg-boss retry); swallow to keep the test green.
+    await expect(pluggySyncWorker([
+      { id: 'job-w-C', name: 'pluggy.sync', data: { item_id: item.id, trigger: 'manual' } } as never,
+    ])).rejects.toThrow();
+
+    const [row] = await db
+      .select({ last_manual_sync_at: pluggy_items.last_manual_sync_at })
+      .from(pluggy_items)
+      .where(eq(pluggy_items.id, item.id));
+    expect(row.last_manual_sync_at).toBeNull();
   });
 });

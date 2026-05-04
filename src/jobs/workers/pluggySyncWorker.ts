@@ -351,15 +351,30 @@ export async function pluggySyncWorker(jobs: Job<SyncJobPayload>[]): Promise<voi
       );
 
       // -----------------------------------------------------------------------
-      // 6. Flip item status + set last_synced_at
+      // 6. Flip item status + set last_synced_at (and last_manual_sync_at on
+      //    successful manual triggers — Concern #12, plan 02-18). The manual-
+      //    sync cooldown route reads `last_manual_sync_at`, NOT `last_synced_at`,
+      //    so failed manual attempts (the worker threw before reaching here)
+      //    do not cool down and recent webhook/reconcile syncs do not block
+      //    a subsequent manual sync.
       // -----------------------------------------------------------------------
+      const sync_completed_at = new Date();
+      const update_set: {
+        status: 'UPDATED';
+        last_synced_at: Date;
+        updated_at: Date;
+        last_manual_sync_at?: Date;
+      } = {
+        status: 'UPDATED',
+        last_synced_at: sync_completed_at,
+        updated_at: sync_completed_at,
+      };
+      if (trigger === 'manual') {
+        update_set.last_manual_sync_at = sync_completed_at;
+      }
       await db
         .update(pluggy_items)
-        .set({
-          status: 'UPDATED',
-          last_synced_at: new Date(),
-          updated_at: new Date(),
-        })
+        .set(update_set)
         .where(eq(pluggy_items.id, item_row.id));
 
       // -----------------------------------------------------------------------
