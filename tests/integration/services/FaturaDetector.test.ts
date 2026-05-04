@@ -124,11 +124,49 @@ async function seedAccountWithUpdatedAt(
     .values({
       user_id,
       pluggy_item_id,
-      pluggy_account_id: `acct-fd-${Date.now()}-${suffix}`,
+      pluggy_account_id: `acct-fd-${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${suffix}`,
       type,
       name: `FD Account ${type} ${suffix}`,
       currency: 'BRL',
       balance,
+    })
+    .returning({ id: accounts.id });
+
+  await db.execute(
+    sql`UPDATE accounts SET updated_at = ${updated_at.toISOString()} WHERE id = ${row.id}`,
+  );
+
+  return row.id;
+}
+
+/**
+ * Seed an account with both updated_at and an explicit bill_due_date — used by
+ * Plan 02-14 (Concern #5) tests to exercise the anchor-source preference path.
+ * Pass bill_due_date=null to seed an account whose proximity anchor falls back
+ * to accounts.updated_at.
+ */
+async function seedCreditCardWithBillDate(
+  user_id: string,
+  pluggy_item_id: string,
+  balance: string,
+  updated_at: Date,
+  bill_due_date: Date | null,
+  suffix: string = '',
+): Promise<string> {
+  const { db } = await import('@/db');
+  const { accounts } = await import('@/db/schema');
+
+  const [row] = await db
+    .insert(accounts)
+    .values({
+      user_id,
+      pluggy_item_id,
+      pluggy_account_id: `acct-fd-${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${suffix}`,
+      type: 'CREDIT_CARD',
+      name: `FD CC ${suffix}`,
+      currency: 'BRL',
+      balance,
+      bill_due_date,
     })
     .returning({ id: accounts.id });
 
@@ -365,5 +403,324 @@ describe('faturaDetectorWorker', () => {
 
     // Must NOT be flagged — 26 days is outside the +/-7-day window (P8 / TX-05)
     expect(row.is_credit_card_payment).toBe(false);
+  });
+
+  // -------------------------------------------------------------------------
+  // Plan 02-14 — Concern #5 closure: false-positive coverage + anchor source
+  // -------------------------------------------------------------------------
+
+  it('fatura-fp-1: same-amount purchase to non-card account (residual FP — still flags, documented)', async () => {
+    const { db } = await import('@/db');
+    const { transactions } = await import('@/db/schema');
+    const { faturaDetectorWorker } = await import('@/jobs/workers/faturaDetectorWorker');
+    const { eq } = await import('drizzle-orm');
+
+    const user_id = await seedUser();
+    const item_id = await seedPluggyItem(user_id);
+
+    // User has a checking account, savings (with same-amount CREDIT not flagged
+    // as transfer because is_transfer is detector-managed), and a credit card.
+    // Without independent context, a single 890 debit to the merchant + a card
+    // with balance 890 will still be flagged. This test pins that documented
+    // residual false-positive behavior so future changes that silently broaden
+    // coverage are caught.
+    const checking_acct = await seedAccountWithUpdatedAt(
+      user_id, item_id, 'CHECKING', '0',
+      new Date('2026-04-01T00:00:00Z'), 'fp1-chk',
+    );
+    await seedAccountWithUpdatedAt(
+      user_id, item_id, 'CREDIT_CARD', '890.00',
+      new Date('2026-04-12T12:00:00Z'), 'fp1-cc',
+    );
+
+    const tx_id = await seedTransaction(
+      user_id, checking_acct, '890.00', 'DEBIT',
+      new Date('2026-04-15T12:00:00Z'),
+    );
+
+    await faturaDetectorWorker([
+      { id: 'job-fp1', name: 'pluggy.fatura-detector', data: { user_id } } as Job<{ user_id: string }>,
+    ]);
+
+    const [row] = await db
+      .select({ is_credit_card_payment: transactions.is_credit_card_payment })
+      .from(transactions)
+      .where(eq(transactions.id, tx_id));
+
+    // Documented residual FP class #1 in docs/specs/fatura-detection.md.
+    expect(row.is_credit_card_payment).toBe(true);
+  });
+
+  it('fatura-fp-2: pre-flagged transfer is excluded by detector (TransferDetector runs first)', async () => {
+    const { db } = await import('@/db');
+    const { transactions } = await import('@/db/schema');
+    const { faturaDetectorWorker } = await import('@/jobs/workers/faturaDetectorWorker');
+    const { eq } = await import('drizzle-orm');
+
+    const user_id = await seedUser();
+    const item_id = await seedPluggyItem(user_id);
+
+    const checking_acct = await seedAccountWithUpdatedAt(
+      user_id, item_id, 'CHECKING', '0',
+      new Date('2026-04-01T00:00:00Z'), 'fp2-chk',
+    );
+    await seedAccountWithUpdatedAt(
+      user_id, item_id, 'CREDIT_CARD', '890.00',
+      new Date('2026-04-12T12:00:00Z'), 'fp2-cc',
+    );
+
+    const tx_id = await seedTransaction(
+      user_id, checking_acct, '890.00', 'DEBIT',
+      new Date('2026-04-15T12:00:00Z'),
+    );
+
+    // Simulate TransferDetector having already flagged this debit as a transfer
+    // (the post-ingestion ordering is TransferDetector → FaturaDetector per
+    // Wave 4 / 02-05 plan). FaturaDetector must skip rows where is_transfer=true.
+    await db.execute(
+      sql`UPDATE transactions SET is_transfer = true WHERE id = ${tx_id}`,
+    );
+
+    await faturaDetectorWorker([
+      { id: 'job-fp2', name: 'pluggy.fatura-detector', data: { user_id } } as Job<{ user_id: string }>,
+    ]);
+
+    const [row] = await db
+      .select({
+        is_credit_card_payment: transactions.is_credit_card_payment,
+        is_transfer: transactions.is_transfer,
+      })
+      .from(transactions)
+      .where(eq(transactions.id, tx_id));
+
+    expect(row.is_transfer).toBe(true);
+    expect(row.is_credit_card_payment).toBe(false);
+  });
+
+  it('fatura-fp-3: partial card payment (debit < card balance) is NOT flagged', async () => {
+    const { db } = await import('@/db');
+    const { transactions } = await import('@/db/schema');
+    const { faturaDetectorWorker } = await import('@/jobs/workers/faturaDetectorWorker');
+    const { eq } = await import('drizzle-orm');
+
+    const user_id = await seedUser();
+    const item_id = await seedPluggyItem(user_id);
+
+    const checking_acct = await seedAccountWithUpdatedAt(
+      user_id, item_id, 'CHECKING', '0',
+      new Date('2026-04-01T00:00:00Z'), 'fp3-chk',
+    );
+    await seedAccountWithUpdatedAt(
+      user_id, item_id, 'CREDIT_CARD', '890.00',
+      new Date('2026-04-12T12:00:00Z'), 'fp3-cc',
+    );
+
+    // Partial payment: debit 500.00, card balance 890.00 → no balance equality.
+    const tx_id = await seedTransaction(
+      user_id, checking_acct, '500.00', 'DEBIT',
+      new Date('2026-04-15T12:00:00Z'),
+    );
+
+    await faturaDetectorWorker([
+      { id: 'job-fp3', name: 'pluggy.fatura-detector', data: { user_id } } as Job<{ user_id: string }>,
+    ]);
+
+    const [row] = await db
+      .select({ is_credit_card_payment: transactions.is_credit_card_payment })
+      .from(transactions)
+      .where(eq(transactions.id, tx_id));
+
+    expect(row.is_credit_card_payment).toBe(false);
+  });
+
+  it('fatura-fp-4: overpayment (debit > card balance) is NOT flagged', async () => {
+    const { db } = await import('@/db');
+    const { transactions } = await import('@/db/schema');
+    const { faturaDetectorWorker } = await import('@/jobs/workers/faturaDetectorWorker');
+    const { eq } = await import('drizzle-orm');
+
+    const user_id = await seedUser();
+    const item_id = await seedPluggyItem(user_id);
+
+    const checking_acct = await seedAccountWithUpdatedAt(
+      user_id, item_id, 'CHECKING', '0',
+      new Date('2026-04-01T00:00:00Z'), 'fp4-chk',
+    );
+    await seedAccountWithUpdatedAt(
+      user_id, item_id, 'CREDIT_CARD', '890.00',
+      new Date('2026-04-12T12:00:00Z'), 'fp4-cc',
+    );
+
+    // Overpayment: debit 1000.00 vs balance 890.00 → no balance equality.
+    const tx_id = await seedTransaction(
+      user_id, checking_acct, '1000.00', 'DEBIT',
+      new Date('2026-04-15T12:00:00Z'),
+    );
+
+    await faturaDetectorWorker([
+      { id: 'job-fp4', name: 'pluggy.fatura-detector', data: { user_id } } as Job<{ user_id: string }>,
+    ]);
+
+    const [row] = await db
+      .select({ is_credit_card_payment: transactions.is_credit_card_payment })
+      .from(transactions)
+      .where(eq(transactions.id, tx_id));
+
+    expect(row.is_credit_card_payment).toBe(false);
+  });
+
+  it('fatura-fp-5: multi-card ambiguity — two cards with matching balance → NO flag (audit metadata records skip)', async () => {
+    const { db } = await import('@/db');
+    const { transactions, audit_log } = await import('@/db/schema');
+    const { faturaDetectorWorker } = await import('@/jobs/workers/faturaDetectorWorker');
+    const { eq } = await import('drizzle-orm');
+
+    const user_id = await seedUser();
+    const item_id = await seedPluggyItem(user_id);
+
+    const checking_acct = await seedAccountWithUpdatedAt(
+      user_id, item_id, 'CHECKING', '0',
+      new Date('2026-04-01T00:00:00Z'), 'fp5-chk',
+    );
+    // TWO credit cards both with balance 890 within the +/-7-day window —
+    // ambiguous which one the debit settles. Multi-card guard MUST suppress.
+    await seedAccountWithUpdatedAt(
+      user_id, item_id, 'CREDIT_CARD', '890.00',
+      new Date('2026-04-12T12:00:00Z'), 'fp5-cc-a',
+    );
+    await seedAccountWithUpdatedAt(
+      user_id, item_id, 'CREDIT_CARD', '890.00',
+      new Date('2026-04-13T12:00:00Z'), 'fp5-cc-b',
+    );
+
+    const tx_id = await seedTransaction(
+      user_id, checking_acct, '890.00', 'DEBIT',
+      new Date('2026-04-15T12:00:00Z'),
+    );
+
+    await faturaDetectorWorker([
+      { id: 'job-fp5', name: 'pluggy.fatura-detector', data: { user_id } } as Job<{ user_id: string }>,
+    ]);
+
+    const [row] = await db
+      .select({ is_credit_card_payment: transactions.is_credit_card_payment })
+      .from(transactions)
+      .where(eq(transactions.id, tx_id));
+
+    // Multi-card ambiguity → no auto-flag (Concern #5).
+    expect(row.is_credit_card_payment).toBe(false);
+
+    // No fatura_detected audit row (count was 0 → guard at flagged>0).
+    const [{ value: detected_count }] = await db
+      .select({ value: count() })
+      .from(audit_log)
+      .where(eq(audit_log.action, 'fatura_detected'));
+    expect(Number(detected_count)).toBe(0);
+  });
+
+  it('fatura-billdate-anchor: prefers Pluggy bill_due_date when present (updated_at outside window)', async () => {
+    const { db } = await import('@/db');
+    const { transactions, audit_log } = await import('@/db/schema');
+    const { faturaDetectorWorker } = await import('@/jobs/workers/faturaDetectorWorker');
+    const { eq } = await import('drizzle-orm');
+
+    const user_id = await seedUser();
+    const item_id = await seedPluggyItem(user_id);
+
+    const checking_acct = await seedAccountWithUpdatedAt(
+      user_id, item_id, 'CHECKING', '0',
+      new Date('2026-04-01T00:00:00Z'), 'ba-chk',
+    );
+
+    // bill_due_date = 2026-04-15 (matches debit date) but accounts.updated_at
+    // is 2026-03-01 (way outside the +/-7d window from updated_at).
+    // Old heuristic would NOT flag (out-of-window). New heuristic prefers
+    // bill_due_date and FLAGS.
+    await seedCreditCardWithBillDate(
+      user_id,
+      item_id,
+      '890.00',
+      new Date('2026-03-01T00:00:00Z'),   // updated_at — far in the past
+      new Date('2026-04-15T00:00:00Z'),   // bill_due_date — matches debit
+      'ba-cc',
+    );
+
+    const tx_id = await seedTransaction(
+      user_id, checking_acct, '890.00', 'DEBIT',
+      new Date('2026-04-15T12:00:00Z'),
+    );
+
+    await faturaDetectorWorker([
+      { id: 'job-ba', name: 'pluggy.fatura-detector', data: { user_id } } as Job<{ user_id: string }>,
+    ]);
+
+    const [row] = await db
+      .select({ is_credit_card_payment: transactions.is_credit_card_payment })
+      .from(transactions)
+      .where(eq(transactions.id, tx_id));
+
+    expect(row.is_credit_card_payment).toBe(true);
+
+    // Audit metadata records the anchor source.
+    const [audit_row] = await db
+      .select({ metadata: audit_log.metadata })
+      .from(audit_log)
+      .where(eq(audit_log.action, 'fatura_detected'));
+    expect(audit_row).toBeDefined();
+    const metadata = audit_row.metadata as Record<string, unknown>;
+    expect(metadata.anchor_billdate).toBe(1);
+    expect(metadata.anchor_fallback).toBe(0);
+    expect(metadata.best_effort).toBe(true);
+  });
+
+  it('fatura-fallback-anchor: falls back to accounts.updated_at when bill_due_date IS NULL', async () => {
+    const { db } = await import('@/db');
+    const { transactions, audit_log } = await import('@/db/schema');
+    const { faturaDetectorWorker } = await import('@/jobs/workers/faturaDetectorWorker');
+    const { eq } = await import('drizzle-orm');
+
+    const user_id = await seedUser();
+    const item_id = await seedPluggyItem(user_id);
+
+    const checking_acct = await seedAccountWithUpdatedAt(
+      user_id, item_id, 'CHECKING', '0',
+      new Date('2026-04-01T00:00:00Z'), 'fa-chk',
+    );
+
+    // bill_due_date = NULL; accounts.updated_at = 2026-04-12 (within +/-7d).
+    await seedCreditCardWithBillDate(
+      user_id,
+      item_id,
+      '890.00',
+      new Date('2026-04-12T12:00:00Z'),
+      null,
+      'fa-cc',
+    );
+
+    const tx_id = await seedTransaction(
+      user_id, checking_acct, '890.00', 'DEBIT',
+      new Date('2026-04-15T12:00:00Z'),
+    );
+
+    await faturaDetectorWorker([
+      { id: 'job-fa', name: 'pluggy.fatura-detector', data: { user_id } } as Job<{ user_id: string }>,
+    ]);
+
+    const [row] = await db
+      .select({ is_credit_card_payment: transactions.is_credit_card_payment })
+      .from(transactions)
+      .where(eq(transactions.id, tx_id));
+
+    expect(row.is_credit_card_payment).toBe(true);
+
+    const [audit_row] = await db
+      .select({ metadata: audit_log.metadata })
+      .from(audit_log)
+      .where(eq(audit_log.action, 'fatura_detected'));
+    expect(audit_row).toBeDefined();
+    const metadata = audit_row.metadata as Record<string, unknown>;
+    expect(metadata.anchor_billdate).toBe(0);
+    expect(metadata.anchor_fallback).toBe(1);
+    expect(metadata.best_effort).toBe(true);
   });
 });

@@ -242,6 +242,17 @@ export async function pluggySyncWorker(jobs: Job<SyncJobPayload>[]): Promise<voi
                   a.creditData?.creditLimit != null
                     ? String(a.creditData.creditLimit)
                     : null,
+                // Plan 02-14 / Concern #5: persist Pluggy creditData.balanceDueDate
+                // as the FaturaDetector proximity anchor. NULL when the connector
+                // does not surface this field — detector falls back to updated_at.
+                // SDK deserializes the field as Date|null; coerce string defensively
+                // for connectors / fixtures that surface ISO strings.
+                bill_due_date:
+                  a.creditData?.balanceDueDate != null
+                    ? a.creditData.balanceDueDate instanceof Date
+                      ? a.creditData.balanceDueDate
+                      : new Date(a.creditData.balanceDueDate)
+                    : null,
                 owner: a.owner ?? null,
               })
               .onConflictDoUpdate({
@@ -254,6 +265,7 @@ export async function pluggySyncWorker(jobs: Job<SyncJobPayload>[]): Promise<voi
                   name: sql.raw('excluded.name'),
                   balance: sql.raw('excluded.balance'),
                   credit_limit: sql.raw('excluded.credit_limit'),
+                  bill_due_date: sql.raw('excluded.bill_due_date'),
                   updated_at: sql`now()`,
                 },
               });

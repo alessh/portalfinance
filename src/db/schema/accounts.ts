@@ -38,6 +38,11 @@ export const accounts = pgTable(
     currency: text('currency').notNull(),
     balance: numeric('balance', { precision: 15, scale: 2 }).notNull(),
     credit_limit: numeric('credit_limit', { precision: 15, scale: 2 }),
+    // Pluggy creditData.balanceDueDate when present; nullable for non-credit
+    // accounts and for connectors that don't surface this field. Used by
+    // FaturaDetector as the preferred proximity anchor (Concern #5 / plan
+    // 02-14). NULL falls back to accounts.updated_at.
+    bill_due_date: timestamp('bill_due_date', { withTimezone: true }),
     status: account_status_enum('status').notNull().default('ACTIVE'),
     owner: text('owner'),
     created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

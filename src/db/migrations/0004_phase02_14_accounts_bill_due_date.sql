@@ -1,0 +1,1 @@
+ALTER TABLE "accounts" ADD COLUMN "bill_due_date" timestamp with time zone;

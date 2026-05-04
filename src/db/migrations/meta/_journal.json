@@ -29,6 +29,13 @@
       "when": 1777930086940,
       "tag": "0003_phase02_18_pluggy_items_last_manual_sync_at",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1777931159896,
+      "tag": "0004_phase02_14_accounts_bill_due_date",
+      "breakpoints": true
     }
   ]
 }
