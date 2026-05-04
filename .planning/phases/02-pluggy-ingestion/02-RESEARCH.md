@@ -924,37 +924,43 @@ The following claims are unverified by tools in this session and should be confi
 
 **A3 and A5 are MEDIUM risk and should be the planner's first verification steps before Wave 3 (webhook implementation).**
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Pluggy connect-token TTL**
    - What we know: CONN-01 specifies "short-lived (30 min)". Pluggy docs (canonical_refs) cite `connect_token-create` reference but exact TTL not extracted in this session.
    - What's unclear: Whether the TTL is fixed at 30 min by Pluggy or configurable; whether a token issued for `update mode` (reconnect) has a different TTL.
    - Recommendation: Planner reads `https://docs.pluggy.ai/reference/connect-token-create` directly during Wave 2 (`/api/connect/init` task) and stores the verified TTL as a constant. The 30-min default in CONTEXT.md is the upper bound; refresh tokens before any UI flow that takes >25 minutes.
+   - **RESOLVED:** Use Pluggy default (30 min). Plan 02-03 surfaces `expiresAt` to the client; client refreshes via `/api/connect/init` if the widget has not been opened in time.
 
 2. **PluggyService method names in `pluggy-sdk@0.85.2`**
    - What we know: SDK is published, version verified, used by other Brazilian fintech projects.
    - What's unclear: Exact method names — the assumed shape in Code Examples (`createConnectToken`, `fetchTransactions`, `deleteItem`, `getItem`, `listAccounts`) is informed but not verified against the package itself in this session.
    - Recommendation: After `pnpm add pluggy-sdk@0.85.2`, the planner inspects `node_modules/pluggy-sdk/dist/*.d.ts` and adjusts the `PluggyService` wrapper method bodies to match. The wrapper's PUBLIC API (the methods CONTEXT.md commits to) stays unchanged; only the internal calls to the SDK adapt.
+   - **RESOLVED:** Verified post-install in Plan 02-01 Task 1 acceptance criteria (grep `node_modules/pluggy-sdk/*.d.ts` for `createConnectToken`, `getItem`, `listAccounts`, `listTransactions`, `deleteItem` before Plan 02-02 wraps them).
 
 3. **Webhook `eventId` JSON field name**
    - What we know: Pluggy webhooks have an event identifier; `webhook_events.event_id` UNIQUE constraint requires a stable string per event.
    - What's unclear: The exact JSON field name — `eventId` vs `event_id` vs `id`.
    - Recommendation: First webhook integration test (probably against staged sandbox) prints the raw payload; the planner pins the receiver to the verified field name. Until then, write the receiver to support all three by `body.eventId ?? body.event_id ?? body.id`.
+   - **RESOLVED:** Plan 02-04 receiver accepts the `{ eventId, event, itemId }` shape per Pluggy docs; the integration test fixture in Plan 02-02 (`fixtures/pluggy/webhook-payload.json`) locks the contract.
 
 4. **executionStatus normalization**
    - What we know: Pluggy enumerates many `executionStatus` values (verified docs: ~25 distinct strings across in-progress, success, error, intermediate categories). D-43 stores `execution_status text` (free-text, not enum) — correct decision.
    - What's unclear: Whether we want to derive a coarse-grained `error_category` enum (e.g., AUTH_ERROR, SITE_ERROR, USER_ERROR) for the re-auth notifier debounce key.
    - Recommendation: Phase 2 ships `execution_status` as free text. The re-auth notifier debounces on `(item_id, last_email_sent_at)`, NOT on error category. Phase 6 (OPS-02) may bucket errors for alerting.
+   - **RESOLVED:** Phase 2 stores Pluggy `executionStatus` as free text (`transactions` schema D-43 column `execution_status text`); Phase 6 OPS-02 may bucket the values for dashboards.
 
 5. **Cloudflare WAF rule deployment mechanism**
    - What we know: D-42 mandates a Cloudflare rule rejecting non-`177.71.238.212` requests at `/api/webhooks/pluggy`.
    - What's unclear: Whether Cloudflare config is managed via Terraform, the dashboard, or `wrangler` — Phase 1 STATE.md doesn't capture Cloudflare-as-code.
    - Recommendation: Planner adds an explicit task in Wave 1 (or Wave 5 ops) to either (a) document the manual Cloudflare dashboard step + screenshot, or (b) introduce Terraform if the team prefers. Until the rule is in place, defense relies on the `X-Pluggy-Signature` header check alone; this is acceptable but defense-in-depth is missing.
+   - **RESOLVED:** Manual deployment in Phase 2 documented in Plan 02-04 Task 2 runbook (`docs/ops/cloudflare-waf-pluggy.md`); Terraform automation deferred to Phase 6 OPS-03.
 
 6. **`pluggy_item_id_hash` algorithm and salt**
    - What we know: D-43 specifies `pluggy_item_id_hash bytea NOT NULL` for uniqueness lookup, "same pattern as users.cpf_hash". `users.cpf_hash` is HMAC-SHA-256 with `CPF_HASH_PEPPER` (Phase 1).
    - What's unclear: Whether to reuse `CPF_HASH_PEPPER` or introduce a separate pepper for Pluggy item IDs. Reusing is simpler; separating is defense-in-depth (a pepper leak only compromises one identifier class).
    - Recommendation: Introduce a NEW env var `PLUGGY_ITEM_ID_HASH_PEPPER` distinct from `CPF_HASH_PEPPER`. Both Phase 1 RESEARCH.md Pitfall 5 and the OPS-04 boot guard already establish the pattern of distinct peppers per identifier class.
+   - **RESOLVED:** Introduce `PLUGGY_ITEM_ID_HASH_PEPPER` as a distinct env var. Plan 02-01 declares it in `env.ts` (Zod `min(32)` + production refine). Plan 02-02 adds `hashPluggyItemId(plaintext): Buffer` helper to `src/lib/crypto.ts` using `crypto.createHmac(sha256, env.PLUGGY_ITEM_ID_HASH_PEPPER)`. Plans 02-03 / 02-04 / 02-05 / 02-06 substitute the helper for every `createHash(sha256)` call site that hashes a `pluggy_item_id`.
 
 ## Environment Availability
 

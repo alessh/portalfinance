@@ -1,14 +1,18 @@
 ---
-status: partial
+status: testing
 phase: 02-pluggy-ingestion
 source: [02-VERIFICATION.md]
 started: 2026-05-02T13:00:00Z
-updated: 2026-05-02T22:30:00Z
+updated: 2026-05-03T00:00:00Z
 ---
 
 ## Current Test
 
-[gap-closure plans 02-07, 02-08, 02-09 landed plus a tests/setup.ts regression fix — all 7 tests are now pending re-run by the user]
+number: 2
+name: Webhook idempotency replay (criterion 2)
+expected: |
+  Posting the same Pluggy webhook event 3 times produces identical DB state (no duplicate `webhook_events` rows, no double sync). Posting an invalid `X-Pluggy-Signature` header returns 401.
+awaiting: user response
 
 ## Tests
 
@@ -16,8 +20,11 @@ updated: 2026-05-02T22:30:00Z
 expected: User opens `/connect`, grants consent, completes Pluggy Connect for a sandbox bank, and within 60 seconds sees accounts and transactions on `/transactions`.
 why_human: Live Pluggy sandbox credentials + running Next.js server + running pg-boss worker + 60s timing window.
 how: Set `PLUGGY_SANDBOX_CLIENT_ID` / `PLUGGY_SANDBOX_CLIENT_SECRET` in `.env.local`, run `pnpm dev` and `pnpm start:worker`, sign in, navigate `/connect`.
-result: pending
-note: "Previously failed (ZodError on /connect). Plan 02-07 added `import 'server-only'` to env.ts/crypto.ts and split cpf.ts so client bundles no longer reach the env loader. Plan 02-08 documented the `.env.local` bootstrap. Re-run."
+result: issue
+reported: |
+  `pnpm start:worker` crashes at startup. `.env not found. Continuing without it.` (printed twice — neither `.env` nor `.env.local` is present). Then: `Error: This module cannot be imported from a Client Component module. It should only be used from a Server Component.` thrown by `node_modules/server-only/index.js:1`, triggered from `src/lib/env.ts:25` (the `import 'server-only'` line added by plan 02-07). Node v24.13.0, tsx loader. Worker exits with status 1, so Test 1 cannot run end-to-end.
+severity: blocker
+note: "Plan 02-07 added `import 'server-only'` to env.ts/crypto.ts to prevent client bundles from reaching the env loader, but `server-only` only resolves to a no-op under the Next.js RSC compiler. The worker entry (`src/jobs/worker.ts`) is plain Node-via-tsx and is NOT processed by Next.js, so `server-only`'s default CJS export throws at module load. Plan 02-08 was meant to bootstrap `.env.local`, but no env file is present in this run."
 
 ### 2. Webhook idempotency replay (criterion 2)
 expected: Posting the same Pluggy webhook event 3 times produces identical DB state (no duplicate `webhook_events` rows, no double sync). Posting an invalid `X-Pluggy-Signature` header returns 401.
@@ -60,12 +67,32 @@ note: "Was blocked on testcontainers cascade and Test 1 env-loading (both now cl
 
 total: 7
 passed: 0
-issues: 0
-pending: 7
+issues: 1
+pending: 6
 skipped: 0
 blocked: 0
 
 ## Gaps
+
+- truth: "Worker process (`pnpm start:worker`, plain Node entry `src/jobs/worker.ts` invoked via tsx) starts without errors and is able to import `src/lib/env.ts` to validate environment variables. Required env file (`.env.local` or `.env`) is present at repo root."
+  status: failed
+  reason: |
+    User reported: `pnpm start:worker` crashes at startup. `.env not found. Continuing without it.` printed twice (no .env or .env.local at repo root). Then `Error: This module cannot be imported from a Client Component module. It should only be used from a Server Component.` from `node_modules/server-only/index.js:1`, triggered by `src/lib/env.ts:25` (`import 'server-only'`). Node v24.13.0, exit 1. Test 1 cannot proceed because the worker is required for end-to-end Pluggy ingestion.
+  severity: blocker
+  test: 1
+  artifacts:
+    - path: "src/lib/env.ts:25"
+      issue: "`import 'server-only'` (added by plan 02-07) crashes any non-RSC consumer. The Next.js RSC compiler rewrites the package to a no-op, but `tsx`/plain Node loads the actual CJS module which throws on import."
+    - path: "src/jobs/worker.ts"
+      issue: "Worker entry executed via `tsx --env-file-if-exists=.env --env-file-if-exists=.env.local`; not processed by Next.js, so server-only's runtime guard throws."
+    - path: "src/lib/crypto.ts"
+      issue: "Same `import 'server-only'` added by plan 02-07; same crash mode for any tsx/Node consumer (likely reachable from worker via env or job code paths)."
+    - path: "<repo root>"
+      issue: "No `.env` or `.env.local` present (`.env not found. Continuing without it.` printed twice). Plan 02-08 produced docs but the bootstrap step has not been completed in this environment."
+  missing:
+    - "Replace the hard `import 'server-only'` in src/lib/env.ts and src/lib/crypto.ts with a guard that distinguishes server runtime (Node + Next.js server bundle) from client bundles, while still allowing plain-Node entries (worker, scripts, tsx) to import the module. Options: (a) detect `typeof window !== 'undefined'` and throw only then; (b) use an internal `assertServerOnly()` helper instead of the package; (c) split env.ts into a pure schema + a `server-only` boundary file used only by Next.js code."
+    - "Add a regression test that imports `@/lib/env` and `@/lib/crypto` from a tsx subprocess (e.g., spawn `tsx -e \"import('@/lib/env')\"`) and asserts exit 0 — this would have caught 02-07's overshoot before merge."
+    - "Bootstrap `.env.local` from `.env.example` in the dev environment (plan 02-08 follow-up) and silence the duplicate `.env not found` log when both --env-file-if-exists flags miss."
 
 - truth: "Opening /connect renders the Pluggy Connect entry point without runtime errors; environment variables required by the web runtime (NODE_ENV, DATABASE_URL, NEXTAUTH_SECRET, ENCRYPTION_KEY, CPF_HASH_PEPPER) are loaded before module evaluation; server-only env schema is not evaluated in client bundles."
   status: resolved
