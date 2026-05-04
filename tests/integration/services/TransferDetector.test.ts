@@ -135,13 +135,14 @@ async function seedAccount(
   return row.id;
 }
 
-/** Seed a transaction and return its id. */
+/** Seed a transaction and return its id. Optional `explicit_id` for determinism tests. */
 async function seedTransaction(
   user_id: string,
   account_id: string,
   amount: string,
   type: 'DEBIT' | 'CREDIT',
   posted_at: Date,
+  explicit_id?: string,
 ): Promise<string> {
   const { db } = await import('@/db');
   const { transactions } = await import('@/db/schema');
@@ -149,6 +150,7 @@ async function seedTransaction(
   const [row] = await db
     .insert(transactions)
     .values({
+      ...(explicit_id ? { id: explicit_id } : {}),
       user_id,
       account_id,
       pluggy_transaction_id: `tx-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -375,4 +377,148 @@ describe('transferDetectorWorker', () => {
       .where(drizzleEq(audit_log.action, 'transfer_detected'));
     expect(Number(audit_count)).toBe(1);
   });
+
+  // -------------------------------------------------------------------------
+  // Plan 02-13 — Concern #4 closure: deterministic mutual best match.
+  // -------------------------------------------------------------------------
+
+  it('transfer-determinism-1: one debit + 3 credits same amount picks closest credit by time', async () => {
+    const { db } = await import('@/db');
+    const { transactions } = await import('@/db/schema');
+    const { transferDetectorWorker } = await import('@/jobs/workers/transferDetectorWorker');
+
+    const user_id = await seedUser();
+    const item_id = await seedPluggyItem(user_id);
+    const acct_a = await seedAccount(user_id, item_id, 'CHECKING', 'a');
+    const acct_b = await seedAccount(user_id, item_id, 'SAVINGS', 'b');
+    const acct_c = await seedAccount(user_id, item_id, 'SAVINGS', 'c');
+
+    const debit_at = new Date('2026-04-15T12:00:00Z');
+    // C2 is 6h away from the debit — closest within the 3-day window.
+    const c1_at = new Date('2026-04-14T12:00:00Z'); // 24h delta
+    const c2_at = new Date('2026-04-15T18:00:00Z'); //  6h delta — closest
+    const c3_at = new Date('2026-04-13T12:00:00Z'); // 48h delta
+
+    const tx_d  = await seedTransaction(user_id, acct_a, '500.00', 'DEBIT',  debit_at);
+    const tx_c1 = await seedTransaction(user_id, acct_b, '500.00', 'CREDIT', c1_at);
+    const tx_c2 = await seedTransaction(user_id, acct_b, '500.00', 'CREDIT', c2_at);
+    const tx_c3 = await seedTransaction(user_id, acct_c, '500.00', 'CREDIT', c3_at);
+
+    await transferDetectorWorker([
+      { id: 'job-d1', name: 'pluggy.transfer-detector', data: { user_id } } as Job<{ user_id: string }>,
+    ]);
+
+    const rows = await db
+      .select({ id: transactions.id, is_transfer: transactions.is_transfer, transfer_pair_id: transactions.transfer_pair_id })
+      .from(transactions)
+      .where(eq(transactions.user_id, user_id));
+    const by_id = Object.fromEntries(rows.map((r) => [r.id, r]));
+
+    // Debit and C2 form the only flagged pair (1-to-1 invariant).
+    expect(by_id[tx_d].is_transfer).toBe(true);
+    expect(by_id[tx_d].transfer_pair_id).toBe(tx_c2);
+    expect(by_id[tx_c2].is_transfer).toBe(true);
+    expect(by_id[tx_c2].transfer_pair_id).toBe(tx_d);
+
+    // C1 and C3 must NOT be flagged — there is no debit left to pair with them.
+    expect(by_id[tx_c1].is_transfer).toBe(false);
+    expect(by_id[tx_c1].transfer_pair_id).toBeNull();
+    expect(by_id[tx_c3].is_transfer).toBe(false);
+    expect(by_id[tx_c3].transfer_pair_id).toBeNull();
+  });
+
+  it('transfer-determinism-2: id-lex tiebreak — equal time delta picks smallest id wins', async () => {
+    const { db } = await import('@/db');
+    const { transactions } = await import('@/db/schema');
+    const { transferDetectorWorker } = await import('@/jobs/workers/transferDetectorWorker');
+
+    const user_id = await seedUser();
+    const item_id = await seedPluggyItem(user_id);
+    const acct_a = await seedAccount(user_id, item_id, 'CHECKING', 'a');
+    const acct_b = await seedAccount(user_id, item_id, 'SAVINGS', 'b');
+    const acct_c = await seedAccount(user_id, item_id, 'SAVINGS', 'c');
+
+    const debit_at  = new Date('2026-04-15T12:00:00Z');
+    const credit_at_alpha = new Date('2026-04-15T11:00:00Z'); // -1h
+    const credit_at_beta  = new Date('2026-04-15T13:00:00Z'); // +1h (same |delta|)
+
+    // Force a known id ordering: alpha lex-sorts before beta.
+    const credit_alpha_id = '00000000-0000-0000-0000-000000000001';
+    const credit_beta_id  = '00000000-0000-0000-0000-000000000002';
+
+    const tx_d = await seedTransaction(user_id, acct_a, '500.00', 'DEBIT',  debit_at);
+    await seedTransaction(user_id, acct_b, '500.00', 'CREDIT', credit_at_alpha, credit_alpha_id);
+    await seedTransaction(user_id, acct_c, '500.00', 'CREDIT', credit_at_beta,  credit_beta_id);
+
+    await transferDetectorWorker([
+      { id: 'job-d2', name: 'pluggy.transfer-detector', data: { user_id } } as Job<{ user_id: string }>,
+    ]);
+
+    const [debit_row] = await db
+      .select({ transfer_pair_id: transactions.transfer_pair_id })
+      .from(transactions)
+      .where(eq(transactions.id, tx_d));
+
+    expect(debit_row.transfer_pair_id).toBe(credit_alpha_id);
+  });
+
+  it('transfer-determinism-3: re-run produces byte-identical transfer_pair_id assignments', async () => {
+    const { db } = await import('@/db');
+    const { transactions, audit_log } = await import('@/db/schema');
+    const { transferDetectorWorker } = await import('@/jobs/workers/transferDetectorWorker');
+    const { count } = await import('drizzle-orm');
+
+    const user_id = await seedUser();
+    const item_id = await seedPluggyItem(user_id);
+    const acct_a = await seedAccount(user_id, item_id, 'CHECKING', 'a');
+    const acct_b = await seedAccount(user_id, item_id, 'SAVINGS', 'b');
+    const acct_c = await seedAccount(user_id, item_id, 'SAVINGS', 'c');
+
+    const debit_at = new Date('2026-04-15T12:00:00Z');
+    const c1_at = new Date('2026-04-14T12:00:00Z'); // 24h
+    const c2_at = new Date('2026-04-15T18:00:00Z'); //  6h — closest
+    const c3_at = new Date('2026-04-13T12:00:00Z'); // 48h
+
+    const tx_d  = await seedTransaction(user_id, acct_a, '500.00', 'DEBIT',  debit_at);
+    const tx_c1 = await seedTransaction(user_id, acct_b, '500.00', 'CREDIT', c1_at);
+    const tx_c2 = await seedTransaction(user_id, acct_b, '500.00', 'CREDIT', c2_at);
+    const tx_c3 = await seedTransaction(user_id, acct_c, '500.00', 'CREDIT', c3_at);
+
+    const job = { id: 'job-d3', name: 'pluggy.transfer-detector', data: { user_id } } as Job<{ user_id: string }>;
+    await transferDetectorWorker([job]);
+
+    const rows_after_first = await db
+      .select({ id: transactions.id, transfer_pair_id: transactions.transfer_pair_id })
+      .from(transactions)
+      .where(eq(transactions.user_id, user_id))
+      .orderBy(transactions.id);
+
+    // Insert an unrelated transaction that does NOT match the heuristic,
+    // then re-run.
+    const acct_d = await seedAccount(user_id, item_id, 'CHECKING', 'd');
+    await seedTransaction(user_id, acct_d, '7.13', 'DEBIT', new Date('2026-01-01T00:00:00Z'));
+
+    await transferDetectorWorker([job]);
+
+    const rows_after_second = await db
+      .select({ id: transactions.id, transfer_pair_id: transactions.transfer_pair_id })
+      .from(transactions)
+      .where(eq(transactions.user_id, user_id))
+      .orderBy(transactions.id);
+
+    // (a) Original four transactions retain their first-run pair assignments.
+    const first_by_id  = Object.fromEntries(rows_after_first.map((r) => [r.id, r.transfer_pair_id]));
+    const second_by_id = Object.fromEntries(rows_after_second.map((r) => [r.id, r.transfer_pair_id]));
+    for (const id of [tx_d, tx_c1, tx_c2, tx_c3]) {
+      expect(second_by_id[id]).toBe(first_by_id[id]);
+    }
+
+    // (b) Only one transfer_detected audit row — re-run produced no new pairs.
+    const [{ value: audit_count }] = await db
+      .select({ value: count() })
+      .from(audit_log)
+      .where(eq(audit_log.action, 'transfer_detected'));
+    expect(Number(audit_count)).toBe(1);
+  });
 });
+
