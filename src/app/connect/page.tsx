@@ -20,6 +20,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { users, pluggy_items, accounts } from '@/db/schema';
 import { requireSession } from '@/lib/session';
+import { userHasRealCpf } from '@/lib/cpf';
 import { PaywallStubCard } from '@/components/billing/PaywallStubCard';
 import { ConnectIsland } from './ConnectIsland';
 
@@ -81,9 +82,12 @@ export default async function ConnectPage({ searchParams }: ConnectPageProps) {
   const params = await searchParams;
   const reconnectId = params.reconnect;
 
-  // Load user subscription tier and CPF status.
+  // Load user subscription tier and CPF status. We select cpf_enc (not
+  // cpf_hash) because signupCore writes a non-null random cpf_hash placeholder
+  // — only cpf_enc.byteLength can distinguish placeholder from a real CPF
+  // (review WR-02). userHasRealCpf is the shared helper /api/connect/init uses.
   const userRows = await db
-    .select({ cpf_hash: users.cpf_hash, subscription_tier: users.subscription_tier })
+    .select({ cpf_enc: users.cpf_enc, subscription_tier: users.subscription_tier })
     .from(users)
     .where(eq(users.id, session.userId))
     .limit(1);
@@ -91,7 +95,7 @@ export default async function ConnectPage({ searchParams }: ConnectPageProps) {
   const user = userRows[0];
   if (!user) redirect('/login');
 
-  const hasCpf = !!user.cpf_hash;
+  const hasCpf = userHasRealCpf(user.cpf_enc as Buffer | null);
   const isFree = user.subscription_tier === 'free';
 
   // D-49: Free user attempting 2nd connection → paywall stub (widget never opens).

@@ -51,3 +51,16 @@ export function formatCPF(cpf: string): string {
  */
 export const CPF_PLACEHOLDER_BYTES = 44;
 export const CPF_ENCRYPTED_BYTES = 39;
+
+/**
+ * Single source of truth for "this user has set a real CPF" (review WR-02 follow-up).
+ *
+ * Compares `cpf_enc.byteLength` to {@link CPF_ENCRYPTED_BYTES} so any future
+ * change to the placeholder shape fails closed (returns `false`) instead of
+ * silently flipping open. Both `/api/connect/init` and `app/connect/page.tsx`
+ * MUST use this helper — using `cpf_hash` is unsafe because `signupCore`
+ * writes a non-null random `cpf_hash` placeholder at user creation.
+ */
+export function userHasRealCpf(cpf_enc: Buffer | Uint8Array | null | undefined): boolean {
+  return !!cpf_enc && cpf_enc.byteLength === CPF_ENCRYPTED_BYTES;
+}
