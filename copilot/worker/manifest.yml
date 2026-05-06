@@ -32,12 +32,22 @@ variables:
   SES_FROM_EMAIL: no-reply@portalfinance.app
   SES_CONFIGURATION_SET: portal-finance
   NEXTAUTH_URL: https://portalfinance.app
+  # Phase 2 OPS-04: env.ts refine asserts PLUGGY_ENV === 'production' for
+  # web + worker when NODE_ENV=production. Sandbox keys are forbidden in
+  # this environment (separate refine in env.ts:160-168).
+  PLUGGY_ENV: production
 
 secrets:
   NEXTAUTH_SECRET: /copilot/portalfinance/prod/secrets/NEXTAUTH_SECRET
   ENCRYPTION_KEY: /copilot/portalfinance/prod/secrets/ENCRYPTION_KEY
   CPF_HASH_PEPPER: /copilot/portalfinance/prod/secrets/CPF_HASH_PEPPER
   SENTRY_DSN: /copilot/portalfinance/prod/secrets/SENTRY_DSN
+  # Phase 2 Pluggy creds (OPS-04 production refine -- env.ts:194-213).
+  # See copilot/web/manifest.yml for full notes on each value's lifecycle.
+  PLUGGY_CLIENT_ID: /copilot/portalfinance/prod/secrets/PLUGGY_CLIENT_ID
+  PLUGGY_CLIENT_SECRET: /copilot/portalfinance/prod/secrets/PLUGGY_CLIENT_SECRET
+  PLUGGY_WEBHOOK_SECRET: /copilot/portalfinance/prod/secrets/PLUGGY_WEBHOOK_SECRET
+  PLUGGY_ITEM_ID_HASH_PEPPER: /copilot/portalfinance/prod/secrets/PLUGGY_ITEM_ID_HASH_PEPPER
   # DB connection info bridged from env-addon Outputs via SSM (see web/manifest.yml note).
   DB_ENDPOINT: /copilot/portalfinance/prod/secrets/DB_ENDPOINT
   DB_PORT: /copilot/portalfinance/prod/secrets/DB_PORT

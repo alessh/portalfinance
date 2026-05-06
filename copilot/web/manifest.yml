@@ -50,6 +50,10 @@ variables:
   NEXTAUTH_URL: https://portalfinance.app
   TURNSTILE_SITE_KEY: '0x4AAAAAADC3m3WBesHI5u2M'           # public key -- safe in manifest
   NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY: '0x4AAAAAADC3m3WBesHI5u2M'  # public key -- safe in manifest
+  # Phase 2 OPS-04: env.ts refine asserts PLUGGY_ENV === 'production' for
+  # web + worker when NODE_ENV=production. Sandbox keys are forbidden in
+  # this environment (separate refine in env.ts:160-168).
+  PLUGGY_ENV: production
 
 secrets:
   NEXTAUTH_SECRET: /copilot/portalfinance/prod/secrets/NEXTAUTH_SECRET
@@ -57,6 +61,15 @@ secrets:
   CPF_HASH_PEPPER: /copilot/portalfinance/prod/secrets/CPF_HASH_PEPPER
   SENTRY_DSN: /copilot/portalfinance/prod/secrets/SENTRY_DSN
   TURNSTILE_SECRET_KEY: /copilot/portalfinance/prod/secrets/TURNSTILE_SECRET_KEY
+  # Phase 2 Pluggy creds (OPS-04 production refine — env.ts:194-213).
+  # PLUGGY_CLIENT_ID/SECRET issued by Pluggy dashboard.
+  # PLUGGY_WEBHOOK_SECRET shared with Pluggy webhook signing config.
+  # PLUGGY_ITEM_ID_HASH_PEPPER is internal-only; NEVER rotate without a
+  # migration plan -- baked into every pluggy_items.pluggy_item_id_hash row.
+  PLUGGY_CLIENT_ID: /copilot/portalfinance/prod/secrets/PLUGGY_CLIENT_ID
+  PLUGGY_CLIENT_SECRET: /copilot/portalfinance/prod/secrets/PLUGGY_CLIENT_SECRET
+  PLUGGY_WEBHOOK_SECRET: /copilot/portalfinance/prod/secrets/PLUGGY_WEBHOOK_SECRET
+  PLUGGY_ITEM_ID_HASH_PEPPER: /copilot/portalfinance/prod/secrets/PLUGGY_ITEM_ID_HASH_PEPPER
   # DB connection info bridged from env-addon Outputs via SSM. The four
   # SSM Strings are written by ops (manually for now; future: a CFN custom
   # resource in the env addon could write them). entrypoint.sh consumes
