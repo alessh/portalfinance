@@ -1,14 +1,18 @@
 import path from 'node:path';
 import type { NextConfig } from 'next';
 
+// Pin Next/Turbopack workspace root to this package — avoids false detection
+// of stray lockfiles higher up the directory tree (e.g., `C:/Users/<user>/package-lock.json`).
+// POSIX-style path with forward slashes for Turbopack on Windows.
+const project_root = path.resolve(__dirname).replace(/\\/g, '/');
+
 const nextConfig: NextConfig = {
-  // Pin Turbopack workspace root to this package — avoids false detection
-  // of stray lockfiles higher up the directory tree (e.g., in $HOME).
-  // Note: root uses POSIX path with forward slashes to avoid Windows path
-  // issues in Turbopack (Windows backslashes cause resolution failures).
   turbopack: {
-    root: path.resolve(__dirname).replace(/\\/g, '/'),
+    root: project_root,
   },
+  // Mirror the same pin for the standalone tracing step, so `output: 'standalone'`
+  // does not walk up and treat the parent directory as the workspace root.
+  outputFileTracingRoot: project_root,
   // Next.js 16 promoted typedRoutes out of experimental.
   typedRoutes: true,
   // D-10 (Plan 01.1) -- standalone output powers `node .next/standalone/server.js`

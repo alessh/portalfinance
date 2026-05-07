@@ -1,5 +1,13 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
 @import "tw-animate-css";
+
+/* Tailwind v4 ignores `content` from tailwind.config.ts and uses automatic
+ * source detection by default. On Windows, that scanner picks up stray
+ * artifacts in the project root (e.g., dev logs, captured HTML) where React
+ * has already HTML-escaped class names like `[&_svg]:shrink-0` to
+ * `[&amp;_svg]:shrink-0`, which produces invalid CSS such as `&amp; svg {}`.
+ * Pin the scanner explicitly to source files only. */
+@source "../**/*.{ts,tsx}";
 
 @custom-variant dark (&:is(.dark *));
 
