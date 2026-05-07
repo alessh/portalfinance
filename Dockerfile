@@ -93,6 +93,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/docs ./docs
 # Pre-compiled worker + migrator (from pnpm build:worker)
 COPY --from=builder --chown=nextjs:nodejs /app/dist ./dist
 
+# SQL migration files consumed at runtime by dist/db/migrate.js via
+# drizzle-orm/postgres-js/migrator. migrationsFolder is './src/db/migrations'
+# (relative to WORKDIR /app). These are plain SQL files -- not bundled by tsup.
+COPY --from=builder --chown=nextjs:nodejs /app/src/db/migrations ./src/db/migrations
+
 # Production node_modules for the worker / migrate runtime.
 # Web does NOT need this -- Next standalone bundle at /app/node_modules
 # is self-contained from earlier COPY. We overlay prod-deps node_modules
